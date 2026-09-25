@@ -23,6 +23,10 @@ apache24_site_network_restriction_evidence: ""
 apache24_site_script_aliases_approved: []
 apache24_site_follow_symlinks: false
 apache24_site_indexes_enabled: false
+# V-214292 permits index.html or an equivalent default document. Keep this list
+# aligned with the site's effective DirectoryIndex policy.
+apache24_site_default_documents:
+  - index.html
 apache24_site_baseline_recovery_evidence: ""
 apache24_site_inactive_timeout_minutes: null
 apache24_site_blocked_networks: []
