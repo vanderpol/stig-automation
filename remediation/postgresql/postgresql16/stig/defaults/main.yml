@@ -26,8 +26,20 @@ postgres16_pgaudit_log_catalog: "on"
 # Literal current-check minimum for V-261860.
 postgres16_log_line_prefix: "< %m %a %u %d %r %p %i %e %s %c >"
 
-# Do not assume an enterprise syslog facility/destination.
+# V-261899 session termination/keepalive values. These STIG checks require
+# nonzero values; defaults follow the benchmark's example and remain tunable.
+postgres16_statement_timeout_ms: 10000
+postgres16_tcp_keepalives_idle: 10
+postgres16_tcp_keepalives_interval: 10
+postgres16_tcp_keepalives_count: 10
+
+# V-261921 uses UTC as the safe common reference by default.
+postgres16_log_timezone: "UTC"
+
+# Central logging is organization-owned. Supplying an approved facility enables
+# guarded PostgreSQL syslog configuration; offload/receiver evidence is still required.
 postgres16_syslog_facility: null
+postgres16_syslog_ident: "postgres"
 postgres16_central_log_evidence: null
 
 # Site-owned evidence / approved-state inputs.
