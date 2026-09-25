@@ -59,14 +59,92 @@
   when: apache24_site_document_root | length > 0
   tags: [V-214290, audit]
 
-- name: "V-214290 | Report document-root filesystem"
-  ansible.builtin.debug:
-    msg:
-      document_root: "{{ apache24_site_document_root }}"
-      mount: "{{ apache24_site_document_mount.stdout | default('unknown') }}"
-      requirement: "The document directory must be on a separate partition/filesystem from Apache system files."
+- name: "V-214290 | Determine Apache system-file mount"
+  ansible.builtin.command:
+    argv:
+      - findmnt
+      - -n
+      - -T
+      - "{{ apache24.config_root }}"
+      - -o
+      - TARGET
+  register: apache24_site_system_mount
+  changed_when: false
   when: apache24_site_document_root | length > 0
   tags: [V-214290, audit]
+
+- name: "V-214290 | Determine operating-system root mount"
+  ansible.builtin.command:
+    argv: [findmnt, -n, -T, /, -o, TARGET]
+  register: apache24_site_os_mount
+  changed_when: false
+  when: apache24_site_document_root | length > 0
+  tags: [V-214290, audit]
+
+- name: "V-214290 | Verify document root is on a separate filesystem"
+  ansible.builtin.assert:
+    that:
+      - apache24_site_document_mount.stdout | trim != apache24_site_system_mount.stdout | trim
+      - apache24_site_document_mount.stdout | trim != apache24_site_os_mount.stdout | trim
+    fail_msg: >-
+      V-214290 finding: document root {{ apache24_site_document_root }} is on
+      {{ apache24_site_document_mount.stdout | default('unknown') }}, which is not separate from
+      the Apache system/configuration filesystem and operating-system root as required.
+    success_msg: >-
+      V-214290 technical filesystem check passed: document root mount
+      {{ apache24_site_document_mount.stdout | trim }} differs from Apache system mount
+      {{ apache24_site_system_mount.stdout | trim }} and OS root mount {{ apache24_site_os_mount.stdout | trim }}.
+  when: apache24_site_document_root | length > 0
+  tags: [V-214290, audit]
+
+- name: "V-214292 | Find directories under the document root"
+  ansible.builtin.find:
+    paths: "{{ apache24_site_document_root }}"
+    file_type: directory
+    recurse: true
+  register: apache24_site_document_directories
+  when: apache24_site_document_root | length > 0
+  tags: [V-214292, audit]
+
+- name: "V-214292 | Include document root in directory check"
+  ansible.builtin.set_fact:
+    apache24_site_directories_to_check: >-
+      {{ [apache24_site_document_root] +
+         (apache24_site_document_directories.files | default([]) | map(attribute='path') | list) }}
+  when: apache24_site_document_root | length > 0
+  tags: [V-214292, audit]
+
+- name: "V-214292 | Check for an approved default document in every applicable directory"
+  ansible.builtin.find:
+    paths: "{{ item }}"
+    patterns: "{{ apache24_site_default_documents }}"
+    file_type: file
+    recurse: false
+  loop: "{{ apache24_site_directories_to_check | default([]) }}"
+  register: apache24_site_default_document_checks
+  when: apache24_site_document_root | length > 0
+  tags: [V-214292, audit]
+
+- name: "V-214292 | Report directories missing a default document"
+  ansible.builtin.set_fact:
+    apache24_site_missing_default_documents: >-
+      {{ apache24_site_default_document_checks.results | default([])
+         | selectattr('matched', 'equalto', 0)
+         | map(attribute='item') | list }}
+  when: apache24_site_document_root | length > 0
+  tags: [V-214292, audit]
+
+- name: "V-214292 | Verify every applicable directory has a default document"
+  ansible.builtin.assert:
+    that:
+      - apache24_site_missing_default_documents | default([]) | length == 0
+    fail_msg: >-
+      V-214292 finding/review required. These directories do not contain one of the approved
+      default documents {{ apache24_site_default_documents }}:
+      {{ apache24_site_missing_default_documents | default([]) }}
+    success_msg: "V-214292 technical check passed for the configured document root."
+  when: apache24_site_document_root | length > 0
+  tags: [V-214292, audit]
 
 - name: "V-214289 | Report stable-baseline recovery evidence"
   ansible.builtin.debug:
