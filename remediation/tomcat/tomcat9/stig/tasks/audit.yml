@@ -1,0 +1,18 @@
+---
+- name: Ensure audit package is installed
+  ansible.builtin.package:
+    name: audit
+    state: present
+
+- name: V-222998 V-222999 V-223000 | Install Tomcat audit watches
+  ansible.builtin.copy:
+    dest: /etc/audit/rules.d/tomcat9-stig.rules
+    owner: root
+    group: root
+    mode: "0640"
+    content: |
+      -w {{ tomcat9_stig_paths.bin }} -p wa -k tomcat_bin
+      -w {{ tomcat9_stig_paths.conf }} -p wa -k tomcat_conf
+      -w {{ tomcat9_stig_paths.lib }} -p wa -k tomcat_lib
+  notify: Reload audit rules
+  tags: [V-222998, V-222999, V-223000]
