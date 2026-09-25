@@ -181,18 +181,57 @@
     - V-261860
     - V-261863
 
-- name: PostgreSQL 16 STIG | Enforce nonzero session termination settings
+- name: PostgreSQL 16 STIG | Validate approved session termination settings
+  ansible.builtin.assert:
+    that:
+      - (item.value | int) > 0
+    fail_msg: >-
+      V-261899 values must be explicit organization-approved nonzero integers.
+  loop:
+    - { key: "statement_timeout", value: "{{ postgres16_statement_timeout_ms }}" }
+    - { key: "tcp_keepalives_idle", value: "{{ postgres16_tcp_keepalives_idle }}" }
+    - { key: "tcp_keepalives_interval", value: "{{ postgres16_tcp_keepalives_interval }}" }
+    - { key: "tcp_keepalives_count", value: "{{ postgres16_tcp_keepalives_count }}" }
+  when: item.value is not none
+  tags:
+    - V-261899
+
+- name: PostgreSQL 16 STIG | Require complete approved V-261899 input set
+  ansible.builtin.assert:
+    that:
+      - postgres16_statement_timeout_ms is not none
+      - postgres16_tcp_keepalives_idle is not none
+      - postgres16_tcp_keepalives_interval is not none
+      - postgres16_tcp_keepalives_count is not none
+    fail_msg: >-
+      V-261899 requires organization-defined nonzero statement_timeout and
+      tcp_keepalives_* values. Supply all four approved values; the role will
+      not copy the STIG's example numbers as organization policy.
+  when: >
+    postgres16_statement_timeout_ms is not none or
+    postgres16_tcp_keepalives_idle is not none or
+    postgres16_tcp_keepalives_interval is not none or
+    postgres16_tcp_keepalives_count is not none
+  tags:
+    - V-261899
+
+- name: PostgreSQL 16 STIG | Apply approved session termination settings
   become: true
   ansible.builtin.lineinfile:
     path: "{{ postgres16_config_file }}"
     regexp: '^\s*#?\s*{{ item.key | regex_escape }}\s*='
-    line: "{{ item.key }} = {{ item.value }}"
+    line: "{{ item.key }} = {{ item.value | int }}"
     backup: true
   loop:
-    - { key: "statement_timeout", value: "{{ postgres16_statement_timeout_ms | int }}" }
-    - { key: "tcp_keepalives_idle", value: "{{ postgres16_tcp_keepalives_idle | int }}" }
-    - { key: "tcp_keepalives_interval", value: "{{ postgres16_tcp_keepalives_interval | int }}" }
-    - { key: "tcp_keepalives_count", value: "{{ postgres16_tcp_keepalives_count | int }}" }
+    - { key: "statement_timeout", value: "{{ postgres16_statement_timeout_ms }}" }
+    - { key: "tcp_keepalives_idle", value: "{{ postgres16_tcp_keepalives_idle }}" }
+    - { key: "tcp_keepalives_interval", value: "{{ postgres16_tcp_keepalives_interval }}" }
+    - { key: "tcp_keepalives_count", value: "{{ postgres16_tcp_keepalives_count }}" }
+  when:
+    - postgres16_statement_timeout_ms is not none
+    - postgres16_tcp_keepalives_idle is not none
+    - postgres16_tcp_keepalives_interval is not none
+    - postgres16_tcp_keepalives_count is not none
   notify: PostgreSQL 16 STIG | Reload configuration
   tags:
     - V-261899
