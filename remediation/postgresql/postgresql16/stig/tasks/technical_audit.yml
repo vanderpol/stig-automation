@@ -326,7 +326,7 @@
   ansible.builtin.assert:
     that:
       - not (postgres16_fips_state.failed | default(false))
-      - (postgres16_fips_state.content | b64decode | trim) == '1'
+      - (postgres16_fips_state.content | default('') | b64decode | trim) == '1'
       - postgres16_openssl_version.rc | default(1) == 0
       - >-
         ('OpenSSL 3' not in (postgres16_openssl_version.stdout | default('')))
@@ -471,7 +471,7 @@
 - name: PostgreSQL 16 STIG | Assert test-cycle required server version
   ansible.builtin.assert:
     that:
-      - postgres16_server_version.stdout | trim == postgres16_required_server_version | string
+      - (postgres16_server_version.stdout | trim).split(' ')[0] == (postgres16_required_server_version | string)
     fail_msg: >-
       Installed PostgreSQL server_version={{ postgres16_server_version.stdout | trim }}
       does not match test-cycle required version={{ postgres16_required_server_version }}.
