@@ -24,17 +24,20 @@
 - name: V-278390 | Require replay-resistance evidence for network authentication
   ansible.builtin.assert:
     that:
-      - nginx_stig_replay_resistance_evidence | length > 0
+      - not nginx_stig_network_authentication_in_use | bool or nginx_stig_replay_resistance_evidence | length > 0
     fail_msg: "V-278390 requires the site's authentication mechanism and replay-resistance evidence."
   tags: [V-278390, CAT2]
 
-- name: V-278396 | CAT I hard stop until central logging endpoint is supplied
+- name: V-278396 | CAT I require central logging endpoint and effective syslog logging
   ansible.builtin.assert:
     that:
       - nginx_stig_syslog_server | length > 0
+      - nginx_stig_effective_config.stdout is not search('(?m)^\\s*(?:access_log|error_log)\\s+(?!syslog:)(?!off(?:\\s|;))')
+      - nginx_stig_effective_config.stdout is search('(?m)^\\s*(?:access_log|error_log)\\s+syslog:server=')
     fail_msg: >-
-      V-278396 is CAT I. Supply nginx_stig_syslog_server and reconcile every effective
-      access_log/error_log directive with the current check before treating this control as compliant.
+      V-278396 is CAT I. Supply nginx_stig_syslog_server and ensure every effective
+      access_log/error_log destination required by the current check is syslog-backed.
+      A configured endpoint variable alone is not evidence of effective central logging.
   tags: [V-278396, CAT1]
 
 - name: V-278398 | Require organization-defined allowlist
@@ -54,7 +57,7 @@
 - name: V-278402 | Require site-defined security headers when proxying
   ansible.builtin.assert:
     that:
-      - nginx_stig_required_proxy_headers | length > 0
+      - not nginx_stig_proxying_in_use | bool or nginx_stig_required_proxy_headers | length > 0
     fail_msg: "V-278402 requires organization/application-defined security attributes; do not invent header values."
   tags: [V-278402, CAT2]
 
@@ -144,7 +147,6 @@
   ansible.builtin.assert:
     that:
       - nginx_stig_effective_config.stdout is search('(?m)^\\s*(limit_conn|limit_req)\\s+')
-        or nginx_stig_dos_scope_files | length > 0
     fail_msg: "V-278404 requires an applied limit_conn or limit_req; defining only a shared zone is insufficient."
   tags: [V-278404, CAT2]
 
