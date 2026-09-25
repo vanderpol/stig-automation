@@ -23,13 +23,13 @@ The review found a material coverage problem: the existing matrix claimed classi
 - V-223006 — ISSO approval of management-role users
 - V-223009 — connector address completeness (partial implementation existed)
 
-Audit visibility has been added for all 14 so they can no longer disappear from test output. They are **not** considered remediated merely because audit messages now exist.
+This round closed the deterministic portions that can be safely automated and converted the remaining architecture/process requirements into explicit guarded inputs/evidence. The 14 controls no longer silently disappear from execution, but mixed controls still require site evidence and lab validation.
 
 ## Source/provenance conclusion
 
 The repository README establishes the project-owner-supplied `tomcat9_stig_ansible_rhel8_rhel9_v0.3` project as the implementation baseline. Existing task logic is therefore inherited from that internal baseline, with later local adaptations.
 
-Ansible-Lockdown TOMCAT-9-STIG exists as a maintained public remediation project and was consulted as comparison material during this retrospective review. No evidence available in this repository establishes that the supplied v0.3 baseline was copied from Ansible-Lockdown, so public-repository inheritance is not asserted.
+Ansible-Lockdown TOMCAT-9-STIG exists as a public remediation project and its current documentation labels it maintained. However, its repository README does not state a current DISA Tomcat benchmark version and still documents RHEL 7/8, CentOS 7/8, and Ubuntu 16.04/18.04/20.04 assumptions. This review could not establish that the public role is aligned to V3R4 (released 2026-02-25) or that its implementation was refreshed after that benchmark release. It is therefore comparison/reference material only, not a V3R4 authority. No evidence available in this repository establishes that the supplied v0.3 baseline was copied from Ansible-Lockdown, so public-repository inheritance is not asserted.
 
 Apache Tomcat's community review of the DISA STIG is useful technical commentary and highlights that some STIG recommendations have semantic/operability concerns. It is treated as review material, not compliance authority.
 
@@ -39,6 +39,6 @@ V3R4 is the implementation authority. V-222927, V-222929, and V-222936 were remo
 
 ## Test consequence
 
-Tomcat should **not yet be described as having all 79 current controls implemented**. The 14 gaps above must be resolved as remediation, audit/evidence, or explicit N/A/site-owned behavior and then validated on RHEL 8/9 before the same tester-handoff status used for Apache is appropriate.
+All 79 current V3R4 controls are now represented as remediation, guarded remediation, audit/evidence, or explicit N/A/site-owned behavior. The newly added manager LDAP/LDAPS, LockOutRealm, session, network restriction, connector-address, FIPS, proxy mutual-authentication, cluster-evidence, manager-error-page, and ISSO-approval logic remains **untested**. Tomcat is therefore implementation-complete for this review round but is not yet assessment-verified or ready to be called compliant.
 
 Detailed per-control status is in `remediation/tomcat/tomcat9/stig/docs/SOURCE_PROVENANCE.md`.
