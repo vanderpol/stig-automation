@@ -2,7 +2,7 @@
 
 Benchmark: **Crunchy Data Postgres 16 STIG V1R3**  
 Expected controls: **111**  
-Status: **enumeration/classification in progress**
+Status: **111/111 V1R3 controls enumerated; implementation reconciliation in progress**
 
 This ledger is deliberately created before remediation code. No control may silently disappear. A control is not considered covered until the V-ID, STIG ID, implementation type, provenance, risk, executable handling, and validation state are recorded here.
 
@@ -95,6 +95,30 @@ Risk: `HIGH | MEDIUM | BASELINE`
 | V-261931 | CD16-00-008600 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | At-rest confidentiality; may be DB, filesystem, or disk control. |
 | V-261932 | CD16-00-008800 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | Conditional on data-owner requirement; SSL alone may not prove full path. |
 | V-261933 | CD16-00-008900 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | Reception protection; validate transport boundary. |
+| V-261934 | CD16-00-009000 | II | APP/EVIDENCE | ORIGINAL | HIGH | Invalid-input behavior requires application/system documentation and negative testing. |
+| V-261935 | CD16-00-009100 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Superseded PostgreSQL components/packages; removal can affect rollback/migration plans. |
+| V-261936 | CD16-00-009200 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Patch timeliness is governed by authoritative timelines; no blind package upgrade. |
+| V-261938 | CD16-00-009400 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Security-object access auditing; shared pgAudit class union. |
+| V-261939 | CD16-00-009500 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Failed security-object access; requires negative verification. |
+| V-261940 | CD16-00-009600 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Security-category access audit family; shared pgAudit capability. |
+| V-261941 | CD16-00-009700 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Failed security-category access audit family; negative verification. |
+| V-261942 | CD16-00-009800 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Privilege/permission additions require role-class auditing. |
+| V-261943 | CD16-00-009900 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Failed privilege/permission additions require denial logging. |
+| V-261944 | CD16-00-010000 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Privilege/permission modifications require role-class auditing. |
+| V-261945 | CD16-00-010100 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Failed privilege/permission modifications require denial logging. |
+| V-261946 | CD16-00-010200 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Security-object modification requires pgAudit plus catalog auditing. |
+| V-261947 | CD16-00-010300 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Failed security-object modification requires denial logging. |
+| V-261948 | CD16-00-010400 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Security-category modification audit family. |
+| V-261949 | CD16-00-010500 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Failed security-category modification audit family. |
+| V-261950 | CD16-00-010600 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Privilege/permission deletion audit family. |
+| V-261951 | CD16-00-010700 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Failed privilege/permission deletion requires denial logging. |
+| V-261952 | CD16-00-010800 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Security-object deletion requires DDL auditing. |
+| V-261953 | CD16-00-010900 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Failed security-object deletion requires denial logging. |
+| V-261954 | CD16-00-011000 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Security-category deletion audit family. |
+| V-261955 | CD16-00-011100 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Failed security-category deletion audit family. |
+| V-261956 | CD16-00-011200 | II | REMEDIATION/AUDIT | COMMON | MEDIUM | Successful connections: log_connections plus identity/time/session detail. |
+| V-261957 | CD16-00-011300 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Failed connections require FATAL/denial evidence. |
+| V-261958 | CD16-00-011400 | II | REMEDIATION/AUDIT | COMMON | MEDIUM | Session/logoff audit family; connection/disconnection logging. |
 | V-261959 | CD16-00-011500 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Privileged activity audit; include denial behavior. |
 | V-261960 | CD16-00-011600 | II | REMEDIATION | COMMON | MEDIUM | Connection/disconnection timestamps and identity. |
 | V-261961 | CD16-00-011700 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Must reconstruct concurrent sessions/workstations. |
@@ -108,4 +132,4 @@ Risk: `HIGH | MEDIUM | BASELINE`
 
 ## Gate
 
-The table above is **not yet the complete 111-control enumeration**. No remediation tasks are being represented as complete until the exact V1R3 package ledger is fully populated. This explicit gate prevents the documentation/executable drift encountered in earlier lockdown work.
+The V1R3 matrix now enumerates **111/111 current controls**. V-261937 is intentionally absent because it is not a V1R3 control; V-283674 occupies CD16-00-009300 between V-261936 and V-261938. The remaining gate is executable reconciliation: every row must map to remediation, guarded remediation, audit, evidence, application evidence, or a justified N/A path before first-pass readiness.
