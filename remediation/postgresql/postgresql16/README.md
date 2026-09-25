@@ -11,4 +11,5 @@ See:
 - `stig/docs/CONTROL_MATRIX.md`
 - `stig/docs/SOURCE_PROVENANCE.md`
 - `stig/docs/ISSUES_AND_CONCERNS.md`
+- `stig/docs/CAT_I_REVIEW.md`
 - repository `docs/LOCKDOWN_LESSONS_LEARNED.md`
