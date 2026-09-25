@@ -21,5 +21,8 @@
   ansible.builtin.import_tasks: remediation.yml
   when: not apache24_stig_audit_only | bool
 
+- name: Audit administrative access boundaries
+  ansible.builtin.import_tasks: admin_audit.yml
+
 - name: Evaluate evidence-dependent controls
   ansible.builtin.import_tasks: audit.yml
