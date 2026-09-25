@@ -24,6 +24,14 @@
   loop: "{{ tomcat_stig_connector_ports_detected.stdout_lines | reject('equalto','') | list }}"
   tags: [V-223009]
 
+- name: "V-223009 | Reject empty connector-address mappings"
+  ansible.builtin.assert:
+    that:
+      - item.value | string | length > 0
+    fail_msg: "tomcat_stig_connector_addresses contains an empty address for connector key {{ item.key }}."
+  loop: "{{ tomcat_stig_connector_addresses | dict2items }}"
+  tags: [V-223009]
+
 - name: "V-222968 | Require FIPS platform evidence before enabling Tomcat FIPSMode"
   ansible.builtin.assert:
     that:
