@@ -1,0 +1,255 @@
+---
+- name: Validate STIG role inputs
+  ansible.builtin.assert:
+    that:
+      - tomcat_user | length > 0
+      - tomcat_group | length > 0
+      - tomcat_home_resolved | length > 1
+      - tomcat_base_resolved | length > 1
+    fail_msg: "Tomcat identity/path variables must be explicitly valid before remediation."
+  tags: [always]
+
+- name: "V-222983 | Set Tomcat account to nologin"
+  ansible.builtin.user:
+    name: "{{ tomcat_user }}"
+    shell: /usr/sbin/nologin
+  tags: [V-222983, accounts]
+
+- name: "V-222984 | Read Tomcat account"
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ tomcat_user }}"
+  tags: [V-222984, accounts]
+
+- name: "V-222984 | Assert Tomcat is non-privileged"
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.getent_passwd[tomcat_user][1] | int >= 1000
+    fail_msg: >-
+      {{ tomcat_user }} has UID {{ ansible_facts.getent_passwd[tomcat_user][1] }}. The role will not
+      renumber an existing service account automatically; correct the account identity under change control.
+  tags: [V-222984, accounts]
+
+- name: "V-222986 | CATALINA_HOME ownership"
+  ansible.builtin.file:
+    path: "{{ tomcat_home_resolved }}"
+    owner: root
+    group: "{{ tomcat_group }}"
+    state: directory
+  tags: [V-222986, permissions]
+
+- name: "V-222943/V-222988 | logs ownership and mode"
+  ansible.builtin.file:
+    path: "{{ tomcat_logs_dir_resolved }}"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_group }}"
+    mode: '0750'
+    state: directory
+  tags: [V-222943, V-222988, permissions]
+
+- name: "V-222989/V-222990 | temp ownership and mode"
+  ansible.builtin.file:
+    path: "{{ tomcat_temp_dir_resolved }}"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_group }}"
+    mode: '0750'
+    state: directory
+  tags: [V-222989, V-222990, permissions]
+
+- name: "V-222991 | work ownership"
+  ansible.builtin.file:
+    path: "{{ tomcat_work_dir_resolved }}"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_group }}"
+    state: directory
+  tags: [V-222991, permissions]
+
+- name: "V-222946/V-222987 | conf ownership and mode"
+  ansible.builtin.file:
+    path: "{{ tomcat_conf_dir_resolved }}"
+    owner: root
+    group: "{{ tomcat_group }}"
+    mode: '0750'
+    state: directory
+  tags: [V-222946, V-222987, permissions]
+
+- name: "V-222948 | bin ownership and mode"
+  ansible.builtin.file:
+    path: "{{ tomcat_bin_dir_resolved }}"
+    owner: root
+    group: "{{ tomcat_group }}"
+    mode: '0750'
+    state: directory
+  tags: [V-222948, permissions]
+
+- name: "V-222944 | Find log files"
+  ansible.builtin.find:
+    paths: "{{ tomcat_logs_dir_resolved }}"
+    file_type: file
+  register: tomcat_stig_log_files
+  tags: [V-222944, permissions]
+
+- name: "V-222944 | Set log file permissions"
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: '0640'
+  loop: "{{ tomcat_stig_log_files.files }}"
+  loop_control: { label: "{{ item.path }}" }
+  tags: [V-222944, permissions]
+
+- name: "V-222945 | Find conf files"
+  ansible.builtin.find:
+    paths: "{{ tomcat_conf_dir_resolved }}"
+    file_type: file
+    recurse: true
+  register: tomcat_stig_conf_files
+  tags: [V-222945, permissions]
+
+- name: "V-222945 | Set conf file permissions"
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: "{{ tomcat_group }}"
+    mode: '0640'
+  loop: "{{ tomcat_stig_conf_files.files }}"
+  loop_control: { label: "{{ item.path }}" }
+  tags: [V-222945, permissions]
+
+- name: "V-222947 | Find Tomcat bin JARs"
+  ansible.builtin.find:
+    paths: "{{ tomcat_bin_dir_resolved }}"
+    patterns: '*.jar'
+    file_type: file
+  register: tomcat_stig_bin_jars
+  tags: [V-222947, permissions]
+
+- name: "V-222947 | Set Tomcat bin JAR permissions"
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: "{{ tomcat_group }}"
+    mode: '0640'
+  loop: "{{ tomcat_stig_bin_jars.files }}"
+  loop_control: { label: "{{ item.path }}" }
+  tags: [V-222947, permissions]
+
+- name: "V-222967 | Protect configured keystore"
+  ansible.builtin.file:
+    path: "{{ tomcat_keystore_file }}"
+    owner: root
+    group: "{{ tomcat_group }}"
+    mode: '0640'
+  when: tomcat_keystore_file | length > 0
+  tags: [V-222967, tls, permissions]
+
+- name: "V-222931 | Change default JKS keystore password when approved secret supplied"
+  ansible.builtin.command:
+    argv: [keytool, -storepasswd, -keystore, "{{ tomcat_keystore_file }}", -storepass, "{{ tomcat_keystore_current_password }}", -new, "{{ tomcat_keystore_new_password }}"]
+  no_log: true
+  when:
+    - tomcat_keystore_type | upper == 'JKS'
+    - tomcat_keystore_file | length > 0
+    - tomcat_keystore_current_password == 'changeit'
+    - tomcat_keystore_new_password | length >= 10
+  tags: [V-222931, tls]
+
+- name: "V-222958/V-222960 | Remove examples and documentation"
+  ansible.builtin.file:
+    path: "{{ tomcat_webapps_dir_resolved }}/{{ item }}"
+    state: absent
+  loop: [examples, docs]
+  notify: restart tomcat
+  tags: [V-222958, V-222960, applications]
+
+- name: "V-222959 | Remove default ROOT application when site has not replaced it"
+  ansible.builtin.file:
+    path: "{{ tomcat_webapps_dir_resolved }}/ROOT"
+    state: absent
+  when: tomcat_stig_remove_default_root | bool
+  notify: restart tomcat
+  tags: [V-222959, applications]
+
+- name: Ensure systemd drop-in directory exists
+  ansible.builtin.file:
+    path: "{{ tomcat_systemd_dropin_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: [systemd]
+
+- name: "V-222949/V-222973/V-223002/V-223003/V-223004/V-223005 | JVM hardening drop-in"
+  ansible.builtin.copy:
+    dest: "{{ tomcat_systemd_dropin_dir }}/10-stig.conf"
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Service]
+      UMask=0027
+      Environment="CATALINA_OPTS=-Dorg.apache.catalina.STRICT_SERVLET_COMPLIANCE={{ 'false' if tomcat_stig_strict_servlet_exception else 'true' }} -Dorg.apache.catalina.connector.RECYCLE_FACADES=true -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_BACKSLASH={{ 'true' if tomcat_stig_allow_backslash_exception else 'false' }} -Dorg.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH={{ 'true' if tomcat_stig_allow_backslash_exception else 'false' }} -Dorg.apache.catalina.connector.Response.ENFORCE_ENCODING_IN_GET_WRITER=true"
+  notify: [daemon reload, restart tomcat]
+  tags: [V-222949, V-222973, V-223002, V-223003, V-223004, V-223005, systemd]
+
+- name: "V-222963/V-222964/V-222969 | Require complete secure JMX inputs if remote JMX enabled"
+  ansible.builtin.assert:
+    that:
+      - tomcat_stig_jmx_password_file | length > 0
+      - tomcat_stig_jmx_access_file | length > 0
+      - tomcat_stig_jmx_ssl_keystore | length > 0
+      - tomcat_stig_jmx_ssl_keystore_password | length > 0
+      - tomcat_stig_jmx_bind_address | length > 0
+    fail_msg: "Remote JMX was enabled but authentication/TLS/bind inputs are incomplete."
+  when: tomcat_stig_remote_jmx_enabled | bool
+  tags: [V-222963, V-222964, V-222969, jmx]
+
+- name: "V-222963/V-222964/V-222969 | Configure secure remote JMX"
+  ansible.builtin.copy:
+    dest: "{{ tomcat_systemd_dropin_dir }}/20-jmx-stig.conf"
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      [Service]
+      Environment="JAVA_TOOL_OPTIONS=-Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.port={{ tomcat_stig_jmx_port }} -Dcom.sun.management.jmxremote.rmi.port={{ tomcat_stig_jmx_port }} -Djava.rmi.server.hostname={{ tomcat_stig_jmx_bind_address }} -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.password.file={{ tomcat_stig_jmx_password_file }} -Dcom.sun.management.jmxremote.access.file={{ tomcat_stig_jmx_access_file }} -Dcom.sun.management.jmxremote.ssl=true -Djavax.net.ssl.keyStore={{ tomcat_stig_jmx_ssl_keystore }} -Djavax.net.ssl.keyStorePassword={{ tomcat_stig_jmx_ssl_keystore_password }}"
+  no_log: true
+  when: tomcat_stig_remote_jmx_enabled | bool
+  notify: [daemon reload, restart tomcat]
+  tags: [V-222963, V-222964, V-222969, jmx]
+
+- name: "V-222963/V-222964 | Disable role-managed remote JMX when not authorized"
+  ansible.builtin.file:
+    path: "{{ tomcat_systemd_dropin_dir }}/20-jmx-stig.conf"
+    state: absent
+  when: not tomcat_stig_remote_jmx_enabled | bool
+  notify: [daemon reload, restart tomcat]
+  tags: [V-222963, V-222964, jmx]
+
+- name: "V-222966 | Import site-provided DoD CA bundle into configured truststore"
+  ansible.builtin.command:
+    argv: [keytool, -importcert, -noprompt, -trustcacerts, -alias, dod-stig-ca, -file, "{{ tomcat_dod_ca_bundle }}", -keystore, "{{ tomcat_truststore_file }}"]
+  when:
+    - tomcat_dod_ca_bundle | length > 0
+    - tomcat_truststore_file | length > 0
+  register: tomcat_stig_ca_import
+  changed_when: tomcat_stig_ca_import.rc == 0
+  failed_when: tomcat_stig_ca_import.rc != 0 and 'already exists' not in (tomcat_stig_ca_import.stderr | default(''))
+  tags: [V-222966, pki]
+
+- name: "V-222998/V-222999/V-223000 | Install audit watches"
+  ansible.builtin.copy:
+    dest: /etc/audit/rules.d/tomcat-stig.rules
+    owner: root
+    group: root
+    mode: '0640'
+    content: |
+      -w {{ tomcat_bin_dir_resolved }}/ -p wa -k tomcat_bin_changes
+      -w {{ tomcat_conf_dir_resolved }}/ -p wa -k tomcat_conf_changes
+      -w {{ tomcat_lib_dir_resolved }}/ -p wa -k tomcat_lib_changes
+  notify: reload audit rules
+  tags: [V-222998, V-222999, V-223000, auditd]
+
+- name: Apply deterministic XML remediations
+  ansible.builtin.include_tasks: xml_remediation.yml
+  when: tomcat_stig_manage_xml | bool
+  tags: [xml]
