@@ -1,0 +1,49 @@
+---
+# Crunchy Data Postgres 16 STIG V1R3
+postgres16_stig_enabled: true
+
+# Discovery / connection. The role asks PostgreSQL for its actual paths.
+postgres16_psql_bin: psql
+postgres16_admin_user: postgres
+postgres16_admin_db: postgres
+
+# Safety gates.
+postgres16_allow_restart: false
+postgres16_manage_pgaudit_package: false
+postgres16_pgaudit_package_name: ""
+postgres16_manage_hba: false
+postgres16_manage_authorization: false
+postgres16_manage_pki: false
+postgres16_manage_fips: false
+postgres16_manage_package_updates: false
+
+# V-261857 is organization-defined. Empty means fail the applicable
+# remediation prerequisite rather than inventing a connection limit.
+postgres16_max_connections: null
+postgres16_role_connection_limits: {}
+
+# Audit baseline required by the V1R3 pgAudit family. Additional
+# organization-defined audit classes may be appended explicitly.
+postgres16_pgaudit_required_classes:
+  - ddl
+  - role
+  - read
+  - write
+postgres16_pgaudit_additional_classes: []
+postgres16_pgaudit_log_catalog: "on"
+
+# Literal current-check minimum for V-261860.
+postgres16_log_line_prefix: "< %m %a %u %d %r %p >"
+
+# Do not assume an enterprise syslog facility/destination.
+postgres16_syslog_facility: null
+postgres16_central_log_evidence: null
+
+# Site-owned evidence / approved-state inputs.
+postgres16_approved_superusers: []
+postgres16_approved_auth_methods: []
+postgres16_authorization_evidence: null
+postgres16_pki_evidence: null
+postgres16_fips_evidence: null
+postgres16_patch_evidence: null
+postgres16_at_rest_protection_evidence: null
