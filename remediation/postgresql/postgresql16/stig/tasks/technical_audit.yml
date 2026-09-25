@@ -270,6 +270,72 @@
   tags:
     - V-261892
 
+- name: PostgreSQL 16 STIG | Enforce mandatory host FIPS readiness
+  ansible.builtin.assert:
+    that:
+      - not (postgres16_fips_state.failed | default(false))
+      - (postgres16_fips_state.content | b64decode | trim) == '1'
+      - postgres16_openssl_version.rc | default(1) == 0
+      - >-
+        ('OpenSSL 3' not in (postgres16_openssl_version.stdout | default('')))
+        or
+        ((postgres16_openssl_providers.stdout | default(''))
+         is regex('(?is).*fips.*status:\\s*active.*'))
+      - >-
+        ('OpenSSL 3' in (postgres16_openssl_version.stdout | default('')))
+        or
+        ('fips' in (postgres16_openssl_version.stdout | default('') | lower))
+    fail_msg: >-
+      V-261896 is CAT I and the current check requires OS FIPS mode plus a
+      FIPS-compliant OpenSSL implementation/provider. Prepare the host using the
+      approved platform lifecycle process before PostgreSQL STIG remediation.
+      This role will not convert or reboot the operating system automatically.
+  tags:
+    - V-261896
+
+- name: PostgreSQL 16 STIG | Report TLS file ownership and modes
+  ansible.builtin.debug:
+    msg: >-
+      {{ item.item.key }}={{ item.item.value }}
+      exists={{ item.stat.exists | default(false) }}
+      owner={{ item.stat.pw_name | default('unknown') }}
+      group={{ item.stat.gr_name | default('unknown') }}
+      mode={{ item.stat.mode | default('unknown') }}
+  loop: "{{ postgres16_tls_file_stats.results | default([]) }}"
+  when: item.item.value | length > 0
+  tags:
+    - V-261893
+    - V-261894
+    - V-261900
+    - V-261929
+
+- name: PostgreSQL 16 STIG | Audit TLS parent directories
+  ansible.builtin.stat:
+    path: "{{ item.value | dirname }}"
+  loop: "{{ postgres16_tls_paths | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  when: item.value | length > 0
+  register: postgres16_tls_directory_stats
+  tags:
+    - V-261893
+    - V-261894
+    - V-261929
+
+- name: PostgreSQL 16 STIG | Report TLS parent-directory protection
+  ansible.builtin.debug:
+    msg: >-
+      {{ item.item.key }}_directory={{ item.stat.path | default(item.item.value | dirname) }}
+      owner={{ item.stat.pw_name | default('unknown') }}
+      group={{ item.stat.gr_name | default('unknown') }}
+      mode={{ item.stat.mode | default('unknown') }}
+  loop: "{{ postgres16_tls_directory_stats.results | default([]) }}"
+  when: item.item.value | length > 0
+  tags:
+    - V-261893
+    - V-261894
+    - V-261929
+
 - name: PostgreSQL 16 STIG | Audit server version
   become: true
   become_user: "{{ postgres16_admin_user }}"
