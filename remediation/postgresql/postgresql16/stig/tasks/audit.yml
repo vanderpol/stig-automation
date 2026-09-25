@@ -70,6 +70,18 @@
   tags:
     - V-261891
 
+- name: PostgreSQL 16 STIG | Require existing password credentials to use SCRAM
+  ansible.builtin.assert:
+    that:
+      - postgres16_non_scram_roles.stdout_lines | length == 0
+    fail_msg: >-
+      V-261891 is CAT I. One or more stored PostgreSQL password credentials are
+      not SCRAM-SHA-256. password_encryption has been configured for future
+      password changes, but existing credentials must be reset through the
+      approved credential-management process.
+  tags:
+    - V-261891
+
 - name: PostgreSQL 16 STIG | Report non-SCRAM password role count without hashes
   ansible.builtin.debug:
     msg: >-
