@@ -48,7 +48,9 @@ postgres16_enable_ssl: null
 
 # Optional current-minor assertion for V-283674. Keep null unless the test cycle
 # supplies the authoritative current PostgreSQL 16 minor version.
-postgres16_required_server_version: null
+# Current upstream PostgreSQL 16 minor as of 2026-09-25. Update this deliberately
+# when PostgreSQL publishes a newer 16.x release; V-283674 requires latest.
+postgres16_required_server_version: "16.15"
 
 # Site-owned evidence / approved-state inputs.
 postgres16_approved_superusers: []
