@@ -132,7 +132,6 @@
     insertafter: '^\\s*server\\s*\\{'
     block: |
       limit_conn {{ nginx_stig_limit_conn_zone_name }} {{ nginx_stig_limit_conn_per_client }};
-    validate: "{{ nginx_stig_binary }} -t -c {{ nginx_stig_main_conf }}"
   loop: "{{ nginx_stig_dos_scope_files }}"
   when: nginx_stig_dos_scope_files | length > 0
   notify: reload nginx
