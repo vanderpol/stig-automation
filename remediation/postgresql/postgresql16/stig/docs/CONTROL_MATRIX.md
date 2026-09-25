@@ -2,7 +2,7 @@
 
 Benchmark: **Crunchy Data Postgres 16 STIG V1R3**  
 Expected controls: **111**  
-Status: **111/111 V1R3 controls enumerated; implementation reconciliation in progress**
+Status: **111/111 V1R3 controls enumerated; 111/111 have executable ownership; literal-check reconciliation in progress**
 
 This ledger is deliberately created before remediation code. No control may silently disappear. A control is not considered covered until the V-ID, STIG ID, implementation type, provenance, risk, executable handling, and validation state are recorded here.
 
@@ -121,7 +121,7 @@ Risk: `HIGH | MEDIUM | BASELINE`
 | V-261958 | CD16-00-011400 | II | REMEDIATION/AUDIT | COMMON | MEDIUM | Session/logoff audit family; connection/disconnection logging. |
 | V-261959 | CD16-00-011500 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Privileged activity audit; include denial behavior. |
 | V-261960 | CD16-00-011600 | II | REMEDIATION | COMMON | MEDIUM | Connection/disconnection timestamps and identity. |
-| V-261961 | CD16-00-011700 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Must reconstruct concurrent sessions/workstations. |
+| V-261961 | CD16-00-011700 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Must reconstruct concurrent sessions/workstations; common prefix includes required %c session ID. |
 | V-261962 | CD16-00-011800 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | pgaudit read/write/ddl/role semantics require literal-check validation. |
 | V-261963 | CD16-00-011900 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Negative object-access verification. |
 | V-261964 | CD16-00-012000 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Direct DB access audit. |
