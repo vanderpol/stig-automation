@@ -121,3 +121,25 @@ Please report the Git tag or commit SHA, RHEL major/minor version, Tomcat versio
 - Review application compatibility before removing the default ROOT application or enforcing production connector/Host settings.
 - Site-specific PKI, JMX, LDAP, proxy, connector, and architecture decisions must be supplied explicitly; the role does not invent them.
 - Anti-STIG content must not be run on production systems and remains deferred until a compliant baseline is verified.
+
+
+## PostgreSQL 16 V1R3 initial validation
+
+The PostgreSQL role targets the current Crunchy Data Postgres 16 STIG V1R3. This is an initial validation build, not a compliance-certified release.
+
+Start with `docs/POSTGRESQL16_QUICK_START.md` and use `docs/POSTGRESQL16_TEST_REPORT.md` for results.
+
+Basic sequence:
+
+    cp inventories/lab/hosts.postgresql16.example.yml inventories/lab/hosts.yml
+    cp inventories/lab/group_vars/postgresql16.yml.example inventories/lab/group_vars/postgresql16.yml
+    ansible postgresql16 -m ping
+    ansible-playbook playbooks/postgresql16_preflight.yml
+    ansible-playbook playbooks/postgresql16_stig.yml --check --diff
+    ansible-playbook playbooks/postgresql16_stig.yml
+
+If pgAudit is newly added to `shared_preload_libraries`, use the approved site restart/change process before functional testing. The role intentionally does not restart a database automatically.
+
+After functional testing, run the playbook again for idempotency and then run the current authoritative V1R3 assessment. Reconcile every unexpected V-ID. Store sanitized team artifacts under `remediation/postgresql/postgresql16/tests/results/`.
+
+PostgreSQL-specific high-risk areas include authentication/HBA, PKI, FIPS, PPSM ports/listen addresses, role/object privileges, package/support state, at-rest encryption, central audit offload, and application-owned controls. Do not turn those into generic defaults merely to clear a finding.
