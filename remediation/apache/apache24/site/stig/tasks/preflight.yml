@@ -1,0 +1,21 @@
+---
+- name: Build Site STIG readiness facts
+  ansible.builtin.set_fact:
+    apache24_site_input_required:
+      - "{{ 'V-214284/V-214290/V-214292: approved document root' if apache24_site_document_root | length == 0 else '' }}"
+      - "{{ 'V-214287: private-key path and approved administrators/PKI Sponsor' if apache24_site_pki_enabled and (apache24_site_private_key_file | length == 0 or apache24_site_private_key_approved_accounts | length == 0) else '' }}"
+      - "{{ 'V-214297: organization-defined nonsecure-zone decision/network list' if apache24_site_network_restriction_evidence | length == 0 and apache24_site_blocked_networks | length == 0 else '' }}"
+      - "{{ 'V-214304: approved ports/modules and PPSM reference when applicable' if apache24_site_approved_ports | length == 0 else '' }}"
+    apache24_site_evidence_required:
+      - "{{ 'V-214280: application user-management architecture' if apache24_site_user_management_evidence | length == 0 else '' }}"
+      - "{{ 'V-214286: RFC 5280 validation evidence' if apache24_site_pki_enabled and apache24_site_rfc5280_validation_evidence | length == 0 else '' }}"
+      - "{{ 'V-214289: tested baseline/disaster-recovery evidence' if apache24_site_baseline_recovery_evidence | length == 0 else '' }}"
+      - "{{ 'V-214300: DoD/DoD-approved client CA evidence' if apache24_site_pki_enabled and apache24_site_client_ca_approval_reference | length == 0 else '' }}"
+
+- name: Site STIG preflight summary
+  ansible.builtin.debug:
+    msg:
+      benchmark: "Apache Server 2.4 UNIX Site STIG V2R7"
+      status: "{{ 'SITE INPUT REQUIRED' if (apache24_site_input_required | reject('equalto','') | list | length) > 0 else ('EVIDENCE REQUIRED' if (apache24_site_evidence_required | reject('equalto','') | list | length) > 0 else 'READY') }}"
+      site_input_required: "{{ apache24_site_input_required | reject('equalto','') | list }}"
+      evidence_required: "{{ apache24_site_evidence_required | reject('equalto','') | list }}"
