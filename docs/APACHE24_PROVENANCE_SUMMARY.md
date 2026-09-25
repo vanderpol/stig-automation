@@ -20,18 +20,15 @@ Public comparison/reference material included:
 
 The review did **not** classify code as inherited merely because another role uses the same Apache directive. Indexed public material did not establish reliable line-level/task-level ancestry for every V-ID, so there are currently no controls marked INHERITED. This avoids inventing provenance after the fact.
 
-## Classification counts
+## Provenance counts
 
-| Provenance | Server | Site | Total |
-|---|---:|---:|---:|
-| COMMON | 11 | 2 | 13 |
-| ADAPTED | 7 | 3 | 10 |
-| ORIGINAL | 5 | 1 | 6 |
-| EVIDENCE/AUDIT | 22 | 10 | 32 |
-| INHERITED | 0 | 0 | 0 |
-| **Total** | **45** | **16** | **61** |
+Provenance and implementation type are now separate dimensions. Retrospective provenance is conservative: where an evidence/audit implementation was created locally and no upstream implementation was established as its source, it is classified ORIGINAL rather than using EVIDENCE/AUDIT as a provenance value.
 
-These categories describe implementation provenance, not ownership of the STIG requirement.
+The detailed Server and Site ledgers are authoritative for per-control classification. No control is classified INHERITED without evidence of material source-code/task inheritance.
+
+## Implementation-type counts
+
+Implementation type separately records whether a control is deterministic remediation, technical audit, organization evidence, application evidence, or a mixed case. This prevents evidence-oriented controls from disappearing from provenance statistics.
 
 ## Test-risk result
 
@@ -52,11 +49,11 @@ The comparison found a real first-pass implementation gap. The current check req
 
 ### Site V-214292
 
-The comparison found that `Options -Indexes` is useful defense-in-depth but does **not** by itself satisfy the current check. The current check expects an `index.html` or equivalent default document in applicable document-root directories. The control matrix is therefore changed to AUDIT-VAR and the existing -Indexes setting must not be interpreted as proof of compliance.
+The comparison found that `Options -Indexes` is useful defense-in-depth but does **not** by itself satisfy the current check. The audit now enumerates the document root and subdirectories and checks each for an approved default document (default `index.html`, configurable for equivalent DirectoryIndex content). Missing directories are reported as a finding/review condition.
 
 ### Site V-214290
 
-Current check semantics confirm that the document root must be on a different filesystem/partition from both OS and Apache system files. Existing `findmnt` discovery is useful but needs assessment comparison logic; this remains HIGH scrutiny.
+Current check semantics confirm that the document root must be on a different filesystem/partition from both OS and Apache system files. The audit now compares the document-root mount against both the Apache configuration/system mount and OS root mount and fails explicitly when they coincide. It remains HIGH scrutiny until tested on representative layouts.
 
 ### Server V-214244 / Site V-214282
 
@@ -80,3 +77,9 @@ Highest-value first-cycle scrutiny should concentrate on:
 7. any control whose PASS depends on evidence rather than a deterministic Apache directive.
 
 The detailed per-V-ID rationale is in the Server and Site SOURCE_PROVENANCE.md ledgers.
+
+## Additional remediation corrections from the reconciliation
+
+- **V-214303:** the previous generic Set-Cookie header rewrite did not match the current STIG check semantics. Remediation is now opt-in and configures Apache `Session On` plus `SessionCookieName ... httponly;secure` only when the site explicitly supplies the Apache-managed session-cookie name.
+- **V-214246:** approved Listen values now receive explicit endpoint syntax/port validation before configuration.
+- **V-214269:** remediation now re-scans enabled SSLCipherSuite directives and asserts that at least one exists and every enabled directive excludes EXPORT/EXP.
