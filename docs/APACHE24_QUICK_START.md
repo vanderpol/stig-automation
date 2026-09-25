@@ -129,6 +129,10 @@ Edit it for the hosted application.
 
 You must supply the real document root. If PKI/client certificates apply, the organization must supply its approved CA/trust material and evidence. **Do not put private keys or passwords in this repository.**
 
+For V-214292, keep `apache24_site_default_documents` aligned with the site's effective default-document/DirectoryIndex behavior. The example uses `index.html`.
+
+V-214303 session-cookie remediation is **disabled by default**. Enable `apache24_site_cookie_secure_enforcement` only when the site actually uses Apache `mod_session` and the approved `SessionCookieName` is known; then set `apache24_site_session_cookie_name`. Do not enable it merely to satisfy an automated check.
+
 If the server hosts multiple applications with different security decisions, create separate inventory groups/group-variable profiles rather than forcing all sites to share one profile.
 
 ## Step 8 — Run Site preflight and preview
@@ -196,3 +200,5 @@ Resolve the issue or obtain the site decision first.
 - `remediation/apache/apache24/site/stig/docs/CONTROL_MATRIX.md` — Site V-ID ledger.
 - `docs/APACHE24_DUPLICATE_REVIEW.md` — current duplicate candidates.
 - `docs/APACHE24_FIRST_PASS_STATUS.md` — implementation/test status.
+- `docs/APACHE24_PROVENANCE_SUMMARY.md` — source comparison and high-scrutiny testing priorities.
+- `docs/APACHE24_SERVER_TEST_REPORT.md` — Server/Site initial-validation report template.
