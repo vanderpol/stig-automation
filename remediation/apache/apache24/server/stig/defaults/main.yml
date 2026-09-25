@@ -1,37 +1,26 @@
 ---
 apache24_stig_audit_only: false
 apache24_stig_restart: true
+
+# Deterministic server hardening
 apache24_stig_timeout: 60
 apache24_stig_server_tokens: Prod
-apache24_stig_server_signature: 'Off'
-apache24_stig_trace_enable: 'Off'
-apache24_stig_listen: []
+apache24_stig_server_signature: "Off"
+apache24_stig_trace_enable: "Off"
+apache24_stig_log_level: "info"
 apache24_stig_disable_webdav: true
-apache24_stig_disable_proxy: true
-apache24_stig_log_dir_mode: '0750'
-apache24_stig_log_file_mode: '0640'
-apache24_stig_htpasswd_mode: '0640'
-apache24_stig_document_root: ''
-apache24_stig_management_separated: false
-apache24_stig_log_backup_documented: false
-apache24_stig_log_failure_alerting_documented: false
-apache24_stig_module_approval_documented: false
-apache24_stig_capacity_documented: false
-apache24_stig_security_integration_documented: false
-apache24_stig_patch_process_documented: false
-apache24_stig_vendor_support_documented: false
+apache24_stig_remove_documentation_packages: true
+apache24_stig_log_dir_mode: "0750"
+apache24_stig_log_file_mode: "0640"
+apache24_stig_htpasswd_mode: "0640"
+apache24_stig_pid_file: ""
+apache24_stig_pid_dir_mode: "0755"
+apache24_stig_control_binary_mode: "0755"
 apache24_stig_ssl_protocol: "-SSLv2 -SSLv3 -TLSv1 +TLSv1.2 +TLSv1.3"
 apache24_stig_ssl_cipher_suite: "HIGH:!NULL:!MD5:!SEED:!IDEA:!EXPORT"
 apache24_stig_log_format_name: stig_combined
 apache24_stig_log_format: '%a %A %h %H %l %m %s %t %u %U "%{Referer}i"'
 apache24_stig_custom_log: ""
-apache24_stig_proxy_approved: false
-apache24_stig_remove_documentation_packages: true
-apache24_stig_disable_status_info: true
-apache24_stig_disable_webdav: true
-apache24_stig_pid_file: ""
-apache24_stig_pid_dir_mode: "0755"
-apache24_stig_control_binary_mode: "0755"
 apache24_stig_blocked_extensions:
   - ".bak"
   - ".old"
@@ -39,25 +28,34 @@ apache24_stig_blocked_extensions:
   - ".save"
   - ".swp"
   - ".tmp"
+
+# Site/organization decisions: no permissive guesses
+apache24_stig_listen: []
+apache24_stig_proxy_approved: false
 apache24_stig_disable_cgi: false
 apache24_stig_cgi_approved: false
-apache24_stig_cookie_httponly: true
 apache24_stig_remote_ip_enabled: false
 apache24_stig_approved_admin_accounts: []
 apache24_stig_admin_audit_paths: []
 apache24_stig_privileged_paths: []
 apache24_stig_management_endpoints: []
+apache24_stig_blocked_networks: []
+apache24_stig_session_timeout_minutes: null
+apache24_stig_application_value: ""
+
+# Evidence references/status
+apache24_stig_log_backup_documented: false
+apache24_stig_log_failure_alerting_documented: false
+apache24_stig_module_approval_documented: false
+apache24_stig_capacity_documented: false
+apache24_stig_security_integration_documented: false
+apache24_stig_patch_process_documented: false
+apache24_stig_vendor_support_documented: false
 apache24_stig_management_separation_documented: false
+apache24_stig_remote_audit_logging_documented: false
 apache24_stig_session_management_evidence: ""
 apache24_stig_session_invalidation_evidence: ""
 apache24_stig_cookie_scope_evidence: ""
 apache24_stig_session_id_length_evidence: ""
-apache24_stig_session_timeout_minutes: null
-apache24_stig_application_value: ""
-apache24_stig_blocked_networks: []
-apache24_stig_remote_audit_logging_documented: false
-apache24_stig_security_integration_documented: false
-apache24_stig_log_level: "info"
-apache24_stig_script_aliases_approved: []
 apache24_stig_patch_evidence: ""
 apache24_stig_vendor_support_evidence: ""
