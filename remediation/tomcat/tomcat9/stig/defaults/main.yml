@@ -38,6 +38,9 @@ tomcat_stig_allow_autodeploy: false
 tomcat_stig_allow_backslash_exception: false
 tomcat_stig_strict_servlet_exception: false
 
+# Explicit acknowledgement required because V3R4's server.xml-visible management Realm
+# is inherited by applications that do not define their own Realm.
+tomcat_stig_replace_engine_realm_for_management: false
 tomcat_stig_ldap_enabled: false
 tomcat_stig_ldap_connection_url: ""
 tomcat_stig_ldap_user_base: ""
