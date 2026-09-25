@@ -2,22 +2,18 @@
 
 Current implementation scope: **RHEL 8 and RHEL 9 with Tomcat 9**.
 
-## Current repository status
+This directory is now reconciled from the original `tomcat9_stig_ansible_rhel8_rhel9_v0.3` project supplied by the project owner. The v0.3 files, rather than the earlier reconstructed skeleton, are the implementation baseline.
 
-The role skeleton and the first deterministic controls have been carried into this repository:
+## Role flow
 
-- authoritative path discovery with fail-safe behavior rather than guessed paths
-- conf/log/temp/work permissions and ownership
-- Tomcat service account nologin
-- systemd UMask 0027
-- audit watches for bin/conf/lib
-- explicit site/SSP variables in defaults
-- V-ID tags on implemented controls
+- `tasks/discovery.yml` — selects the RHEL RPM or explicit Apache-standard layout and refuses to guess unknown layouts.
+- `tasks/remediation.yml` — deterministic and variable-driven remediation.
+- `tasks/xml_remediation.yml` — idempotent server.xml/web.xml changes.
+- `tasks/audit.yml` — human/evidence/process checks that must not be silently converted into invented technical settings.
+- `defaults/main.yml` — site/SSP/ISSO inputs and safe defaults.
 
-The complete prior control/remediation matrix is under `docs/CONTROL_MATRIX.md`.
+## Scope
 
-## Important carry-over note
+RHEL 8 and RHEL 9 are the stabilization targets. Ubuntu and RHEL 10 remain outside this Tomcat 9 baseline.
 
-The prior project produced a v0.3 role archive, but the complete archive is not currently available through the retained project files. Only the control matrix and automated-rule list are retrievable. Therefore this repository is **not** being populated with guessed copies of unretrievable files. Remaining rule implementations will be rebuilt/verified against the V3R4 matrix and official STIG intent before being marked implemented.
-
-Anti-STIG remains deferred until a compliant baseline is demonstrated.
+Anti-STIG remains deferred until this role produces a verified compliant SCAP baseline.
