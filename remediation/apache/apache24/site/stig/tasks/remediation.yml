@@ -45,22 +45,34 @@
   notify: restart apache
   tags: [V-214301]
 
-- name: "V-214303 | Enable headers module on Ubuntu"
-  ansible.builtin.command: a2enmod headers
-  register: apache24_site_headers_enable
-  changed_when: "'Enabling module headers' in apache24_site_headers_enable.stdout"
+- name: "V-214303 | Require explicit Apache session-cookie name before enforcement"
+  ansible.builtin.assert:
+    that:
+      - apache24_site_session_cookie_name | length > 0
+    fail_msg: >-
+      V-214303 remediation is opt-in because it changes hosted-application session behavior.
+      Set apache24_site_session_cookie_name only when this site uses Apache mod_session and the
+      approved SessionCookieName is known.
+  when: apache24_site_cookie_secure_enforcement | bool
+  tags: [V-214303]
+
+- name: "V-214303 | Enable Apache session modules on Ubuntu when approved"
+  ansible.builtin.command: "a2enmod session session_cookie"
+  register: apache24_site_session_enable
+  changed_when: "'Enabling module' in apache24_site_session_enable.stdout"
   when:
     - ansible_facts.distribution == 'Ubuntu'
     - apache24_site_cookie_secure_enforcement | bool
   notify: restart apache
   tags: [V-214303]
 
-- name: "V-214303 | Force Secure property on response cookies when site approves server-side enforcement"
+- name: "V-214303 | Configure Apache-managed session cookie security"
   ansible.builtin.blockinfile:
     path: "{{ apache24.site_managed_conf }}"
-    marker: "# {mark} STIG SITE COOKIE SECURITY"
+    marker: "# {mark} STIG SITE SESSION COOKIE"
     block: |
-      Header always edit Set-Cookie ^((?:(?!;[[:space:]]*Secure).)*)$ "$1; Secure"
+      Session On
+      SessionCookieName {{ apache24_site_session_cookie_name }} path=/;httponly;secure
   when: apache24_site_cookie_secure_enforcement | bool
   notify: restart apache
   tags: [V-214303]
