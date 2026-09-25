@@ -27,7 +27,7 @@ Similarity is not inheritance. No Site row is classified INHERITED without evide
 | V-214288 | APP/AUDIT-VAR | EVIDENCE/AUDIT | HIGH | Cookie Domain/Path behavior belongs to application/site design. |
 | V-214289 | EVIDENCE | EVIDENCE/AUDIT | HIGH | Stable-baseline/recovery capability is process/evidence. |
 | V-214290 | AUDIT-VAR | ORIGINAL | HIGH | Local findmnt-based filesystem discovery was created for the current requirement; still needs comparison of document-root filesystem to Apache system/config filesystem. |
-| V-214292 | AUTO-VAR | COMMON | HIGH | Options -Indexes is conventional; default-page/site behavior still needs authoritative assessment validation. |
+| V-214292 | AUTO-VAR | COMMON | HIGH | Comparison found that -Indexes is useful hardening but does not itself satisfy the current check, which requires index.html or equivalent default content in each applicable directory. Treat current remediation as partial pending site-content audit/assessment. |
 | V-214296 | APP/AUDIT-VAR | EVIDENCE/AUDIT | HIGH | Inactive timeout is application/category dependent. |
 | V-214297 | AUTO-VAR | EVIDENCE/AUDIT | HIGH | Organization-defined network zones may be enforced outside Apache; unsafe global Require logic was deliberately removed. |
 | V-214298 | AUDIT-VAR | EVIDENCE/AUDIT | HIGH | Distinct administrative-account boundary is organization-defined. |
