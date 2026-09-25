@@ -246,6 +246,7 @@ Every substantial lockdown should have:
 - provenance ledger;
 - tester quick-start;
 - test-report template;
+- `ISSUES_AND_CONCERNS.md` as a living role-local record of benchmark ambiguities, implementation risks, blast-radius concerns, and unresolved validation items, linked prominently from the role README;
 - known anomaly/duplicate notes;
 - first-pass/readiness status;
 - Anti-STIG only after positive validation.
