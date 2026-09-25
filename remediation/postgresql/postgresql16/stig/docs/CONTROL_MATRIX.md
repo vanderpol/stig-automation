@@ -76,6 +76,21 @@ Risk: `HIGH | MEDIUM | BASELINE`
 | V-261912 | CD16-00-006500 | II | APP/EVIDENCE | ORIGINAL | HIGH | Security labels in process are conditional and schema/application-specific. |
 | V-261913 | CD16-00-006600 | II | APP/EVIDENCE | ORIGINAL | HIGH | Security labels in transmission are conditional and architecture-specific. |
 | V-261914 | CD16-00-006700 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | DAC must reconcile to data-owner policy; no generic GRANT/REVOKE baseline. |
+| V-261915 | CD16-00-006800 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Privileged functions/extensions must reconcile to approved roles and AO risk acceptance. |
+| V-261916 | CD16-00-006900 | II | APP/EVIDENCE | ORIGINAL | HIGH | SECURITY DEFINER/elevated module execution requires documented application need. |
+| V-261917 | CD16-00-007000 | II | GUARDED REMEDIATION/EVIDENCE | ORIGINAL | HIGH | Central syslog is required; facility/destination architecture is site-owned. |
+| V-261918 | CD16-00-007200 | II | EVIDENCE | ORIGINAL | HIGH | Audit storage capacity is organization-defined and infrastructure-owned. |
+| V-261919 | CD16-00-007300 | II | EVIDENCE | ORIGINAL | HIGH | 75% storage alert requires site monitoring/notification integration. |
+| V-261920 | CD16-00-007400 | II | EVIDENCE | ORIGINAL | HIGH | Real-time audit failure alert requires site monitoring/notification integration. |
+| V-261921 | CD16-00-007500 | II | REMEDIATION/AUDIT | COMMON | MEDIUM | log_timezone must map to UTC; site timezone policy retained explicitly. |
+| V-261922 | CD16-00-007600 | II | REMEDIATION | COMMON | MEDIUM | Shared log prefix includes %m millisecond timestamp. |
+| V-261923 | CD16-00-007700 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Logic-module installation privileges require approved users; dev-only N/A possible. |
+| V-261924 | CD16-00-007800 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Configuration/database change privileges require approved-state comparison. |
+| V-261925 | CD16-00-007900 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Denied configuration changes must be logged; negative verification required. |
+| V-261926 | CD16-00-008000 | II | GUARDED REMEDIATION/AUDIT | ORIGINAL | HIGH | PPSM-approved port is site-owned and changing it is restart/connectivity sensitive. |
+| V-261927 | CD16-00-008100 | II | APP/EVIDENCE | ORIGINAL | HIGH | Reauthentication on role/privilege changes spans application/session design. |
+| V-261928 | CD16-00-008300 | I | EVIDENCE | ORIGINAL | HIGH | Classified-only NSA-approved network cryptography; N/A in unclassified environment. |
+| V-261929 | CD16-00-008400 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | DOD-approved CA trust is site PKI material; do not invent trust anchors. |
 | V-261930 | CD16-00-008500 | I | REMEDIATION/EVIDENCE | NEW-CURRENT | HIGH | V1R3 severity changed to CAT I; at-rest integrity is site/data-owner dependent. |
 | V-261931 | CD16-00-008600 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | At-rest confidentiality; may be DB, filesystem, or disk control. |
 | V-261932 | CD16-00-008800 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | Conditional on data-owner requirement; SSL alone may not prove full path. |
