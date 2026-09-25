@@ -1,9 +1,4 @@
 ---
-- name: Gather local group database for account checks
-  ansible.builtin.getent:
-    database: group
-  tags: [always]
-
 - name: V-278383 | Assert NGINX account is not in common privileged groups
   ansible.builtin.assert:
     that:
@@ -32,6 +27,15 @@
       - nginx_stig_replay_resistance_evidence | length > 0
     fail_msg: "V-278390 requires the site's authentication mechanism and replay-resistance evidence."
   tags: [V-278390, CAT2]
+
+- name: V-278396 | CAT I hard stop until central logging endpoint is supplied
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_syslog_server | length > 0
+    fail_msg: >-
+      V-278396 is CAT I. Supply nginx_stig_syslog_server and reconcile every effective
+      access_log/error_log directive with the current check before treating this control as compliant.
+  tags: [V-278396, CAT1]
 
 - name: V-278398 | Require organization-defined allowlist
   ansible.builtin.assert:
@@ -89,7 +93,7 @@
       - "V-278387/V-278393 modules: compare loaded modules with approved inventory."
       - "V-278388 logs: verify each effective access/error log permission."
       - "V-278391/V-278406 revocation: CRL and OCSP are alternative current-check paths."
-      - "V-278396 central logging: requires site syslog endpoint."
+      - "V-278396 central logging: every effective log directive must be reconciled, not merely one added."
       - "V-278400 PIV/mTLS: requires DOD PKI material and application scope."
       - "V-278404 connection/request limits: apply to site server/location scope after functional testing."
       - "V-278405/V-278407 crypto: cipher config does not itself prove FIPS validation."
