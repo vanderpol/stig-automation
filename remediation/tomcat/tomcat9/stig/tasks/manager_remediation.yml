@@ -52,6 +52,98 @@
   when: "'manager' in tomcat_stig_installed_management_apps"
   tags: [V-222970]
 
+- name: "V-222980/V-222981/V-222982/V-222962/V-222965 | Configure management LockOutRealm with LDAPS JNDIRealm"
+  ansible.builtin.shell: |
+    python3 - "{{ tomcat_webapps_dir_resolved }}" '{{ tomcat_stig_installed_management_apps | to_json }}' <<'PY'
+    import json, os, sys, xml.etree.ElementTree as ET
+    webapps, apps_json = sys.argv[1:3]
+    apps = json.loads(apps_json)
+    env = os.environ
+    changed_any = False
+
+    def set_attr(e, k, v):
+        global changed_any
+        if v is not None and e.get(k) != v:
+            e.set(k, v)
+            changed_any = True
+
+    for app in apps:
+        path = os.path.join(webapps, app, "META-INF", "context.xml")
+        tree = ET.parse(path)
+        root = tree.getroot()
+        before = ET.tostring(root, encoding="unicode")
+
+        direct_realms = [r for r in root.findall("Realm")]
+        lock = next((r for r in direct_realms
+                     if r.get("className") == "org.apache.catalina.realm.LockOutRealm"), None)
+        if lock is None:
+            lock = ET.Element("Realm")
+            lock.set("className", "org.apache.catalina.realm.LockOutRealm")
+            for r in direct_realms:
+                root.remove(r)
+                lock.append(r)
+            root.append(lock)
+            changed_any = True
+
+        set_attr(lock, "failureCount", "5")
+        set_attr(lock, "lockOutTime", "600")
+
+        jndi = next((r for r in lock.findall("Realm")
+                     if r.get("className") == "org.apache.catalina.realm.JNDIRealm"), None)
+        if jndi is None:
+            jndi = ET.SubElement(lock, "Realm")
+            jndi.set("className", "org.apache.catalina.realm.JNDIRealm")
+            changed_any = True
+
+        attrs = {
+            "connectionURL": env["TC_STIG_LDAP_URL"],
+            "userBase": env["TC_STIG_LDAP_USER_BASE"],
+            "userSearch": env["TC_STIG_LDAP_USER_SEARCH"],
+            "roleBase": env["TC_STIG_LDAP_ROLE_BASE"],
+            "roleName": env["TC_STIG_LDAP_ROLE_NAME"],
+            "roleSearch": env["TC_STIG_LDAP_ROLE_SEARCH"],
+        }
+        if env.get("TC_STIG_LDAP_CONNECTION_NAME"):
+            attrs["connectionName"] = env["TC_STIG_LDAP_CONNECTION_NAME"]
+        if env.get("TC_STIG_LDAP_CONNECTION_PASSWORD"):
+            attrs["connectionPassword"] = env["TC_STIG_LDAP_CONNECTION_PASSWORD"]
+        for k, v in attrs.items():
+            set_attr(jndi, k, v)
+
+        if ET.tostring(root, encoding="unicode") != before:
+            tree.write(path, encoding="UTF-8", xml_declaration=True)
+            changed_any = True
+
+    print("CHANGED" if changed_any else "OK")
+    PY
+  args:
+    executable: /bin/bash
+  environment:
+    TC_STIG_LDAP_URL: "{{ tomcat_stig_ldap_connection_url }}"
+    TC_STIG_LDAP_USER_BASE: "{{ tomcat_stig_ldap_user_base }}"
+    TC_STIG_LDAP_USER_SEARCH: "{{ tomcat_stig_ldap_user_search }}"
+    TC_STIG_LDAP_ROLE_BASE: "{{ tomcat_stig_ldap_role_base }}"
+    TC_STIG_LDAP_ROLE_NAME: "{{ tomcat_stig_ldap_role_name }}"
+    TC_STIG_LDAP_ROLE_SEARCH: "{{ tomcat_stig_ldap_role_search }}"
+    TC_STIG_LDAP_CONNECTION_NAME: "{{ tomcat_stig_ldap_connection_name }}"
+    TC_STIG_LDAP_CONNECTION_PASSWORD: "{{ tomcat_stig_ldap_connection_password }}"
+  register: tomcat_stig_management_realm_result
+  changed_when: "'CHANGED' in tomcat_stig_management_realm_result.stdout"
+  when: tomcat_stig_installed_management_apps | length > 0
+  no_log: "{{ tomcat_stig_ldap_connection_password | length > 0 }}"
+  notify: restart tomcat
+  tags: [V-222962, V-222965, V-222980, V-222981, V-222982]
+
+- name: "V-223006 | Require ISSO approval evidence for management-role users"
+  ansible.builtin.assert:
+    that:
+      - tomcat_stig_management_user_approval_evidence | length > 0
+    fail_msg: >-
+      Management applications are installed. Document the Tomcat management-role users/roles
+      and ISSO approval in tomcat_stig_management_user_approval_evidence.
+  when: tomcat_stig_installed_management_apps | length > 0
+  tags: [V-223006]
+
 - name: "V-222926/V-222970 | Configure manager context security"
   ansible.builtin.shell: |
     python3 - "{{ tomcat_webapps_dir_resolved }}" '{{ tomcat_stig_installed_management_apps | to_json }}' "{{ tomcat_stig_manager_max_active_sessions | default(0, true) | int }}" <<'PY'
