@@ -20,71 +20,6 @@
         if (pv.text or '').strip()!=value: pv.text=value; changed=True
     st=ET.parse(server); sr=st.getroot()
     set_attr(sr,'port','-1')
-    if {{ 'True' if tomcat_stig_fips_enabled else 'False' }}:
-        apr = None
-        for listener in sr.findall('Listener'):
-            if listener.get('className') == 'org.apache.catalina.core.AprLifecycleListener':
-                apr = listener
-                break
-        if apr is None:
-            apr = ET.Element('Listener')
-            apr.set('className','org.apache.catalina.core.AprLifecycleListener')
-            sr.insert(0, apr)
-            changed = True
-        set_attr(apr,'SSLEngine','on')
-        set_attr(apr,'FIPSMode','on')
-
-    if {{ 'True' if (tomcat_stig_installed_management_apps | default([]) | length > 0) else 'False' }}:
-        for engine in sr.findall('.//Engine'):
-            realms = engine.findall('Realm')
-            if len(realms) > 1:
-                raise SystemExit('Multiple direct Engine Realm elements found; refusing ambiguous management-auth rewrite')
-            existing = realms[0] if realms else None
-            existing_class = existing.get('className') if existing is not None else ''
-            allowed = {
-                '',
-                'org.apache.catalina.realm.LockOutRealm',
-                'org.apache.catalina.realm.UserDatabaseRealm',
-                'org.apache.catalina.realm.JNDIRealm'
-            }
-            if existing_class not in allowed:
-                raise SystemExit('Existing Engine Realm %s requires manual review before LDAP conversion' % existing_class)
-
-            if existing is not None and existing_class == 'org.apache.catalina.realm.LockOutRealm':
-                lockout = existing
-            else:
-                if existing is not None:
-                    engine.remove(existing)
-                lockout = ET.SubElement(engine,'Realm')
-                set_attr(lockout,'className','org.apache.catalina.realm.LockOutRealm')
-                changed=True
-
-            set_attr(lockout,'failureCount','5')
-            set_attr(lockout,'lockOutTime','600')
-
-            nested_realms = list(lockout.findall('Realm'))
-            jndi_realms = [r for r in nested_realms
-                           if r.get('className') == 'org.apache.catalina.realm.JNDIRealm']
-            if len(nested_realms) == 1 and len(jndi_realms) == 1:
-                jndi = jndi_realms[0]
-            else:
-                for nested in nested_realms:
-                    lockout.remove(nested)
-                jndi = ET.SubElement(lockout,'Realm')
-                set_attr(jndi,'className','org.apache.catalina.realm.JNDIRealm')
-                changed=True
-
-            set_attr(jndi,'connectionURL',os.environ['TC_STIG_LDAP_URL'])
-            set_attr(jndi,'userBase',os.environ['TC_STIG_LDAP_USER_BASE'])
-            set_attr(jndi,'userSearch',os.environ['TC_STIG_LDAP_USER_SEARCH'])
-            set_attr(jndi,'roleBase',os.environ['TC_STIG_LDAP_ROLE_BASE'])
-            set_attr(jndi,'roleName',os.environ['TC_STIG_LDAP_ROLE_NAME'])
-            set_attr(jndi,'roleSearch',os.environ['TC_STIG_LDAP_ROLE_SEARCH'])
-            if os.environ.get('TC_STIG_LDAP_CONNECTION_NAME'):
-                set_attr(jndi,'connectionName',os.environ['TC_STIG_LDAP_CONNECTION_NAME'])
-            if os.environ.get('TC_STIG_LDAP_CONNECTION_PASSWORD'):
-                set_attr(jndi,'connectionPassword',os.environ['TC_STIG_LDAP_CONNECTION_PASSWORD'])
-
     approved_ports=set({{ tomcat_stig_approved_connector_ports | map('string') | list | to_json }})
     addresses={{ tomcat_stig_connector_addresses | to_json }}
     for parent in sr.iter():
@@ -173,18 +108,8 @@
     PY
   args:
     executable: /bin/bash
-  environment:
-    TC_STIG_LDAP_URL: "{{ tomcat_stig_ldap_connection_url }}"
-    TC_STIG_LDAP_USER_BASE: "{{ tomcat_stig_ldap_user_base }}"
-    TC_STIG_LDAP_USER_SEARCH: "{{ tomcat_stig_ldap_user_search }}"
-    TC_STIG_LDAP_ROLE_BASE: "{{ tomcat_stig_ldap_role_base }}"
-    TC_STIG_LDAP_ROLE_NAME: "{{ tomcat_stig_ldap_role_name }}"
-    TC_STIG_LDAP_ROLE_SEARCH: "{{ tomcat_stig_ldap_role_search }}"
-    TC_STIG_LDAP_CONNECTION_NAME: "{{ tomcat_stig_ldap_connection_name }}"
-    TC_STIG_LDAP_CONNECTION_PASSWORD: "{{ tomcat_stig_ldap_connection_password }}"
   register: tomcat_stig_xml_result
   changed_when: "'CHANGED' in tomcat_stig_xml_result.stdout"
-  no_log: "{{ tomcat_stig_ldap_connection_password | length > 0 }}"
   notify: restart tomcat
   tags:
     - V-222928
@@ -211,10 +136,4 @@
     - V-222975
     - V-222977
     - V-222985
-    - V-222962
-    - V-222965
-    - V-222980
-    - V-222981
-    - V-222982
-    - V-222968
     - V-222997
