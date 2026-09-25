@@ -1,0 +1,82 @@
+---
+- name: Check Red Hat packaged Tomcat configuration
+  ansible.builtin.stat:
+    path: /etc/tomcat/server.xml
+  register: _tomcat_rpm_server_xml
+
+- name: Check caller-provided standard Tomcat configuration
+  ansible.builtin.stat:
+    path: "{{ (tomcat_base if tomcat_base | length > 0 else '/opt/tomcat') }}/conf/server.xml"
+  register: _tomcat_standard_server_xml
+
+- name: Select Tomcat installation profile
+  ansible.builtin.set_fact:
+    tomcat_detected_layout: >-
+      {{ 'rhel_rpm' if (tomcat_layout == 'auto' and _tomcat_rpm_server_xml.stat.exists) else
+         ('apache_standard' if (tomcat_layout == 'auto' and _tomcat_standard_server_xml.stat.exists) else tomcat_layout) }}
+
+- name: Refuse to guess an unknown Tomcat layout
+  ansible.builtin.assert:
+    that:
+      - tomcat_detected_layout in ['rhel_rpm', 'apache_standard']
+    fail_msg: >-
+      Could not identify the active Tomcat 9 layout. Set tomcat_layout and explicit path variables;
+      the role will not modify a guessed configuration tree.
+
+- name: Resolve Red Hat RPM paths
+  ansible.builtin.set_fact:
+    tomcat_home_resolved: "{{ tomcat_home if tomcat_home | length > 0 else '/usr/share/tomcat' }}"
+    tomcat_base_resolved: "{{ tomcat_base if tomcat_base | length > 0 else '/var/lib/tomcat' }}"
+    tomcat_conf_dir_resolved: "{{ tomcat_conf_dir if tomcat_conf_dir | length > 0 else '/etc/tomcat' }}"
+    tomcat_webapps_dir_resolved: "{{ tomcat_webapps_dir if tomcat_webapps_dir | length > 0 else '/var/lib/tomcat/webapps' }}"
+    tomcat_logs_dir_resolved: "{{ tomcat_logs_dir if tomcat_logs_dir | length > 0 else '/var/log/tomcat' }}"
+    tomcat_temp_dir_resolved: "{{ tomcat_temp_dir if tomcat_temp_dir | length > 0 else '/var/cache/tomcat/temp' }}"
+    tomcat_work_dir_resolved: "{{ tomcat_work_dir if tomcat_work_dir | length > 0 else '/var/cache/tomcat/work' }}"
+    tomcat_bin_dir_resolved: "{{ tomcat_bin_dir if tomcat_bin_dir | length > 0 else '/usr/share/tomcat/bin' }}"
+    tomcat_lib_dir_resolved: "{{ tomcat_lib_dir if tomcat_lib_dir | length > 0 else '/usr/share/tomcat/lib' }}"
+  when: tomcat_detected_layout == 'rhel_rpm'
+
+- name: Resolve standard Apache Tomcat paths
+  ansible.builtin.set_fact:
+    tomcat_home_resolved: "{{ tomcat_home if tomcat_home | length > 0 else '/opt/tomcat' }}"
+    tomcat_base_resolved: "{{ tomcat_base if tomcat_base | length > 0 else (tomcat_home if tomcat_home | length > 0 else '/opt/tomcat') }}"
+    tomcat_conf_dir_resolved: "{{ tomcat_conf_dir if tomcat_conf_dir | length > 0 else ((tomcat_base if tomcat_base | length > 0 else (tomcat_home if tomcat_home | length > 0 else '/opt/tomcat')) + '/conf') }}"
+    tomcat_webapps_dir_resolved: "{{ tomcat_webapps_dir if tomcat_webapps_dir | length > 0 else ((tomcat_base if tomcat_base | length > 0 else (tomcat_home if tomcat_home | length > 0 else '/opt/tomcat')) + '/webapps') }}"
+    tomcat_logs_dir_resolved: "{{ tomcat_logs_dir if tomcat_logs_dir | length > 0 else ((tomcat_base if tomcat_base | length > 0 else (tomcat_home if tomcat_home | length > 0 else '/opt/tomcat')) + '/logs') }}"
+    tomcat_temp_dir_resolved: "{{ tomcat_temp_dir if tomcat_temp_dir | length > 0 else ((tomcat_base if tomcat_base | length > 0 else (tomcat_home if tomcat_home | length > 0 else '/opt/tomcat')) + '/temp') }}"
+    tomcat_work_dir_resolved: "{{ tomcat_work_dir if tomcat_work_dir | length > 0 else ((tomcat_base if tomcat_base | length > 0 else (tomcat_home if tomcat_home | length > 0 else '/opt/tomcat')) + '/work') }}"
+    tomcat_bin_dir_resolved: "{{ tomcat_bin_dir if tomcat_bin_dir | length > 0 else ((tomcat_home if tomcat_home | length > 0 else '/opt/tomcat') + '/bin') }}"
+    tomcat_lib_dir_resolved: "{{ tomcat_lib_dir if tomcat_lib_dir | length > 0 else ((tomcat_home if tomcat_home | length > 0 else '/opt/tomcat') + '/lib') }}"
+  when: tomcat_detected_layout == 'apache_standard'
+
+- name: Verify authoritative Tomcat files and directories
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - "{{ tomcat_conf_dir_resolved }}/server.xml"
+    - "{{ tomcat_conf_dir_resolved }}/web.xml"
+    - "{{ tomcat_webapps_dir_resolved }}"
+    - "{{ tomcat_bin_dir_resolved }}"
+    - "{{ tomcat_lib_dir_resolved }}"
+  register: _tomcat_authoritative_paths
+
+- name: Stop if the selected profile does not match the installed instance
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+    fail_msg: "Expected active Tomcat path does not exist: {{ item.item }}"
+  loop: "{{ _tomcat_authoritative_paths.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+- name: Report detected Tomcat layout
+  ansible.builtin.debug:
+    msg:
+      platform: "RHEL {{ ansible_facts.distribution_major_version }}"
+      layout: "{{ tomcat_detected_layout }}"
+      home: "{{ tomcat_home_resolved }}"
+      base: "{{ tomcat_base_resolved }}"
+      conf: "{{ tomcat_conf_dir_resolved }}"
+      webapps: "{{ tomcat_webapps_dir_resolved }}"
+      logs: "{{ tomcat_logs_dir_resolved }}"
+      work: "{{ tomcat_work_dir_resolved }}"
