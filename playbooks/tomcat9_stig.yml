@@ -1,0 +1,6 @@
+---
+- name: Apply Apache Tomcat 9 STIG V3R4 remediation
+  hosts: tomcat9
+  become: true
+  roles:
+    - role: ../../remediation/tomcat/tomcat9/stig
