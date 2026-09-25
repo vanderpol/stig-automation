@@ -275,6 +275,31 @@
   tags:
     - V-261858
 
+- name: PostgreSQL 16 STIG | Identify SCRAM password-authentication HBA rules
+  ansible.builtin.set_fact:
+    postgres16_scram_hba_rules: >-
+      {{ postgres16_hba_rules.stdout_lines
+         | select('search', '\\|scram-sha-256\\|')
+         | list }}
+  tags:
+    - V-261891
+    - V-261892
+
+- name: PostgreSQL 16 STIG | Require AO approval when password authentication is used
+  ansible.builtin.assert:
+    that:
+      - >-
+        (postgres16_scram_hba_rules | length == 0)
+        or
+        (postgres16_password_auth_ao_approval_evidence is not none)
+    fail_msg: >-
+      Password authentication is present in pg_hba.conf. Current V1R3 text
+      states password authentication is permitted only when PKI cannot be used
+      and AO approval exists. Supply postgres16_password_auth_ao_approval_evidence.
+  tags:
+    - V-261891
+    - V-261892
+
 - name: PostgreSQL 16 STIG | Prohibit cleartext and MD5 HBA password methods
   ansible.builtin.assert:
     that:
