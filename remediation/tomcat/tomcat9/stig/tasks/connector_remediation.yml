@@ -65,3 +65,132 @@
       tomcat_stig_proxy_mutual_tls_risk_acceptance.
   when: tomcat_stig_behind_proxy | bool
   tags: [V-222971]
+
+
+- name: "V-222968 | Configure AprLifecycleListener FIPSMode when explicitly enabled"
+  ansible.builtin.shell: |
+    python3 - "{{ tomcat_conf_dir_resolved }}/server.xml" <<'PY'
+    import sys, xml.etree.ElementTree as ET
+    path=sys.argv[1]
+    tree=ET.parse(path); root=tree.getroot(); changed=False
+    listener=None
+    for e in root.findall("Listener"):
+        if e.get("className")=="org.apache.catalina.core.AprLifecycleListener":
+            listener=e; break
+    if listener is None:
+        listener=ET.Element("Listener")
+        listener.set("className","org.apache.catalina.core.AprLifecycleListener")
+        root.insert(0,listener); changed=True
+    for k,v in (("SSLEngine","on"),("FIPSMode","on")):
+        if listener.get(k)!=v:
+            listener.set(k,v); changed=True
+    if changed:
+        tree.write(path,encoding="UTF-8",xml_declaration=True)
+    print("CHANGED" if changed else "OK")
+    PY
+  args:
+    executable: /bin/bash
+  register: tomcat_stig_fips_xml_result
+  changed_when: "'CHANGED' in tomcat_stig_fips_xml_result.stdout"
+  when: tomcat_stig_fips_enabled | bool
+  notify: restart tomcat
+  tags: [V-222968]
+
+- name: "V-222971 | Require application CLIENT-CERT targets when proxy mutual TLS is required"
+  ansible.builtin.assert:
+    that:
+      - tomcat_stig_proxy_client_cert_web_xml_files | length > 0
+    fail_msg: >-
+      Proxy/load-balancer mutual TLS is required. List each associated application web.xml in
+      tomcat_stig_proxy_client_cert_web_xml_files so CLIENT-CERT authentication can be enforced.
+  when:
+    - tomcat_stig_behind_proxy | bool
+    - tomcat_stig_proxy_mutual_tls_required | bool
+    - tomcat_stig_proxy_mutual_tls_risk_acceptance | length == 0
+  tags: [V-222971]
+
+- name: "V-222971 | Require client certificates on proxied TLS connectors"
+  ansible.builtin.shell: |
+    python3 - "{{ tomcat_conf_dir_resolved }}/server.xml" <<'PY'
+    import sys, xml.etree.ElementTree as ET
+    path=sys.argv[1]
+    tree=ET.parse(path); root=tree.getroot(); changed=False
+    for connector in root.findall(".//Connector"):
+        sslhosts=connector.findall("SSLHostConfig")
+        if sslhosts:
+            for shc in sslhosts:
+                if shc.get("certificateVerification")!="required":
+                    shc.set("certificateVerification","required"); changed=True
+        else:
+            if connector.get("clientAuth")!="true":
+                connector.set("clientAuth","true"); changed=True
+    if changed:
+        tree.write(path,encoding="UTF-8",xml_declaration=True)
+    print("CHANGED" if changed else "OK")
+    PY
+  args:
+    executable: /bin/bash
+  register: tomcat_stig_proxy_mtls_result
+  changed_when: "'CHANGED' in tomcat_stig_proxy_mtls_result.stdout"
+  when:
+    - tomcat_stig_behind_proxy | bool
+    - tomcat_stig_proxy_mutual_tls_required | bool
+    - tomcat_stig_proxy_mutual_tls_risk_acceptance | length == 0
+  notify: restart tomcat
+  tags: [V-222971]
+
+- name: "V-222971 | Configure CLIENT-CERT authentication for proxied applications"
+  ansible.builtin.shell: |
+    python3 - "{{ item }}" <<'PY'
+    import sys, xml.etree.ElementTree as ET
+    path=sys.argv[1]
+    tree=ET.parse(path); root=tree.getroot()
+    ns=root.tag.split("}")[0]+"}" if root.tag.startswith("{") else ""
+    q=lambda n: ns+n
+    changed=False
+    login=root.find(q("login-config"))
+    if login is None:
+        login=ET.SubElement(root,q("login-config")); changed=True
+    auth=login.find(q("auth-method"))
+    if auth is None:
+        auth=ET.SubElement(login,q("auth-method")); changed=True
+    if (auth.text or "").strip()!="CLIENT-CERT":
+        auth.text="CLIENT-CERT"; changed=True
+    if changed:
+        tree.write(path,encoding="UTF-8",xml_declaration=True)
+    print("CHANGED" if changed else "OK")
+    PY
+  args:
+    executable: /bin/bash
+  loop: "{{ tomcat_stig_proxy_client_cert_web_xml_files }}"
+  register: tomcat_stig_client_cert_results
+  changed_when: "'CHANGED' in tomcat_stig_client_cert_results.stdout"
+  when:
+    - tomcat_stig_behind_proxy | bool
+    - tomcat_stig_proxy_mutual_tls_required | bool
+    - tomcat_stig_proxy_mutual_tls_risk_acceptance | length == 0
+  notify: restart tomcat
+  tags: [V-222971]
+
+- name: "V-222974 | Detect configured Tomcat clusters"
+  ansible.builtin.shell: |
+    python3 - "{{ tomcat_conf_dir_resolved }}/server.xml" <<'PY'
+    import sys, xml.etree.ElementTree as ET
+    root=ET.parse(sys.argv[1]).getroot()
+    print(len(root.findall(".//Cluster")))
+    PY
+  args:
+    executable: /bin/bash
+  register: tomcat_stig_cluster_count
+  changed_when: false
+  tags: [V-222974]
+
+- name: "V-222974 | Require trusted-network/encryption evidence when cluster exists"
+  ansible.builtin.assert:
+    that:
+      - tomcat_stig_cluster_trusted_network_documented | bool or tomcat_stig_cluster_encryption_evidence | length > 0
+    fail_msg: >-
+      server.xml contains a Tomcat Cluster. Document the trusted/private network or provide
+      approved cluster-encryption evidence; the role will not invent a network boundary or shared key.
+  when: tomcat_stig_cluster_count.stdout | int > 0
+  tags: [V-222974]
