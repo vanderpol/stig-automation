@@ -159,6 +159,67 @@
   notify: restart apache
   tags: [V-214230, V-214231, V-214232, V-214241, V-214269]
 
+- name: "V-214243 | Install prohibited resource mappings"
+  ansible.builtin.blockinfile:
+    path: "{{ apache24.managed_conf }}"
+    marker: "# {mark} STIG RESOURCE MAPPINGS"
+    block: |
+      <FilesMatch "{{ apache24_stig_blocked_extensions | map('regex_escape') | join('|') }}">
+          Require all denied
+      </FilesMatch>
+  when: apache24_stig_blocked_extensions | length > 0
+  notify: restart apache
+  tags: [V-214243]
+
+- name: "V-214244 | Disable CGI modules on Ubuntu when CGI is not approved"
+  ansible.builtin.command: a2dismod -f cgi cgid
+  register: apache24_cgi_disable
+  changed_when: "'Module cgi disabled' in apache24_cgi_disable.stdout or 'Module cgid disabled' in apache24_cgi_disable.stdout"
+  failed_when: false
+  when:
+    - ansible_facts.distribution == 'Ubuntu'
+    - apache24_stig_disable_cgi | bool
+    - not apache24_stig_cgi_approved | bool
+  notify: restart apache
+  tags: [V-214244]
+
+- name: "V-214267 | Protect Apache control utility"
+  ansible.builtin.file:
+    path: "{{ apache24.apachectl }}"
+    owner: root
+    group: root
+    mode: "{{ apache24_stig_control_binary_mode }}"
+  tags: [V-214267]
+
+- name: "V-214267 | Protect Apache PID directory"
+  ansible.builtin.file:
+    path: "{{ apache24_pid_file_resolved | dirname }}"
+    owner: root
+    group: root
+    mode: "{{ apache24_stig_pid_dir_mode }}"
+    state: directory
+  tags: [V-214267]
+
+- name: "V-214268 | Enable headers module on Ubuntu for HttpOnly cookie enforcement"
+  ansible.builtin.command: a2enmod headers
+  register: apache24_headers_enable
+  changed_when: "'Enabling module headers' in apache24_headers_enable.stdout"
+  when:
+    - ansible_facts.distribution == 'Ubuntu'
+    - apache24_stig_cookie_httponly | bool
+  notify: restart apache
+  tags: [V-214268]
+
+- name: "V-214268 | Add HttpOnly to response cookies"
+  ansible.builtin.blockinfile:
+    path: "{{ apache24.managed_conf }}"
+    marker: "# {mark} STIG COOKIE PROTECTION"
+    block: |
+      Header always edit Set-Cookie ^(.*)$ "$1; HttpOnly"
+  when: apache24_stig_cookie_httponly | bool
+  notify: restart apache
+  tags: [V-214268]
+
 - name: Validate Apache configuration after remediation
   ansible.builtin.command: "{{ apache24.apachectl }} configtest"
   changed_when: false
