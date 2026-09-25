@@ -1,0 +1,14 @@
+---
+benchmark:
+  title: Apache Server 2.4 UNIX Site Security Technical Implementation Guide
+  version: 2
+  release: 7
+  release_date: 2026-05-23
+  findings: 16
+  cat_i: 0
+  cat_ii: 15
+  cat_iii: 1
+scope:
+  apache: "2.4"
+status:
+  anti_stig: deferred pending compliant testing
