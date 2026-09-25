@@ -79,6 +79,70 @@
     label: "{{ item.path }}"
   tags: [V-214274]
 
+- name: "V-214242 | Remove Apache documentation package"
+  ansible.builtin.package:
+    name: "{{ 'httpd-manual' if ansible_facts.distribution == 'RedHat' else 'apache2-doc' }}"
+    state: absent
+  when: apache24_stig_remove_documentation_packages | bool
+  tags: [V-214242]
+
+- name: "V-214245 | Disable WebDAV modules on Ubuntu"
+  ansible.builtin.command: a2dismod -f dav dav_fs dav_lock
+  register: apache24_dav_disable
+  changed_when: "'Module dav disabled' in apache24_dav_disable.stdout or 'Module dav_fs disabled' in apache24_dav_disable.stdout or 'Module dav_lock disabled' in apache24_dav_disable.stdout"
+  failed_when: false
+  when:
+    - ansible_facts.distribution == 'Ubuntu'
+    - apache24_stig_disable_webdav | bool
+  notify: restart apache
+  tags: [V-214245]
+
+- name: "V-214245 | Find RHEL module configuration"
+  ansible.builtin.find:
+    paths: /etc/httpd
+    patterns: "*.conf"
+    recurse: true
+    file_type: file
+  register: apache24_rhel_conf_files
+  when:
+    - ansible_facts.distribution == 'RedHat'
+    - apache24_stig_disable_webdav | bool
+  tags: [V-214245]
+
+- name: "V-214245 | Disable WebDAV LoadModule directives on RHEL"
+  ansible.builtin.replace:
+    path: "{{ item.0.path }}"
+    regexp: '^(\\s*LoadModule\\s+{{ item.1 }}_module\\s+.*)
+  ansible.builtin.command: "{{ apache24.apachectl }} configtest"
+  changed_when: false
+
+    replace: '# STIG disabled: \\1'
+  loop: "{{ apache24_rhel_conf_files.files | default([]) | product(['dav','dav_fs','dav_lock']) | list }}"
+  loop_control:
+    label: "{{ item.0.path }} {{ item.1 }}"
+  when:
+    - ansible_facts.distribution == 'RedHat'
+    - apache24_stig_disable_webdav | bool
+  notify: restart apache
+  tags: [V-214245]
+
+- name: "V-214230/V-214231/V-214232/V-214241/V-214269 | Install core STIG directives"
+  ansible.builtin.blockinfile:
+    path: "{{ apache24.managed_conf }}"
+    marker: "# {mark} STIG CORE DIRECTIVES"
+    block: |
+      ProxyRequests Off
+      SSLProtocol {{ apache24_stig_ssl_protocol }}
+      SSLCipherSuite {{ apache24_stig_ssl_cipher_suite }}
+      LogFormat "{{ apache24_stig_log_format }}" {{ apache24_stig_log_format_name }}
+      {% if apache24_stig_custom_log | length > 0 %}
+      CustomLog "{{ apache24_stig_custom_log }}" {{ apache24_stig_log_format_name }}
+      {% else %}
+      CustomLog "{{ apache24.log_dir }}/access_log" {{ apache24_stig_log_format_name }}
+      {% endif %}
+  notify: restart apache
+  tags: [V-214230, V-214231, V-214232, V-214241, V-214269]
+
 - name: Validate Apache configuration after remediation
   ansible.builtin.command: "{{ apache24.apachectl }} configtest"
   changed_when: false
