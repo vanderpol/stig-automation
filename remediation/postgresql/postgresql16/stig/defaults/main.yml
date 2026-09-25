@@ -34,7 +34,7 @@ postgres16_tcp_keepalives_interval: null
 postgres16_tcp_keepalives_count: null
 
 # V-261921 uses UTC as the safe common reference by default.
-postgres16_log_timezone: "UTC"
+postgres16_log_timezone: null
 
 # Central logging is organization-owned. Supplying an approved facility enables
 # guarded PostgreSQL syslog configuration; offload/receiver evidence is still required.
