@@ -9,7 +9,8 @@
 | PostgreSQL 16 upstream documentation | Product syntax and semantics | SECONDARY |
 | pgAudit upstream documentation | Audit extension syntax/behavior | SECONDARY |
 | RHEL/platform vendor documentation | Packaging, FIPS, service, filesystem behavior | SECONDARY |
-| Third-party STIG mirrors/scanner audit content | Discovery/cross-check only | TERTIARY |
+| Cyber Trackr V1R3 mirror of the DISA XCCDF | Control enumeration and literal check/fix cross-check while developing | TERTIARY |
+| Third-party scanner audit content | Discovery/cross-check only | TERTIARY |
 
 ## Provenance policy
 
@@ -20,3 +21,7 @@ No public Ansible/PostgreSQL lockdown implementation has been adopted as impleme
 ## Current-release freshness
 
 DISA's July 2026 quarterly announcement lists Crunchy Data Postgres 16 STIG V1R3 and simultaneously sunsets the older Crunchy Data PostgreSQL STIG. The PostgreSQL 16 role therefore does not inherit legacy CD12 assumptions merely because older automation exists.
+
+## Enumeration checkpoint — 2026-09-25
+
+The development matrix was reconciled to the V1R3 rule sequence and programmatically counted at **111 unique V-IDs**. The apparent numeric gap at V-261937 is legitimate: CD16-00-009300 is V-283674, followed by V-261938 / CD16-00-009400. This checkpoint records enumeration only; it is not an assessment or implementation-completeness claim.
