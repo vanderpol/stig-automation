@@ -1,0 +1,7 @@
+all:
+  children:
+    postgresql16:
+      hosts:
+        postgres16-lab:
+          ansible_host: 192.0.2.16
+          ansible_user: ansible
