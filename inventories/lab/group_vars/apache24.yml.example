@@ -1,3 +1,7 @@
+# Read docs/APACHE24_SERVER_USER_GUIDE.md before applying remediation.
+# Copy this file to apache24.yml and replace examples with site-approved values.
+# Do not edit the role to customize an environment.
+#
 ---
 # REQUIRED for V-214246. Use only site-approved explicit IP:port endpoints.
 apache24_stig_listen:
