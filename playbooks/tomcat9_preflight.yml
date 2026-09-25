@@ -1,0 +1,9 @@
+---
+- name: Preflight Apache Tomcat 9 STIG target
+  hosts: tomcat9
+  become: true
+  gather_facts: true
+  vars:
+    tomcat_stig_audit_only: true
+  roles:
+    - role: stig
