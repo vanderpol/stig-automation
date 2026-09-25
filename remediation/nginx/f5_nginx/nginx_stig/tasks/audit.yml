@@ -86,6 +86,68 @@
     fail_msg: "V-278411 requires site authentication/IdP token-revocation design and evidence."
   tags: [V-278411, CAT2]
 
+- name: V-278385 | Find custom log formats
+  ansible.builtin.set_fact:
+    nginx_stig_custom_log_formats: "{{ nginx_stig_effective_config.stdout | regex_findall('(?m)^\\s*log_format\\s+[^;]+;') }}"
+  tags: [V-278385, CAT2]
+
+- name: V-278385 | Verify required fields in every custom log format
+  ansible.builtin.assert:
+    that:
+      - item is search('\\$server_name')
+      - item is search('\\$server_addr')
+      - item is search('\\$remote_addr')
+      - item is search('\\$remote_user')
+      - item is search('\\$time_local')
+      - item is search('\\$status')
+      - item is search('\\$request')
+      - item is search('\\$request_id')
+      - item is search('\\$http_user_agent')
+      - item is search('\\$http_x_forwarded_for')
+    fail_msg: "V-278385: custom log_format is missing one or more fields required by the current V1R1 check."
+  loop: "{{ nginx_stig_custom_log_formats }}"
+  tags: [V-278385, CAT2]
+
+- name: Discover file-based NGINX logs
+  ansible.builtin.set_fact:
+    nginx_stig_log_files: >-
+      {{ nginx_stig_effective_config.stdout
+         | regex_findall('(?m)^\\s*(?:access_log|error_log)\\s+((?!syslog:)[^;\\s]+)')
+         | reject('equalto', 'off') | unique | list }}
+  tags: [V-278388, CAT2]
+
+- name: V-278388 | Inspect file-based audit logs
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ nginx_stig_log_files }}"
+  register: nginx_stig_log_stats
+  tags: [V-278388, CAT2]
+
+- name: V-278388 | Assert file-based audit logs are not group/other writable
+  ansible.builtin.assert:
+    that:
+      - not item.stat.exists or (item.stat.mode | int(base=8) | bitwise_and(18)) == 0
+    fail_msg: "V-278388: {{ item.item }} is writable by group or other."
+  loop: "{{ nginx_stig_log_stats.results }}"
+  tags: [V-278388, CAT2]
+
+- name: V-278387 V-278393 | Require explicit approval for every loaded external module
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_loaded_module_paths | difference(nginx_stig_approved_module_paths) | length == 0
+    fail_msg: >-
+      Loaded external modules are not all in nginx_stig_approved_module_paths:
+      {{ nginx_stig_loaded_module_paths | difference(nginx_stig_approved_module_paths) }}
+  tags: [V-278387, V-278393, CAT2]
+
+- name: V-278404 | Require an applied connection/request limit
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_effective_config.stdout is search('(?m)^\\s*(limit_conn|limit_req)\\s+')
+        or nginx_stig_dos_scope_files | length > 0
+    fail_msg: "V-278404 requires an applied limit_conn or limit_req; defining only a shared zone is insufficient."
+  tags: [V-278404, CAT2]
+
 - name: Report controls requiring manual/current-check reconciliation
   ansible.builtin.debug:
     msg:
