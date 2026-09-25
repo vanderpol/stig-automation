@@ -1,7 +1,14 @@
 ---
+# Example inventory for testing both Apache Server and Site roles.
+# 192.0.2.0/24 is documentation space; replace it with your real lab address.
 all:
   children:
     apache24:
+      hosts:
+        apache-rhel9-test:
+          ansible_host: 192.0.2.20
+          ansible_user: ansible
+    apache24_site:
       hosts:
         apache-rhel9-test:
           ansible_host: 192.0.2.20
