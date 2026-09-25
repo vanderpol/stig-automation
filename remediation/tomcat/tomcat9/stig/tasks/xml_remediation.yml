@@ -20,6 +20,19 @@
         if (pv.text or '').strip()!=value: pv.text=value; changed=True
     st=ET.parse(server); sr=st.getroot()
     set_attr(sr,'port','-1')
+    if {{ 'True' if tomcat_stig_fips_enabled else 'False' }}:
+        apr = None
+        for listener in sr.findall('Listener'):
+            if listener.get('className') == 'org.apache.catalina.core.AprLifecycleListener':
+                apr = listener
+                break
+        if apr is None:
+            apr = ET.Element('Listener')
+            apr.set('className','org.apache.catalina.core.AprLifecycleListener')
+            sr.insert(0, apr)
+            changed = True
+        set_attr(apr,'SSLEngine','on')
+        set_attr(apr,'FIPSMode','on')
     approved_ports=set({{ tomcat_stig_approved_connector_ports | map('string') | list | to_json }})
     addresses={{ tomcat_stig_connector_addresses | to_json }}
     for parent in sr.iter():
@@ -136,4 +149,5 @@
     - V-222975
     - V-222977
     - V-222985
+    - V-222968
     - V-222997
