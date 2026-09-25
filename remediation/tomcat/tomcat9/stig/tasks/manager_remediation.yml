@@ -216,9 +216,9 @@
   notify: restart tomcat
   tags: [V-222926, V-222970]
 
-- name: "V-222979 | Configure global 10-minute session timeout when manager is installed"
+- name: "V-222979 | Configure manager application 10-minute session timeout"
   ansible.builtin.shell: |
-    python3 - "{{ tomcat_conf_dir_resolved }}/web.xml" <<'PY'
+    python3 - "{{ tomcat_webapps_dir_resolved }}/manager/WEB-INF/web.xml" <<'PY'
     import sys, xml.etree.ElementTree as ET
     path = sys.argv[1]
     tree = ET.parse(path)
