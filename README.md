@@ -2,6 +2,8 @@
 
 Automation and validation content for DISA STIGs.
 
+Future agent/contributor work must follow `AGENTS.md`. The rationale and reusable Apache/Tomcat lessons are documented in `docs/LOCKDOWN_LESSONS_LEARNED.md`.
+
 The repository has two primary roots:
 
 - `remediation/` — Ansible lockdown and deterministic Anti-STIG content.
