@@ -44,3 +44,58 @@
       - "The end user owns application architecture, authentication/user-management, DR, PPSM, and operational-tuning decisions/evidence."
       - "Supplying an evidence variable records a reference; it does not create or approve the evidence."
   tags: [audit, evidence]
+
+- name: "V-214290 | Determine document-root mount"
+  ansible.builtin.command:
+    argv:
+      - findmnt
+      - -n
+      - -T
+      - "{{ apache24_site_document_root }}"
+      - -o
+      - TARGET
+  register: apache24_site_document_mount
+  changed_when: false
+  when: apache24_site_document_root | length > 0
+  tags: [V-214290, audit]
+
+- name: "V-214290 | Report document-root filesystem"
+  ansible.builtin.debug:
+    msg:
+      document_root: "{{ apache24_site_document_root }}"
+      mount: "{{ apache24_site_document_mount.stdout | default('unknown') }}"
+      requirement: "The document directory must be on a separate partition/filesystem from Apache system files."
+  when: apache24_site_document_root | length > 0
+  tags: [V-214290, audit]
+
+- name: "V-214289 | Report stable-baseline recovery evidence"
+  ansible.builtin.debug:
+    msg:
+      status: "{{ 'SITE-EVIDENCE-PROVIDED' if apache24_site_baseline_recovery_evidence | length > 0 else 'REVIEW-REQUIRED' }}"
+      evidence: "{{ apache24_site_baseline_recovery_evidence }}"
+  tags: [V-214289, audit]
+
+- name: "V-214296 | Validate supplied inactive session timeout"
+  ansible.builtin.assert:
+    that:
+      - apache24_site_inactive_timeout_minutes | int > 0
+    fail_msg: Supply the application-approved inactivity timeout after determining the applicable STIG/application requirement.
+  when: apache24_site_inactive_timeout_minutes is not none
+  tags: [V-214296, audit]
+
+- name: "V-214288 | Report cookie-scope evidence"
+  ansible.builtin.debug:
+    msg:
+      status: "{{ 'SITE-EVIDENCE-PROVIDED' if apache24_site_cookie_scope_evidence | length > 0 else 'REVIEW-REQUIRED' }}"
+      evidence: "{{ apache24_site_cookie_scope_evidence }}"
+      requirement: "Cookie Domain/Path scope must prevent access outside the originating server/application."
+  tags: [V-214288, audit]
+
+- name: "V-214304 | Report approved ports/modules boundary"
+  ansible.builtin.debug:
+    msg:
+      approved_ports: "{{ apache24_site_approved_ports }}"
+      approved_modules: "{{ apache24_site_approved_modules }}"
+      ppsm_reference: "{{ apache24_site_ppsm_approval_reference }}"
+      requirement: "The site must restrict nonsecure/unnecessary ports, protocols, modules, and services; nonstandard use requires site authorization."
+  tags: [V-214304, audit]
