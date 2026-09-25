@@ -141,7 +141,7 @@
     - V-261861
     - V-261863
 
-- name: PostgreSQL 16 STIG | Read shared_preload_libraries
+- name: PostgreSQL 16 STIG | Read file and runtime shared_preload_libraries
   become: true
   become_user: "{{ postgres16_admin_user }}"
   ansible.builtin.command:
@@ -150,8 +150,19 @@
       - -d
       - "{{ postgres16_admin_db }}"
       - -AtX
+      - -F
+      - "|"
       - -c
-      - "SHOW shared_preload_libraries;"
+      - >-
+        SELECT
+          coalesce(
+            (SELECT setting
+             FROM pg_file_settings
+             WHERE name='shared_preload_libraries' AND applied
+             ORDER BY seqno DESC LIMIT 1),
+            ''
+          ),
+          current_setting('shared_preload_libraries');
   register: postgres16_preload_raw
   changed_when: false
   check_mode: false
@@ -159,12 +170,35 @@
     - V-261860
     - V-261863
 
-- name: PostgreSQL 16 STIG | Build merged shared_preload_libraries
+- name: PostgreSQL 16 STIG | Record file and runtime preload values
+  ansible.builtin.set_fact:
+    postgres16_preload_file: "{{ postgres16_preload_raw.stdout.split('|')[0] | trim }}"
+    postgres16_preload_runtime: "{{ postgres16_preload_raw.stdout.split('|')[1] | trim }}"
+  tags:
+    - V-261860
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Build merged shared_preload_libraries from parsed file state
   ansible.builtin.set_fact:
     postgres16_preload_merged: >-
-      {{ ((postgres16_preload_raw.stdout.split(',') |
+      {{ (((postgres16_preload_file
+            if postgres16_preload_file | length > 0
+            else postgres16_preload_runtime).split(',') |
            map('trim') | reject('equalto', '') | list) + ['pgaudit'])
          | unique | join(',') }}
+  tags:
+    - V-261860
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Report pending preload mismatch
+  ansible.builtin.debug:
+    msg: >-
+      File shared_preload_libraries={{ postgres16_preload_file | default('') }};
+      runtime={{ postgres16_preload_runtime | default('') }}.
+      A difference indicates restart-sensitive configuration is not yet active.
+  when:
+    - postgres16_preload_file | length > 0
+    - postgres16_preload_file != postgres16_preload_runtime
   tags:
     - V-261860
     - V-261863
@@ -545,6 +579,34 @@
   changed_when: false
   failed_when: postgres16_config_errors.stdout | trim | length > 0
   check_mode: false
+
+- name: PostgreSQL 16 STIG | Read PostgreSQL pending-restart state
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - >-
+        SELECT name || '=' || pending_restart
+        FROM pg_settings
+        WHERE pending_restart
+        ORDER BY name;
+  register: postgres16_pending_restart
+  changed_when: false
+  check_mode: false
+  when: not ansible_check_mode
+
+- name: PostgreSQL 16 STIG | Report all pending restart settings
+  ansible.builtin.debug:
+    var: postgres16_pending_restart.stdout_lines
+  when:
+    - not ansible_check_mode
+    - postgres16_pending_restart is defined
+    - postgres16_pending_restart.stdout_lines | default([]) | length > 0
 
 - name: PostgreSQL 16 STIG | Report restart-required pgAudit preload change
   ansible.builtin.debug:
