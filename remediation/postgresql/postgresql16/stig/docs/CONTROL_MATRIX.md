@@ -66,6 +66,16 @@ Risk: `HIGH | MEDIUM | BASELINE`
 | V-261902 | CD16-00-005300 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Security-function schema isolation is application/database-design owned. |
 | V-261903 | CD16-00-005400 | II | EVIDENCE | ORIGINAL | HIGH | Organization data-transfer policy and operational procedures. |
 | V-261904 | CD16-00-005600 | II | AUDIT/REMEDIATION | ORIGINAL | HIGH | PGDATA/log/backup access; recursive mutation needs platform-aware review. |
+| V-261905 | CD16-00-005700 | II | APP/EVIDENCE | ORIGINAL | HIGH | Input validation/prepared statements require schema/application review. |
+| V-261906 | CD16-00-005800 | II | APP/EVIDENCE | ORIGINAL | HIGH | Dynamic execution requires source-code/application review. |
+| V-261907 | CD16-00-005900 | II | APP/EVIDENCE | ORIGINAL | HIGH | Dynamic execution input defenses require code review. |
+| V-261908 | CD16-00-006000 | II | REMEDIATION/APP-EVIDENCE | ORIGINAL | HIGH | client_min_messages=error plus application error-message review. |
+| V-261909 | CD16-00-006100 | II | REMEDIATION/AUDIT | COMMON | MEDIUM | Restrict client error detail; protect server logs separately. |
+| V-261910 | CD16-00-006200 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | Automatic termination triggers are organization-defined; may be N/A. |
+| V-261911 | CD16-00-006400 | II | APP/EVIDENCE | ORIGINAL | HIGH | Security labels in storage are conditional and schema/application-specific. |
+| V-261912 | CD16-00-006500 | II | APP/EVIDENCE | ORIGINAL | HIGH | Security labels in process are conditional and schema/application-specific. |
+| V-261913 | CD16-00-006600 | II | APP/EVIDENCE | ORIGINAL | HIGH | Security labels in transmission are conditional and architecture-specific. |
+| V-261914 | CD16-00-006700 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | DAC must reconcile to data-owner policy; no generic GRANT/REVOKE baseline. |
 | V-261930 | CD16-00-008500 | I | REMEDIATION/EVIDENCE | NEW-CURRENT | HIGH | V1R3 severity changed to CAT I; at-rest integrity is site/data-owner dependent. |
 | V-261931 | CD16-00-008600 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | At-rest confidentiality; may be DB, filesystem, or disk control. |
 | V-261932 | CD16-00-008800 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | Conditional on data-owner requirement; SSL alone may not prove full path. |
