@@ -43,3 +43,8 @@ apache24_stig_disable_cgi: false
 apache24_stig_cgi_approved: false
 apache24_stig_cookie_httponly: true
 apache24_stig_remote_ip_enabled: false
+apache24_stig_approved_admin_accounts: []
+apache24_stig_admin_audit_paths: []
+apache24_stig_privileged_paths: []
+apache24_stig_management_endpoints: []
+apache24_stig_management_separation_documented: false
