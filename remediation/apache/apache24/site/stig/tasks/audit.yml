@@ -1,0 +1,46 @@
+---
+- name: "V-214286 | Report RFC 5280 validation evidence"
+  ansible.builtin.debug:
+    msg:
+      pki_enabled: "{{ apache24_site_pki_enabled }}"
+      evidence: "{{ apache24_site_rfc5280_validation_evidence }}"
+      requirement: "When PKI is used, the site must perform RFC 5280-compliant certification-path validation."
+  tags: [V-214286, audit]
+
+- name: "V-214300 | Require user-supplied approved CA material when client PKI is enabled"
+  ansible.builtin.assert:
+    that:
+      - apache24_site_client_ca_file | length > 0
+      - apache24_site_client_ca_approval_reference | length > 0
+    fail_msg: >-
+      Client PKI is enabled. Supply the organization-maintained DoD/DoD-approved CA bundle path
+      and an approval/evidence reference. The role does not download or decide trusted CAs.
+  when: apache24_site_pki_enabled | bool
+  tags: [V-214300, audit]
+
+- name: "V-214287 | Inspect configured private key"
+  ansible.builtin.stat:
+    path: "{{ apache24_site_private_key_file }}"
+  register: apache24_site_private_key_stat
+  when: apache24_site_private_key_file | length > 0
+  tags: [V-214287, audit]
+
+- name: "V-214287 | Report private-key ownership and mode"
+  ansible.builtin.debug:
+    msg:
+      path: "{{ apache24_site_private_key_file }}"
+      owner: "{{ apache24_site_private_key_stat.stat.pw_name | default('unknown') }}"
+      group: "{{ apache24_site_private_key_stat.stat.gr_name | default('unknown') }}"
+      mode: "{{ apache24_site_private_key_stat.stat.mode | default('unknown') }}"
+      approved_accounts: "{{ apache24_site_private_key_approved_accounts }}"
+  when: apache24_site_private_key_file | length > 0
+  tags: [V-214287, audit]
+
+- name: Report site-owned evidence requirements
+  ansible.builtin.debug:
+    msg:
+      - "The end user owns PKI trust material and proof that accepted client CAs are DoD/DoD-approved."
+      - "The end user owns RFC 5280/revocation validation configuration and evidence when PKI applies."
+      - "The end user owns application architecture, authentication/user-management, DR, PPSM, and operational-tuning decisions/evidence."
+      - "Supplying an evidence variable records a reference; it does not create or approve the evidence."
+  tags: [audit, evidence]
