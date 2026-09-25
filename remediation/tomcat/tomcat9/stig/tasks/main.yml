@@ -1,0 +1,24 @@
+---
+- name: Validate Tomcat 9 STIG platform
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family == 'RedHat'
+      - ansible_distribution_major_version | int in [8, 9]
+    fail_msg: "This stabilized Tomcat 9 V3R4 role currently supports RHEL 8 and RHEL 9 only."
+  tags: [always]
+
+- name: Discover Tomcat layout
+  ansible.builtin.include_tasks: discover.yml
+  tags: [always]
+
+- name: Apply deterministic filesystem controls
+  ansible.builtin.include_tasks: filesystem.yml
+  tags: [tomcat9_stig, filesystem]
+
+- name: Apply systemd/service controls
+  ansible.builtin.include_tasks: service.yml
+  tags: [tomcat9_stig, service]
+
+- name: Apply audit controls
+  ansible.builtin.include_tasks: audit.yml
+  tags: [tomcat9_stig, audit]
