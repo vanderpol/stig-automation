@@ -44,3 +44,12 @@ Before calling either role release-ready:
 ## Important design boundary
 
 A successful Ansible run is not proof of STIG compliance. The readiness summary reports READY, SITE INPUT REQUIRED, or EVIDENCE REQUIRED, but the authoritative assessment and required organizational evidence determine compliance.
+
+
+## Initial-validation handoff
+
+The repository is ready for tester handoff as an **initial validation build**, not as a compliance-certified release.
+
+A retrospective provenance/current-check reconciliation was completed before handoff. It resulted in targeted corrections or stronger validation for V-214256, V-214246, V-214269, V-214290, V-214292, and V-214303. These controls, plus distro-specific module handling in V-214245/V-214253, are called out for additional first-cycle scrutiny in `TESTING.md`.
+
+The next meaningful evidence should come from representative RHEL/Ubuntu deployments, idempotency runs, application functional testing, and authoritative V3R3/V2R7 assessment results. Anti-STIG remains deferred until a known-good compliant baseline is demonstrated.
