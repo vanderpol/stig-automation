@@ -39,7 +39,7 @@ V3R4 is the implementation authority. V-222927, V-222929, and V-222936 were remo
 
 ## Test consequence
 
-All 79 current V3R4 controls are now represented as remediation, guarded remediation, audit/evidence, or explicit N/A/site-owned behavior. The newly added manager LDAP/LDAPS, LockOutRealm, session, network restriction, connector-address, FIPS, proxy mutual-authentication, cluster-evidence, manager-error-page, and ISSO-approval logic remains **untested**. Tomcat is therefore implementation-complete for this review round but is not yet assessment-verified or ready to be called compliant.
+All 79 current V3R4 controls are now represented as remediation, guarded remediation, audit/evidence, or explicit N/A/site-owned behavior. The newly added manager LDAP/LDAPS, LockOutRealm, session, network restriction, connector-address, FIPS prerequisite/FIPSMode, proxy mutual-authentication, cluster-evidence, manager-error-page, and ISSO-approval logic remains **untested**. Tomcat is therefore implementation-complete for this review round but is not yet assessment-verified or ready to be called compliant.
 
 Detailed per-control status is in `remediation/tomcat/tomcat9/stig/docs/SOURCE_PROVENANCE.md`.
 
