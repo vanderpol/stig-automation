@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: tomcat9_stig
+  author: stig-automation
+  description: Apache Tomcat 9 DISA STIG V3R4 remediation for RHEL 8/9
+  min_ansible_version: "2.14"
+dependencies: []
