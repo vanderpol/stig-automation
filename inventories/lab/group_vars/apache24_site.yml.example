@@ -19,3 +19,13 @@ apache24_site_approved_ports:
   - 80
   - 443
 apache24_site_ppsm_approval_reference: ""
+
+# V-214292: default document names accepted by the site's effective DirectoryIndex policy.
+# Add equivalents only when they are actually approved/configured for the site.
+apache24_site_default_documents:
+  - index.html
+
+# V-214303 is deliberately opt-in because it changes Apache-managed session behavior.
+# Enable only if this site uses Apache mod_session and the approved SessionCookieName is known.
+apache24_site_cookie_secure_enforcement: false
+# apache24_site_session_cookie_name: session
