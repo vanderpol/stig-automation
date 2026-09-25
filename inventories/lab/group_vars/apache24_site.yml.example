@@ -1,0 +1,21 @@
+---
+# Read docs/APACHE24_SITE_USER_GUIDE.md before applying Site remediation.
+# Copy to the appropriate group_vars file and replace examples with site-approved values.
+
+apache24_site_document_root: /var/www/example
+apache24_site_server_name: example.invalid
+
+# PKI is site-owned. Do not put private keys or passwords here.
+apache24_site_pki_enabled: false
+# apache24_site_client_ca_file: /path/to/organization-maintained-approved-ca-bundle.pem
+# apache24_site_client_ca_approval_reference: "SSP section / ticket / approval record"
+# apache24_site_rfc5280_validation_evidence: "configuration/evidence reference"
+# apache24_site_private_key_file: /path/to/server-private-key
+# apache24_site_private_key_approved_accounts:
+#   - root
+
+# If nonstandard ports are used, retain the applicable PPSM approval reference.
+apache24_site_approved_ports:
+  - 80
+  - 443
+apache24_site_ppsm_approval_reference: ""
