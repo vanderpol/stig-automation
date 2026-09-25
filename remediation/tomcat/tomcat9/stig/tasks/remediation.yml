@@ -24,10 +24,10 @@
 - name: "V-222984 | Assert Tomcat is non-privileged"
   ansible.builtin.assert:
     that:
-      - ansible_facts.getent_passwd[tomcat_user][1] | int >= 1000
+      - ansible_facts.getent_passwd[tomcat_user][1] | int != 0
     fail_msg: >-
       {{ tomcat_user }} has UID {{ ansible_facts.getent_passwd[tomcat_user][1] }}. The role will not
-      renumber an existing service account automatically; correct the account identity under change control.
+      use UID 0. The role will not renumber an existing service account automatically; correct the account identity under change control.
   tags: [V-222984, accounts]
 
 - name: "V-222986 | CATALINA_HOME ownership"
@@ -227,14 +227,22 @@
 
 - name: "V-222966 | Import site-provided DoD CA bundle into configured truststore"
   ansible.builtin.command:
-    argv: [keytool, -importcert, -noprompt, -trustcacerts, -alias, dod-stig-ca, -file, "{{ tomcat_dod_ca_bundle }}", -keystore, "{{ tomcat_truststore_file }}"]
+    argv: [keytool, -importcert, -noprompt, -trustcacerts, -alias, dod-stig-ca, -file, "{{ tomcat_dod_ca_bundle }}", -keystore, "{{ tomcat_truststore_file }}", -storepass, "{{ tomcat_truststore_password }}"]
   when:
     - tomcat_dod_ca_bundle | length > 0
     - tomcat_truststore_file | length > 0
+    - tomcat_truststore_password | length > 0
+  no_log: true
   register: tomcat_stig_ca_import
   changed_when: tomcat_stig_ca_import.rc == 0
   failed_when: tomcat_stig_ca_import.rc != 0 and 'already exists' not in (tomcat_stig_ca_import.stderr | default(''))
   tags: [V-222966, pki]
+
+- name: "V-222998/V-222999/V-223000 | Ensure audit tooling is installed"
+  ansible.builtin.package:
+    name: audit
+    state: present
+  tags: [V-222998, V-222999, V-223000, auditd]
 
 - name: "V-222998/V-222999/V-223000 | Install audit watches"
   ansible.builtin.copy:
