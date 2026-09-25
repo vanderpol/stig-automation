@@ -1,13 +1,12 @@
 # STIG Automation
 
-Ansible automation for applying DISA STIG hardening and, after compliant-baseline validation, deterministic Anti-STIG states for SCAP regression testing.
+Automation and validation content for DISA STIGs.
 
-## Repository organization
+The repository has two primary roots:
 
-Content is organized by technology first and benchmark second. Lockdown and Anti-STIG implementations remain siblings so each DISA rule can be traced from compliant state to intentional noncompliant state.
+- `remediation/` — Ansible lockdown and deterministic Anti-STIG content.
+- `scap/` — SCAP/OVAL validation content.
 
-Current work:
-- Apache HTTP Server 2.4 UNIX — Server STIG and Site STIG
-- Apache Tomcat 9 — V3R4, initially scoped to RHEL 8 and RHEL 9
+Both use the same technology/benchmark hierarchy so a DISA V-ID can be traced across validation, remediation, intentional failure, and regression testing.
 
-Anti-STIG content is intentionally deferred until the corresponding lockdown has been tested as compliant.
+Current work includes Apache HTTP Server 2.4 UNIX Server/Site and Apache Tomcat 9 V3R4. Anti-STIG implementation is deferred until the corresponding remediation has established a verified compliant baseline.
