@@ -29,7 +29,7 @@ A September 2026 retrospective comparison against the current 79-control V3R4 be
 | V-222926 | Manager simultaneous sessions | REMEDIATION — SSP value required; maxActiveSessions applied when manager exists |
 | V-222962 | Management applications LDAP realm | REMEDIATION — installed management apps require site-supplied JNDIRealm inputs |
 | V-222965 | Secure LDAP authentication | REMEDIATION — LDAPS required for management JNDIRealm |
-| V-222968 | FIPS-validated secured connectors | REMEDIATION/EVIDENCE — FIPSMode opt-in only after RHEL/Java FIPS evidence is supplied |
+| V-222968 | FIPS-validated secured connectors | REMEDIATION/EVIDENCE — remediation hard-stops until RHEL/Java FIPS evidence is supplied, then configures FIPSMode=on |
 | V-222970 | Restrict manager application access | REMEDIATION — manager context uses SSP-approved RemoteCIDRValve or RemoteAddrValve semantics |
 | V-222971 | Mutual authentication with proxy/load balancer | REMEDIATION/EVIDENCE — explicit proxied connector/application scope required; certificateVerification=required plus CLIENT-CERT, or approved risk acceptance |
 | V-222974 | Cluster trusted network | AUDIT/EVIDENCE — trusted/private network or coordinated EncryptInterceptor evidence required |
