@@ -1,0 +1,17 @@
+---
+- name: Server STIG evidence-dependent controls
+  ansible.builtin.debug:
+    msg:
+      - "V-214228 session/request concurrency must match approved operational requirements."
+      - "V-214234 log-processing failure alerting requires site integration/evidence."
+      - "V-214237 log backup to separate media/system requires site evidence."
+      - "V-214238 expansion modules require review, testing, approval, and signatures."
+      - "V-214240 unnecessary services/software require mission and ISSO review."
+      - "V-214249 management/application separation requires architecture evidence."
+      - "V-214254 safe failure state requires application/architecture determination."
+      - "V-214260 emergency remote-access disconnect capability requires site procedure."
+      - "V-214262 log storage capacity requires operational sizing."
+      - "V-214263/V-214264 remote logging/security-infrastructure integration require site configuration/evidence."
+      - "V-214270 patch timeliness requires authoritative-source and patch-process evidence."
+      - "V-214273 vendor support status requires current vendor evidence."
+  tags: [audit, evidence]
