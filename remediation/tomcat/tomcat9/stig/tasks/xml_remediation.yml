@@ -1,0 +1,133 @@
+---
+- name: "XML controls | Harden server.xml and web.xml idempotently"
+  ansible.builtin.shell: |
+    python3 - "{{ tomcat_conf_dir_resolved }}/server.xml" "{{ tomcat_conf_dir_resolved }}/web.xml" <<'PY'
+    import sys, xml.etree.ElementTree as ET
+    server, web = sys.argv[1:3]
+    changed=False
+    def set_attr(e,k,v):
+        global changed
+        if e.get(k)!=v: e.set(k,v); changed=True
+    def ensure_param(servlet,name,value):
+        global changed
+        found=None
+        for ip in servlet.findall('init-param'):
+            if (ip.findtext('param-name') or '').strip()==name: found=ip; break
+        if found is None:
+            found=ET.SubElement(servlet,'init-param'); ET.SubElement(found,'param-name').text=name; ET.SubElement(found,'param-value').text=value; changed=True; return
+        pv=found.find('param-value')
+        if pv is None: pv=ET.SubElement(found,'param-value'); changed=True
+        if (pv.text or '').strip()!=value: pv.text=value; changed=True
+    st=ET.parse(server); sr=st.getroot()
+    set_attr(sr,'port','-1')
+    approved_ports=set({{ tomcat_stig_approved_connector_ports | map('string') | list | to_json }})
+    addresses={{ tomcat_stig_connector_addresses | to_json }}
+    for parent in sr.iter():
+        for c in list(parent.findall('Connector')):
+            port=c.get('port',''); proto=c.get('protocol',''); is_http='AJP' not in proto.upper()
+            if {{ tomcat_stig_enforce_approved_connectors | bool | lower }} and approved_ports and port not in approved_ports:
+                parent.remove(c); changed=True; continue
+            if is_http: set_attr(c,'secure','true'); set_attr(c,'scheme','https')
+            set_attr(c,'allowTrace','false'); set_attr(c,'xpoweredBy','false')
+            if port in addresses: set_attr(c,'address',str(addresses[port]))
+    for h in sr.findall('.//Host'):
+        if {{ (tomcat_stig_production and not tomcat_stig_allow_autodeploy) | bool | lower }}: set_attr(h,'autoDeploy','false')
+        if {{ (tomcat_stig_production and not tomcat_stig_allow_deployxml) | bool | lower }}: set_attr(h,'deployXML','false')
+        valves=[v for v in h.findall('Valve') if v.get('className')=='org.apache.catalina.valves.AccessLogValve']
+        if not valves:
+            v=ET.SubElement(h,'Valve'); set_attr(v,'className','org.apache.catalina.valves.AccessLogValve'); valves=[v]; changed=True
+        for v in valves:
+            set_attr(v,'directory','logs'); set_attr(v,'prefix',h.get('name','host')+'_access_log'); set_attr(v,'suffix','.txt'); set_attr(v,'pattern','%h %l %t %u "%r" %s %b')
+            if {{ tomcat_stig_behind_proxy | bool | lower }}: set_attr(v,'requestAttributesEnabled','true')
+        errs=[v for v in h.findall('Valve') if v.get('className')=='org.apache.catalina.valves.ErrorReportValve']
+        if not errs:
+            v=ET.SubElement(h,'Valve'); set_attr(v,'className','org.apache.catalina.valves.ErrorReportValve'); errs=[v]; changed=True
+        for v in errs: set_attr(v,'showServerInfo','false'); set_attr(v,'showReport','false')
+        if {{ tomcat_stig_behind_proxy | bool | lower }}:
+            rips=[v for v in h.findall('Valve') if v.get('className')=='org.apache.catalina.valves.RemoteIpValve']
+            if not rips:
+                v=ET.SubElement(h,'Valve'); set_attr(v,'className','org.apache.catalina.valves.RemoteIpValve'); rips=[v]; changed=True
+            if {{ (tomcat_stig_internal_proxies_regex | length > 0) | bool | lower }}:
+                for v in rips: set_attr(v,'internalProxies',{{ tomcat_stig_internal_proxies_regex | to_json }})
+    for e in sr.findall('.//Engine'):
+        valves=[v for v in e.findall('Valve') if v.get('className')=='org.apache.catalina.valves.AccessLogValve']
+        if not valves:
+            v=ET.SubElement(e,'Valve'); set_attr(v,'className','org.apache.catalina.valves.AccessLogValve'); valves=[v]; changed=True
+        for v in valves:
+            set_attr(v,'directory','logs'); set_attr(v,'prefix','catalina_access_log'); set_attr(v,'suffix','.txt'); set_attr(v,'pattern','%h %l %t %u "%r" %s %b')
+    approved_ctx=set({{ tomcat_stig_approved_privileged_contexts | to_json }})
+    for c in sr.findall('.//Context'):
+        path=c.get('path','')
+        if c.get('privileged','false').lower()=='true' and path not in approved_ctx: set_attr(c,'privileged','false')
+        valves=[v for v in c.findall('Valve') if v.get('className')=='org.apache.catalina.valves.AccessLogValve']
+        if not valves:
+            v=ET.SubElement(c,'Valve'); set_attr(v,'className','org.apache.catalina.valves.AccessLogValve'); valves=[v]; changed=True
+        for v in valves: set_attr(v,'directory','logs'); set_attr(v,'prefix',(path.strip('/') or 'context')+'_access_log'); set_attr(v,'suffix','.txt'); set_attr(v,'pattern','%h %l %t %u "%r" %s %b')
+    if changed: st.write(server,encoding='UTF-8',xml_declaration=True)
+    server_changed=changed
+    changed=False; wt=ET.parse(web); wr=wt.getroot()
+    default=None
+    for s in wr.findall('servlet'):
+        if (s.findtext('servlet-name') or '').strip().lower()=='default': default=s; break
+    if default is not None:
+        ensure_param(default,'readonly','true'); ensure_param(default,'debug','0'); ensure_param(default,'listings','false')
+    sc=wr.find('session-config')
+    if sc is None: sc=ET.SubElement(wr,'session-config'); changed=True
+    cc=sc.find('cookie-config')
+    if cc is None: cc=ET.SubElement(sc,'cookie-config'); changed=True
+    for name in ('http-only','secure'):
+        e=cc.find(name)
+        if e is None: e=ET.SubElement(cc,name); changed=True
+        if (e.text or '').strip()!='true': e.text='true'; changed=True
+    hf=None
+    for f in wr.findall('filter'):
+        if (f.findtext('filter-name') or '')=='httpHeaderSecurity': hf=f; break
+    if hf is None:
+        hf=ET.SubElement(wr,'filter'); ET.SubElement(hf,'filter-name').text='httpHeaderSecurity'; ET.SubElement(hf,'filter-class').text='org.apache.catalina.filters.HttpHeaderSecurityFilter'; changed=True
+    def fparam(name,val):
+        global changed
+        p=None
+        for ip in hf.findall('init-param'):
+            if (ip.findtext('param-name') or '')==name: p=ip; break
+        if p is None: p=ET.SubElement(hf,'init-param'); ET.SubElement(p,'param-name').text=name; ET.SubElement(p,'param-value').text=val; changed=True; return
+        pv=p.find('param-value')
+        if pv is None: pv=ET.SubElement(p,'param-value'); changed=True
+        if (pv.text or '')!=val: pv.text=val; changed=True
+    fparam('hstsEnabled','true'); fparam('hstsMaxAgeSeconds','31536000'); fparam('hstsIncludeSubDomains',{{ ('true' if tomcat_stig_hsts_include_subdomains else 'false') | to_json }})
+    maps=[m for m in wr.findall('filter-mapping') if (m.findtext('filter-name') or '')=='httpHeaderSecurity']
+    if not maps:
+        m=ET.SubElement(wr,'filter-mapping'); ET.SubElement(m,'filter-name').text='httpHeaderSecurity'; ET.SubElement(m,'url-pattern').text='/*'; ET.SubElement(m,'dispatcher').text='REQUEST'; changed=True
+    if changed: wt.write(web,encoding='UTF-8',xml_declaration=True)
+    print('CHANGED' if (server_changed or changed) else 'OK')
+    PY
+  args:
+    executable: /bin/bash
+  register: tomcat_stig_xml_result
+  changed_when: "'CHANGED' in tomcat_stig_xml_result.stdout"
+  notify: restart tomcat
+  tags:
+    - V-222928
+    - V-222930
+    - V-222932
+    - V-222933
+    - V-222934
+    - V-222935
+    - V-222937
+    - V-222938
+    - V-222939
+    - V-222940
+    - V-222941
+    - V-222942
+    - V-222950
+    - V-222951
+    - V-222952
+    - V-222953
+    - V-222954
+    - V-222955
+    - V-222956
+    - V-222957
+    - V-222961
+    - V-222975
+    - V-222977
+    - V-222985
+    - V-222997
