@@ -1,0 +1,23 @@
+---
+# Copy values you actually need into inventory/group_vars or host_vars.
+tomcat_layout: auto
+tomcat_stig_audit_only: false
+tomcat_stig_restart: true
+tomcat_stig_manage_xml: true
+tomcat_stig_production: true
+
+# SSP/ISSO/site-defined inputs:
+tomcat_stig_manager_max_active_sessions: null
+tomcat_stig_behind_proxy: false
+tomcat_stig_internal_proxies_regex: ""
+tomcat_stig_approved_connector_ports: []
+tomcat_stig_enforce_approved_connectors: false
+tomcat_stig_connector_addresses: {}
+tomcat_stig_approved_privileged_contexts: []
+tomcat_stig_approved_webapps: []
+
+# Supply secrets with Ansible Vault or another secret store, not source control.
+tomcat_keystore_file: ""
+tomcat_keystore_password: ""
+tomcat_truststore_file: ""
+tomcat_dod_ca_bundle: ""
