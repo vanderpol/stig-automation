@@ -1,18 +1,111 @@
 ---
-- name: Ensure audit package is installed
-  ansible.builtin.package:
-    name: audit
-    state: present
+- name: Gather deployed web applications
+  ansible.builtin.find:
+    paths: "{{ tomcat_webapps_dir_resolved }}"
+    file_type: directory
+    recurse: false
+  register: _tomcat_webapps
+  failed_when: false
+  tags: [V-223007, audit]
 
-- name: V-222998 V-222999 V-223000 | Install Tomcat audit watches
-  ansible.builtin.copy:
-    dest: /etc/audit/rules.d/tomcat9-stig.rules
-    owner: root
-    group: root
-    mode: "0640"
-    content: |
-      -w {{ tomcat9_stig_paths.bin }} -p wa -k tomcat_bin
-      -w {{ tomcat9_stig_paths.conf }} -p wa -k tomcat_conf
-      -w {{ tomcat9_stig_paths.lib }} -p wa -k tomcat_lib
-  notify: Reload audit rules
-  tags: [V-222998, V-222999, V-223000]
+- name: "V-223007 | HUMAN | Report webapps requiring SSP documentation"
+  ansible.builtin.debug:
+    msg:
+      finding: V-223007
+      status: "{{ 'REVIEW' if tomcat_stig_approved_webapps | length == 0 else 'COMPARE' }}"
+      deployed: "{{ _tomcat_webapps.files | default([]) | map(attribute='path') | map('basename') | list }}"
+      approved_in_ssp: "{{ tomcat_stig_approved_webapps }}"
+      human_action: ISSM/ISSO must ensure every hosted application is documented/authorized in the SSP.
+  tags: [V-223007, human]
+
+- name: Read configured connector ports
+  ansible.builtin.shell: |
+    python3 - <<'PY'
+    import xml.etree.ElementTree as ET
+    r=ET.parse('{{ tomcat_conf_dir_resolved }}/server.xml').getroot()
+    print(' '.join(c.get('port','') for c in r.findall('.//Connector')))
+    PY
+  args: { executable: /bin/bash }
+  register: _connector_ports
+  changed_when: false
+  failed_when: false
+  tags: [V-222952, V-223008, audit]
+
+- name: "V-222952/V-223008 | HUMAN | Connector authorization"
+  ansible.builtin.debug:
+    msg:
+      findings: [V-222952, V-223008]
+      configured_ports: "{{ _connector_ports.stdout.split() | default([]) }}"
+      approved_ports: "{{ tomcat_stig_approved_connector_ports }}"
+      status: "{{ 'REVIEW - no approved connector list supplied' if tomcat_stig_approved_connector_ports | length == 0 else 'COMPARE configured ports to approved list' }}"
+      human_action: ISSO/SSP must define the authorized connectors and ports; Ansible must not infer mission requirements.
+  tags: [V-222952, V-223008, human]
+
+- name: "V-222961 | HUMAN | Privileged application authorization"
+  ansible.builtin.debug:
+    msg:
+      finding: V-222961
+      approved_privileged_contexts: "{{ tomcat_stig_approved_privileged_contexts }}"
+      human_action: ISSO must explicitly approve any application Context using privileged=true.
+  tags: [V-222961, human]
+
+- name: "V-222931 | HUMAN/SECRET | Keystore password validation"
+  ansible.builtin.assert:
+    that:
+      - tomcat_keystore_password | length > 0
+      - tomcat_keystore_password not in tomcat_keystore_default_passwords
+    fail_msg: "V-222931 REVIEW: provide a non-default keystore password using Ansible Vault; the role will not generate/store an operational secret in source."
+    success_msg: "V-222931 configured variable is non-empty and not in the known default list."
+  no_log: true
+  ignore_errors: true
+  tags: [V-222931, human, tls]
+
+- name: "V-222964 | HUMAN/VARIABLE | JMX TLS"
+  ansible.builtin.debug:
+    msg:
+      finding: V-222964
+      status: "{{ 'REVIEW TLS settings for remote JMX' if tomcat_stig_remote_jmx_enabled else 'N/A candidate - remote JMX disabled; validate against system design' }}"
+      human_action: If remote JMX is authorized, configure and validate TLS, authentication, certificate trust and network restrictions.
+  tags: [V-222964, human, jmx]
+
+- name: "V-222993 | HUMAN/EXTERNAL | CAC for management interface"
+  ansible.builtin.debug:
+    msg:
+      finding: V-222993
+      status: REVIEW
+      human_action: Validate the management interface authentication architecture uses approved certificate-based MFA/CAC; application PKI and identity integration are site-specific.
+  tags: [V-222993, human, pki]
+
+- name: "V-222994/V-223001 | HUMAN/PKI | Approved CA and key management"
+  ansible.builtin.debug:
+    msg:
+      findings: [V-222994, V-223001]
+      status: REVIEW
+      human_action: Validate the certificate chain against DoD/organization-approved trust anchors and document approved key-management technology/processes.
+  tags: [V-222994, V-223001, human, pki]
+
+- name: "V-222995 | HUMAN | HA based on RMF categorization"
+  ansible.builtin.debug:
+    msg:
+      finding: V-222995
+      ha_required: "{{ tomcat_stig_high_availability_required }}"
+      evidence: "{{ tomcat_stig_ha_evidence }}"
+      human_action: RMF/system owner determines whether the system requires HA and supplies architecture evidence.
+  tags: [V-222995, human, ha]
+
+- name: "V-222996 | VARIABLE/PROCESS | Security patching"
+  ansible.builtin.debug:
+    msg:
+      finding: V-222996
+      status: PROCESS
+      human_action: Patch/version compliance depends on the organization's approved Tomcat release baseline and vulnerability-management process; do not auto-upgrade across an unapproved application baseline.
+  tags: [V-222996, human, patching]
+
+- name: "V-223010 | EXTERNAL | Audit-processing failure notification"
+  ansible.builtin.debug:
+    msg:
+      finding: V-223010
+      documented: "{{ tomcat_stig_audit_failure_alerting_documented }}"
+      status: "{{ 'DOCUMENTED' if tomcat_stig_audit_failure_alerting_documented else 'REVIEW' }}"
+      human_action: Configure RHEL/audit/logging infrastructure to alert SA and ISSO on log-processing/storage failure and retain evidence of notification testing.
+  tags: [V-223010, human, external]
