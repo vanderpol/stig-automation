@@ -1,0 +1,234 @@
+---
+- name: PostgreSQL 16 STIG | Audit organization-sensitive server settings
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - >-
+        SELECT name || '=' || setting
+        FROM pg_settings
+        WHERE name IN (
+          'max_connections','listen_addresses','port',
+          'ssl','ssl_ca_file','ssl_cert_file','ssl_crl_file','ssl_key_file',
+          'tcp_keepalives_idle','tcp_keepalives_interval','tcp_keepalives_count',
+          'log_destination','syslog_facility','syslog_ident','log_timezone',
+          'password_encryption','client_min_messages'
+        )
+        ORDER BY name;
+  register: postgres16_sensitive_settings
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261857
+    - V-261889
+    - V-261899
+    - V-261900
+    - V-261917
+    - V-261921
+    - V-261926
+    - V-261929
+    - V-261932
+    - V-261933
+    - V-261967
+
+- name: PostgreSQL 16 STIG | Report organization-sensitive server settings
+  ansible.builtin.debug:
+    var: postgres16_sensitive_settings.stdout_lines
+  tags:
+    - preflight
+    - evidence
+
+- name: PostgreSQL 16 STIG | Audit role security attributes and connection limits
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - >-
+        SELECT rolname || '|super=' || rolsuper ||
+               '|createrole=' || rolcreaterole ||
+               '|createdb=' || rolcreatedb ||
+               '|login=' || rolcanlogin ||
+               '|connlimit=' || rolconnlimit
+        FROM pg_roles
+        ORDER BY rolname;
+  register: postgres16_role_state
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261857
+    - V-261862
+    - V-261878
+    - V-261884
+    - V-261885
+    - V-261888
+    - V-261890
+    - V-261898
+    - V-261914
+    - V-261915
+    - V-261923
+    - V-261924
+
+- name: PostgreSQL 16 STIG | Report role state for approved-state reconciliation
+  ansible.builtin.debug:
+    var: postgres16_role_state.stdout_lines
+  tags:
+    - preflight
+    - evidence
+
+- name: PostgreSQL 16 STIG | Audit installed database extensions
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SELECT extname || '|' || extversion FROM pg_extension ORDER BY extname;"
+  register: postgres16_extensions
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261886
+    - V-261888
+    - V-261901
+    - V-261930
+    - V-261931
+
+- name: PostgreSQL 16 STIG | Report installed database extensions
+  ansible.builtin.debug:
+    var: postgres16_extensions.stdout_lines
+  tags:
+    - preflight
+    - evidence
+
+- name: PostgreSQL 16 STIG | Audit HBA authentication methods
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - >-
+        SELECT line_number || '|' ||
+               coalesce(type,'') || '|' ||
+               coalesce(array_to_string(database,','),'') || '|' ||
+               coalesce(array_to_string(user_name,','),'') || '|' ||
+               coalesce(address,'') || '|' ||
+               coalesce(auth_method,'') || '|' ||
+               coalesce(error,'')
+        FROM pg_hba_file_rules
+        ORDER BY line_number;
+  register: postgres16_hba_rules
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261858
+    - V-261892
+    - V-261893
+    - V-261895
+    - V-261897
+    - V-261900
+    - V-261929
+
+- name: PostgreSQL 16 STIG | Report HBA rules without modifying authentication
+  ansible.builtin.debug:
+    var: postgres16_hba_rules.stdout_lines
+  tags:
+    - preflight
+    - evidence
+
+- name: PostgreSQL 16 STIG | Audit PostgreSQL-owned filesystem objects
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - "{{ postgres16_data_directory }}"
+    - "{{ postgres16_config_file }}"
+    - "{{ postgres16_hba_file }}"
+  register: postgres16_security_file_stats
+  tags:
+    - V-261878
+    - V-261879
+    - V-261881
+    - V-261883
+    - V-261894
+    - V-261904
+
+- name: PostgreSQL 16 STIG | Report filesystem ownership and modes
+  ansible.builtin.debug:
+    msg: >-
+      {{ item.stat.path }} owner={{ item.stat.pw_name | default(item.stat.uid) }}
+      group={{ item.stat.gr_name | default(item.stat.gid) }}
+      mode={{ item.stat.mode }}
+  loop: "{{ postgres16_security_file_stats.results }}"
+  when: item.stat.exists
+  tags:
+    - preflight
+    - evidence
+
+- name: PostgreSQL 16 STIG | Read host FIPS indicator
+  ansible.builtin.slurp:
+    src: /proc/sys/crypto/fips_enabled
+  register: postgres16_fips_state
+  failed_when: false
+  changed_when: false
+  tags:
+    - V-261896
+    - V-261965
+    - V-261966
+
+- name: PostgreSQL 16 STIG | Report host FIPS indicator
+  ansible.builtin.debug:
+    msg: >-
+      host_fips={{ (postgres16_fips_state.content | default('') | b64decode | trim)
+      if not (postgres16_fips_state.failed | default(false)) else 'unavailable' }}
+  tags:
+    - V-261896
+    - V-261965
+    - V-261966
+
+- name: PostgreSQL 16 STIG | Audit server version
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SHOW server_version;"
+  register: postgres16_server_version
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261887
+    - V-261935
+    - V-261936
+    - V-283674
+
+- name: PostgreSQL 16 STIG | Report installed server version
+  ansible.builtin.debug:
+    msg: >-
+      PostgreSQL server_version={{ postgres16_server_version.stdout }}.
+      Patch/support compliance still requires comparison with the current
+      approved vendor/package source; this role does not perform a blind upgrade.
+  tags:
+    - V-261887
+    - V-261935
+    - V-261936
+    - V-283674
