@@ -109,3 +109,102 @@
       status: "{{ 'DOCUMENTED' if tomcat_stig_audit_failure_alerting_documented else 'REVIEW' }}"
       human_action: Configure RHEL/audit/logging infrastructure to alert SA and ISSO on log-processing/storage failure and retain evidence of notification testing.
   tags: [V-223010, human, external]
+
+
+# Controls discovered as missing during the V3R4 provenance/current-check reconciliation.
+# These audits make the gaps visible without inventing site architecture.
+
+- name: "V-222926 | AUDIT | Manager maxActiveSessions requires SSP value"
+  ansible.builtin.debug:
+    msg:
+      finding: V-222926
+      configured_ssp_limit: "{{ tomcat_stig_manager_max_active_sessions }}"
+      status: "{{ 'REVIEW - SSP limit not supplied' if tomcat_stig_manager_max_active_sessions is none else 'COMPARE manager META-INF/context.xml maxActiveSessions to SSP limit' }}"
+  tags: [V-222926, audit]
+
+- name: "V-222962/V-222965 | AUDIT | LDAP realm and LDAPS requirement"
+  ansible.builtin.debug:
+    msg:
+      findings: [V-222962, V-222965]
+      ldap_enabled: "{{ tomcat_stig_ldap_enabled }}"
+      connection_url_configured: "{{ tomcat_stig_ldap_connection_url | length > 0 }}"
+      ldaps_scheme: "{{ tomcat_stig_ldap_connection_url.startswith('ldaps://') if tomcat_stig_ldap_connection_url | length > 0 else false }}"
+      status: "REVIEW - management authentication architecture and effective JNDIRealm must be compared to current V3R4 check."
+  tags: [V-222962, V-222965, audit]
+
+- name: "V-222968 | AUDIT | FIPS connector requirement"
+  ansible.builtin.debug:
+    msg:
+      finding: V-222968
+      status: REVIEW
+      human_action: >-
+        Verify current V3R4 FIPSMode/connector requirements and confirm the RHEL Java/OS cryptographic
+        modules in use are FIPS validated. Tomcat configuration alone cannot establish this evidence.
+  tags: [V-222968, audit]
+
+- name: "V-222970 | AUDIT | Manager network restriction"
+  ansible.builtin.debug:
+    msg:
+      finding: V-222970
+      approved_management_regex: "{{ tomcat_stig_management_allowed_cidr_regex }}"
+      status: "REVIEW - compare manager META-INF/context.xml RemoteAddrValve/RemoteCIDRValve to approved management networks."
+  tags: [V-222970, audit]
+
+- name: "V-222971 | AUDIT | Proxy/load-balancer mutual authentication"
+  ansible.builtin.debug:
+    msg:
+      finding: V-222971
+      behind_proxy: "{{ tomcat_stig_behind_proxy }}"
+      mutual_tls_required: "{{ tomcat_stig_proxy_mutual_tls_required }}"
+      status: "REVIEW - current V3R4 check uses SSLHostConfig certificateVerification/client certificate semantics plus application CLIENT-CERT."
+  tags: [V-222971, audit]
+
+- name: "V-222974 | AUDIT | Cluster trusted network"
+  ansible.builtin.debug:
+    msg:
+      finding: V-222974
+      cluster_enabled: "{{ tomcat_stig_cluster_enabled }}"
+      trusted_network_documented: "{{ tomcat_stig_cluster_trusted_network_documented }}"
+      status: "{{ 'REVIEW - trusted cluster network evidence required' if tomcat_stig_cluster_enabled and not tomcat_stig_cluster_trusted_network_documented else 'N/A/REVIEW based on deployed cluster architecture' }}"
+  tags: [V-222974, audit]
+
+- name: "V-222976 | AUDIT | Manager default error pages"
+  ansible.builtin.debug:
+    msg:
+      finding: V-222976
+      status: REVIEW
+      human_action: "If manager is installed, verify its default 401/403/404 JSP error pages are customized and sample account/password guidance is removed."
+  tags: [V-222976, audit]
+
+- name: "V-222979 | AUDIT | Manager idle timeout"
+  ansible.builtin.debug:
+    msg:
+      finding: V-222979
+      required_minutes: 10
+      status: "REVIEW - verify manager application session-timeout is 10 minutes."
+  tags: [V-222979, audit]
+
+- name: "V-222980/V-222981/V-222982 | AUDIT | Management LockOutRealm"
+  ansible.builtin.debug:
+    msg:
+      findings: [V-222980, V-222981, V-222982]
+      required_failure_count: 5
+      required_lockout_seconds: 600
+      status: "REVIEW - verify effective management Realm is a LockOutRealm with failureCount=5 and lockOutTime=600."
+  tags: [V-222980, V-222981, V-222982, audit]
+
+- name: "V-223006 | AUDIT | Management-role user approval"
+  ansible.builtin.debug:
+    msg:
+      finding: V-223006
+      status: REVIEW
+      human_action: "Enumerate users assigned Tomcat management roles and compare every account to ISSO approval records."
+  tags: [V-223006, audit]
+
+- name: "V-223009 | AUDIT | Connector address completeness"
+  ansible.builtin.debug:
+    msg:
+      finding: V-223009
+      approved_connector_addresses: "{{ tomcat_stig_connector_addresses }}"
+      status: "REVIEW - every active Connector must have an address attribute matching an SSP-approved interface."
+  tags: [V-223009, audit]
