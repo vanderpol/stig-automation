@@ -25,6 +25,18 @@
   when: "'manager' in tomcat_stig_installed_management_apps"
   tags: [V-222926]
 
+- name: "V-222962/V-222980 | Acknowledge Engine-level Realm replacement"
+  ansible.builtin.assert:
+    that:
+      - tomcat_stig_replace_engine_realm_for_management | bool
+    fail_msg: >-
+      Management applications are installed and current V3R4 checks require the effective
+      LDAP/LockOutRealm to be visible in server.xml. This role implements that at Engine scope,
+      which can affect other applications inheriting the Engine Realm. Review application
+      authentication, then explicitly set tomcat_stig_replace_engine_realm_for_management=true.
+  when: tomcat_stig_installed_management_apps | length > 0
+  tags: [V-222962, V-222980]
+
 - name: "V-222962/V-222965 | Require complete LDAPS JNDIRealm inputs for management applications"
   ansible.builtin.assert:
     that:
@@ -121,7 +133,9 @@
     TC_STIG_LDAP_CONNECTION_PASSWORD: "{{ tomcat_stig_ldap_connection_password }}"
   register: tomcat_stig_management_realm_result
   changed_when: "'CHANGED' in tomcat_stig_management_realm_result.stdout"
-  when: tomcat_stig_installed_management_apps | length > 0
+  when:
+    - tomcat_stig_installed_management_apps | length > 0
+    - tomcat_stig_replace_engine_realm_for_management | bool
   no_log: "{{ tomcat_stig_ldap_connection_password | length > 0 }}"
   notify: restart tomcat
   tags: [V-222962, V-222965, V-222980, V-222981, V-222982]
@@ -241,6 +255,7 @@
     owner: root
     group: "{{ tomcat_group }}"
     mode: "0640"
+    backup: true
     content: |
       <%@ page contentType="text/html; charset=UTF-8" %>
       <!doctype html>
