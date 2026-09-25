@@ -66,6 +66,6 @@ From the repository root:
 
 See `TESTING.md` before applying the role and record the exact Git tag/commit with SCAP results.
 
-**Current Tomcat status:** a retrospective V3R4 provenance/current-check review found 14 current controls with missing or partial executable coverage. These gaps are now visible in audit output but are not yet remediated. See `docs/TOMCAT9_PROVENANCE_REVIEW.md` and `remediation/tomcat/tomcat9/stig/docs/SOURCE_PROVENANCE.md`.
+**Current Tomcat status:** a retrospective V3R4 provenance/current-check review found 14 previously missing/partial controls. This round added the safe deterministic remediation and explicit site/evidence guardrails needed to represent all 79 current controls. The new logic is not yet lab/assessment verified. See `docs/TOMCAT9_PROVENANCE_REVIEW.md` and `remediation/tomcat/tomcat9/stig/docs/SOURCE_PROVENANCE.md`.
 
 Anti-STIG implementation is deferred until the corresponding remediation has established a verified compliant baseline.
