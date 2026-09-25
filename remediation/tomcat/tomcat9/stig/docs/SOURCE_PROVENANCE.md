@@ -36,89 +36,102 @@ The public Ansible-Lockdown role was rechecked on 2026-09-25. Its project docume
 
 The initial reconciliation found **14 current V3R4 controls with missing or partial implementation/audit coverage**. This round closed the deterministic gaps where safe and converted the remaining architecture/process items into explicit evidence/guardrail controls. The review therefore found and corrected substantive coverage issues, not just attribution issues.
 
+### Shared per-control metadata
+
+The following fields apply to every row below unless a row's source basis says otherwise:
+
+- **Benchmark / primary authority:** Apache Tomcat Application Server 9 STIG V3R4, released 2026-02-25.
+- **Retrospective contributor/date:** stig-automation provenance reconciliation, September 2026.
+- **Internal baseline location:** project-owner-supplied `tomcat9_stig_ansible_rhel8_rhel9_v0.3` archive.
+- **Public comparison source/version/location/license:** Ansible-Lockdown TOMCAT-9-STIG, public `devel` view rechecked 2026-09-25, https://github.com/ansible-lockdown/TOMCAT-9-STIG, MIT. Benchmark alignment remains unverified.
+- **Product reference:** Apache Tomcat 9 documentation, https://tomcat.apache.org/tomcat-9.0-doc/.
+- **Validation status:** UNTESTED means not yet lab/idempotency/authoritative-assessment verified after this reconciliation.
+
+For **INHERITED/ADAPTED** rows, the material used is the implementation from the supplied v0.3 baseline, reconciled to current V3R4 semantics where changes were identified. For **ORIGINAL** rows, the implementation was written in this review directly from current V3R4 check/fix semantics, with Apache product documentation used only to confirm Tomcat behavior. Public Ansible-Lockdown code was not established as a material source for these implementations.
+
 ## Per-control provenance/coverage ledger
 
-| V-ID | Implementation type | Provenance | Source basis | Coverage | Test risk |
-|---|---|---|---|---|---|
-| V-222931 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222964 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222965 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH |
-| V-222968 | REMEDIATION/EVIDENCE | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT-MIXED | HIGH |
-| V-222930 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222932 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222933 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222934 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222935 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222937 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222938 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222939 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222940 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222942 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222943 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222944 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222945 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222946 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222947 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222948 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222949 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222950 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222951 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222952 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222955 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222956 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222961 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222962 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH |
-| V-222963 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222966 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222967 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222969 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222970 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH |
-| V-222971 | AUDIT/EVIDENCE | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT-MIXED | HIGH |
-| V-222974 | AUDIT/EVIDENCE | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT-MIXED | HIGH |
-| V-222975 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222977 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222979 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH |
-| V-222980 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH |
-| V-222981 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH |
-| V-222983 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222984 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222986 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222987 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222988 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222991 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222993 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222994 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222995 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222996 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222997 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222998 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222999 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-223000 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-223004 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-223005 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-223006 | EVIDENCE | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT-MIXED | HIGH |
-| V-223010 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222926 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH |
-| V-222928 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222941 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222953 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222954 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222957 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222958 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222959 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222960 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222973 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222976 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH |
-| V-222982 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH |
-| V-222985 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222989 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-222990 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-223001 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-223002 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-223003 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-223007 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-223008 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH |
-| V-223009 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH |
+| V-ID | Implementation type | Provenance | Source basis | Coverage | Test risk | Validation status |
+|---|---|---|---|---|---|---|
+| V-222931 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222964 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222965 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH | UNTESTED |
+| V-222968 | REMEDIATION/EVIDENCE | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT-MIXED | HIGH | UNTESTED |
+| V-222930 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222932 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222933 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222934 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222935 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222937 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222938 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222939 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222940 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222942 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222943 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222944 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222945 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222946 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222947 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222948 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222949 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222950 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222951 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222952 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222955 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222956 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222961 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222962 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH | UNTESTED |
+| V-222963 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222966 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222967 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222969 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222970 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH | UNTESTED |
+| V-222971 | AUDIT/EVIDENCE | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT-MIXED | HIGH | UNTESTED |
+| V-222974 | AUDIT/EVIDENCE | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT-MIXED | HIGH | UNTESTED |
+| V-222975 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222977 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222979 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH | UNTESTED |
+| V-222980 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH | UNTESTED |
+| V-222981 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH | UNTESTED |
+| V-222983 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222984 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222986 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222987 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222988 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222991 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222993 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222994 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222995 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222996 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222997 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222998 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222999 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-223000 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-223004 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-223005 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-223006 | EVIDENCE | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT-MIXED | HIGH | UNTESTED |
+| V-223010 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222926 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH | UNTESTED |
+| V-222928 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222941 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222953 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222954 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222957 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222958 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222959 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222960 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222973 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222976 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH | UNTESTED |
+| V-222982 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH | UNTESTED |
+| V-222985 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222989 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-222990 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-223001 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-223002 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-223003 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-223007 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-223008 | AUDIT/EVIDENCE | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
+| V-223009 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH | UNTESTED |
 
 ## Interpretation
 
