@@ -98,7 +98,7 @@ The September 2026 provenance/current-check review added or substantially change
 
 - V-222926 — manager maxActiveSessions must match the SSP.
 - V-222962/V-222965 — management applications require Engine-level LDAPS JNDIRealm configuration visible in server.xml.
-- V-222968 — AprLifecycleListener FIPSMode is guarded by RHEL/Java FIPS evidence; after restart, confirm catalina.out contains no FIPSMode failure.
+- V-222968 — remediation now hard-stops until RHEL/Java FIPS readiness evidence is supplied; after restart, confirm server.xml has FIPSMode=on and catalina.out contains no FIPSMode failure.
 - V-222970 — manager network restriction must exactly match the SSP using RemoteCIDRValve or RemoteAddrValve semantics.
 - V-222971 — proxy/load-balancer mutual TLS requires connector client-certificate enforcement and CLIENT-CERT for associated applications unless approved risk acceptance applies.
 - V-222974 — actual configured Cluster elements require trusted-network/encryption evidence.
