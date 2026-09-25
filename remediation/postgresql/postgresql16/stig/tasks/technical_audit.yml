@@ -253,6 +253,20 @@
   tags:
     - V-261858
 
+- name: PostgreSQL 16 STIG | Require approval for non-enterprise HBA methods
+  ansible.builtin.assert:
+    that:
+      - >-
+        (postgres16_non_enterprise_hba_rules | length == 0)
+        or
+        (postgres16_authentication_exception_evidence is not none)
+    fail_msg: >-
+      V-261858 is CAT I. HBA rules outside gss/sspi/ldap/cert require documented
+      organization approval. Supply postgres16_authentication_exception_evidence
+      or correct the HBA design before remediation.
+  tags:
+    - V-261858
+
 - name: PostgreSQL 16 STIG | Report non-enterprise HBA rules requiring approval
   ansible.builtin.debug:
     msg: >-
@@ -260,6 +274,19 @@
       V-261858 permits other methods only when they are documented and approved.
   tags:
     - V-261858
+
+- name: PostgreSQL 16 STIG | Prohibit cleartext and MD5 HBA password methods
+  ansible.builtin.assert:
+    that:
+      - postgres16_weak_hba_rules | length == 0
+    fail_msg: >-
+      V-261892 is CAT I and the current check treats any pg_hba.conf password
+      or md5 authentication entry as a finding. Replace those entries with an
+      approved authentication design (for password fallback, scram-sha-256)
+      before remediation. This role will not bulk-rewrite HBA rules and risk
+      administrative/application lockout.
+  tags:
+    - V-261892
 
 - name: PostgreSQL 16 STIG | Report HBA password-authentication exposure
   ansible.builtin.debug:
@@ -335,6 +362,66 @@
     - V-261893
     - V-261894
     - V-261929
+
+- name: PostgreSQL 16 STIG | Require CAT I authorization and installation-account evidence
+  ansible.builtin.assert:
+    that:
+      - postgres16_authorization_evidence is not none
+      - postgres16_installation_account_evidence is not none
+    fail_msg: >-
+      CAT I controls V-261859 and V-261882 require documented authorization
+      policy and controlled/tracked PostgreSQL installation-account access.
+      Supply the corresponding evidence references before remediation.
+  tags:
+    - V-261859
+    - V-261882
+
+- name: PostgreSQL 16 STIG | Require explicit data-at-rest determination
+  ansible.builtin.assert:
+    that:
+      - postgres16_at_rest_protection_evidence is not none
+    fail_msg: >-
+      CAT I controls V-261901 and V-261930 require a documented AO/data-owner
+      determination and evidence for the selected at-rest protection mechanism,
+      or documentation that encryption is not required where the check permits
+      that outcome. The role cannot infer this decision.
+  tags:
+    - V-261901
+    - V-261930
+
+- name: PostgreSQL 16 STIG | Require explicit classified-system applicability
+  ansible.builtin.assert:
+    that:
+      - postgres16_environment_classification in ['unclassified', 'classified']
+      - >-
+        (postgres16_environment_classification == 'unclassified')
+        or
+        (postgres16_classified_crypto_evidence is not none)
+    fail_msg: >-
+      V-261928 is CAT I. Set postgres16_environment_classification explicitly
+      to unclassified or classified. Classified deployments must also provide
+      evidence of NSA-approved cryptographic protection.
+  tags:
+    - V-261928
+
+- name: PostgreSQL 16 STIG | Require PKI private-key protection evidence when key material exists
+  ansible.builtin.assert:
+    that:
+      - >-
+        (postgres16_tls_file_stats.results | default([])
+         | selectattr('item.key', 'equalto', 'ssl_key_file')
+         | selectattr('stat.exists', 'defined')
+         | selectattr('stat.exists', 'equalto', true)
+         | list | length == 0)
+        or
+        (postgres16_pki_evidence is not none)
+    fail_msg: >-
+      V-261894 is CAT I. PostgreSQL private-key material exists, so provide
+      evidence that the key and containing directory are restricted to
+      authorized users and protected by the approved FIPS cryptographic
+      boundary. The role reports ownership/modes but will not relocate keys.
+  tags:
+    - V-261894
 
 - name: PostgreSQL 16 STIG | Audit server version
   become: true
