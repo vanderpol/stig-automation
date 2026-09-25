@@ -48,3 +48,12 @@ apache24_stig_admin_audit_paths: []
 apache24_stig_privileged_paths: []
 apache24_stig_management_endpoints: []
 apache24_stig_management_separation_documented: false
+apache24_stig_session_management_evidence: ""
+apache24_stig_session_invalidation_evidence: ""
+apache24_stig_cookie_scope_evidence: ""
+apache24_stig_session_id_length_evidence: ""
+apache24_stig_session_timeout_minutes: null
+apache24_stig_application_value: ""
+apache24_stig_blocked_networks: []
+apache24_stig_remote_audit_logging_documented: false
+apache24_stig_security_integration_documented: false
