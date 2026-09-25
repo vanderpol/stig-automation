@@ -1,0 +1,14 @@
+---
+- name: PostgreSQL 16 STIG | Discovery and preflight
+  ansible.builtin.import_tasks: discovery.yml
+  tags: [always, preflight]
+
+- name: PostgreSQL 16 STIG | Deterministic remediation
+  ansible.builtin.import_tasks: remediation.yml
+  when: postgres16_stig_enabled | bool
+  tags: [remediation]
+
+- name: PostgreSQL 16 STIG | Audit and evidence
+  ansible.builtin.import_tasks: audit.yml
+  when: postgres16_stig_enabled | bool
+  tags: [audit, evidence]
