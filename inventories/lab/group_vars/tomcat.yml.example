@@ -23,3 +23,46 @@
 # tomcat_truststore_file: /path/to/truststore
 # tomcat_truststore_password: !vault |
 #   ...
+
+
+# Current V3R4 management controls. Required only when manager/host-manager are installed.
+# tomcat_stig_manager_max_active_sessions: 10
+# tomcat_stig_management_allowed_cidrs:
+#   - 192.0.2.0/24
+# OR use a RemoteAddrValve-compatible regular expression:
+# tomcat_stig_management_allowed_cidr_regex: '^192\.0\.2\.[0-9]+$'
+#
+# V-222962/V-222965 require an LDAPS JNDIRealm for installed management applications.
+# tomcat_stig_ldap_enabled: true
+# tomcat_stig_ldap_connection_url: "ldaps://ldap.example.invalid:636"
+# tomcat_stig_ldap_user_base: "ou=people,dc=example,dc=invalid"
+# tomcat_stig_ldap_user_search: "(uid={0})"
+# tomcat_stig_ldap_role_base: "ou=groups,dc=example,dc=invalid"
+# tomcat_stig_ldap_role_name: "cn"
+# tomcat_stig_ldap_role_search: "(uniqueMember={0})"
+# tomcat_stig_ldap_connection_name: "cn=tomcat-bind,ou=svc,dc=example,dc=invalid"
+# tomcat_stig_ldap_connection_password: !vault |
+#   ...
+# tomcat_stig_management_user_approval_evidence: "SSP section / ISSO approval record"
+
+# V-223009 requires an SSP-approved address for every active Connector.
+# tomcat_stig_connector_addresses:
+#   "8443": "192.0.2.20"
+
+# V-222968: enable only after the RHEL/Java crypto stack is approved/configured for FIPS.
+# tomcat_stig_fips_enabled: true
+# tomcat_stig_fips_platform_evidence: "RHEL/Java FIPS validation/configuration record"
+
+# V-222971: if behind a proxy/load balancer, either document approved risk acceptance or
+# explicitly require mutual TLS and list the associated application web.xml files.
+# tomcat_stig_behind_proxy: true
+# tomcat_stig_proxy_mutual_tls_required: true
+# tomcat_stig_proxy_mutual_tls_evidence: "architecture / certificate trust evidence"
+# tomcat_stig_proxy_client_cert_web_xml_files:
+#   - /var/lib/tomcat/webapps/myapp/WEB-INF/web.xml
+# OR:
+# tomcat_stig_proxy_mutual_tls_risk_acceptance: "approved RMF risk acceptance"
+
+# V-222974: only relevant when a <Cluster> is configured.
+# tomcat_stig_cluster_trusted_network_documented: true
+# tomcat_stig_cluster_encryption_evidence: "private VLAN/VPN/IPsec/EncryptInterceptor evidence"
