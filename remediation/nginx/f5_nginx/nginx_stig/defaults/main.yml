@@ -1,0 +1,40 @@
+---
+nginx_stig_audit_only: false
+nginx_stig_service: nginx
+nginx_stig_binary: nginx
+nginx_stig_main_conf: /etc/nginx/nginx.conf
+nginx_stig_conf_dir: /etc/nginx
+nginx_stig_runtime_user: ""
+nginx_stig_manage_dropin: true
+nginx_stig_dropin: /etc/nginx/conf.d/99-disa-stig.conf
+
+# Organization/site-owned values. Empty values are not guessed.
+nginx_stig_worker_connections: null
+nginx_stig_syslog_server: ""
+nginx_stig_allowed_cidrs: []
+nginx_stig_required_proxy_headers: {}
+nginx_stig_tls_server_snippet_files: []
+nginx_stig_approved_module_paths: []
+nginx_stig_approved_listen_endpoints: []
+nginx_stig_pki_approval_evidence: ""
+nginx_stig_fips_platform_evidence: ""
+nginx_stig_api_in_use: false
+nginx_stig_api_management_address: ""
+nginx_stig_api_separation_evidence: ""
+nginx_stig_keyval_in_use: false
+nginx_stig_keyval_timeout: ""
+nginx_stig_access_tokens_in_use: false
+nginx_stig_token_revocation_evidence: ""
+nginx_stig_replay_resistance_evidence: ""
+nginx_stig_consent_banner_applicable: false
+nginx_stig_consent_banner_evidence: ""
+
+# Safe deterministic defaults that directly match V1R1 checks.
+nginx_stig_client_body_timeout: 10
+nginx_stig_client_header_timeout: 10
+nginx_stig_send_timeout: 10
+nginx_stig_ssl_session_timeout_minutes: 15
+nginx_stig_limit_conn_zone_name: stig_conn_limit
+nginx_stig_limit_conn_zone_size: 10m
+nginx_stig_limit_conn_per_client: 10
+nginx_stig_fips_cipher_string: "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256"
