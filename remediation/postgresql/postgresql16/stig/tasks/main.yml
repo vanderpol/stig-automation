@@ -3,22 +3,22 @@
   ansible.builtin.import_tasks: discovery.yml
   tags: [always, preflight]
 
-- name: PostgreSQL 16 STIG | Deterministic remediation
-  ansible.builtin.import_tasks: remediation.yml
-  when: postgres16_stig_enabled | bool
-  tags: [remediation]
-
-- name: PostgreSQL 16 STIG | Technical audit
+- name: PostgreSQL 16 STIG | Pre-remediation technical audit and mandatory gates
   ansible.builtin.import_tasks: technical_audit.yml
   when: postgres16_stig_enabled | bool
   tags: [audit, preflight]
-
-- name: PostgreSQL 16 STIG | Audit and evidence
-  ansible.builtin.import_tasks: audit.yml
-  when: postgres16_stig_enabled | bool
-  tags: [audit, evidence]
 
 - name: PostgreSQL 16 STIG | Site and application evidence gates
   ansible.builtin.import_tasks: evidence.yml
   when: postgres16_stig_enabled | bool
   tags: [evidence]
+
+- name: PostgreSQL 16 STIG | Deterministic remediation
+  ansible.builtin.import_tasks: remediation.yml
+  when: postgres16_stig_enabled | bool
+  tags: [remediation]
+
+- name: PostgreSQL 16 STIG | Post-remediation audit
+  ansible.builtin.import_tasks: audit.yml
+  when: postgres16_stig_enabled | bool
+  tags: [audit, evidence]
