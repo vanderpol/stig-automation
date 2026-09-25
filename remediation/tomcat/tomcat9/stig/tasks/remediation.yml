@@ -257,6 +257,10 @@
   notify: reload audit rules
   tags: [V-222998, V-222999, V-223000, auditd]
 
+- name: Apply manager-specific deterministic remediations
+  ansible.builtin.include_tasks: manager_remediation.yml
+  tags: [V-222926, V-222979]
+
 - name: Apply deterministic XML remediations
   ansible.builtin.include_tasks: xml_remediation.yml
   when: tomcat_stig_manage_xml | bool
