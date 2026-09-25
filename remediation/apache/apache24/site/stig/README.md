@@ -7,3 +7,6 @@ Site remediation remains separate from Server remediation because its compliance
 Before use, read `docs/APACHE24_SITE_USER_GUIDE.md` and the Site control matrix. Organization-owned PKI material, authorization decisions, application architecture, PPSM approval, and process evidence are not invented by this role.
 
 Recommended order: Server preflight/remediation/assessment, then Site preflight/remediation/assessment.
+
+
+Before testing or deployment, also read [`ISSUES_AND_CONCERNS.md`](ISSUES_AND_CONCERNS.md). It records known assessor-versus-hardening traps, PKI/application boundaries, and high-risk Site controls.
