@@ -1,11 +1,20 @@
 ---
-- name: "Manager controls | Detect manager application"
+- name: "Manager controls | Detect management applications"
   ansible.builtin.stat:
-    path: "{{ tomcat_webapps_dir_resolved }}/manager"
-  register: tomcat_stig_manager_app
-  tags: [V-222926, V-222976, V-222979, V-222980, V-222981, V-222982]
+    path: "{{ tomcat_webapps_dir_resolved }}/{{ item }}"
+  loop: [manager, host-manager]
+  register: tomcat_stig_management_apps
+  tags: [V-222926, V-222962, V-222965, V-222970, V-222976, V-222979, V-222980, V-222981, V-222982]
 
-- name: "V-222926/V-222979 | Require SSP session limit when manager is installed"
+- name: "Manager controls | Build installed management application list"
+  ansible.builtin.set_fact:
+    tomcat_stig_installed_management_apps: >-
+      {{ tomcat_stig_management_apps.results
+         | selectattr('stat.exists', 'equalto', true)
+         | map(attribute='item') | list }}
+  tags: [V-222926, V-222962, V-222965, V-222970, V-222976, V-222979, V-222980, V-222981, V-222982]
+
+- name: "V-222926 | Require SSP session limit when manager is installed"
   ansible.builtin.assert:
     that:
       - tomcat_stig_manager_max_active_sessions is not none
@@ -13,53 +22,186 @@
     fail_msg: >-
       Manager is installed. Set tomcat_stig_manager_max_active_sessions to the SSP-approved
       simultaneous management-session limit before remediation.
-  when: tomcat_stig_manager_app.stat.exists
-  tags: [V-222926, V-222979]
+  when: "'manager' in tomcat_stig_installed_management_apps"
+  tags: [V-222926]
 
-- name: "V-222926/V-222979 | Configure manager session controls"
+- name: "V-222962/V-222965 | Require complete LDAPS JNDIRealm inputs for management applications"
+  ansible.builtin.assert:
+    that:
+      - tomcat_stig_ldap_enabled | bool
+      - tomcat_stig_ldap_connection_url.startswith('ldaps://')
+      - tomcat_stig_ldap_user_base | length > 0
+      - tomcat_stig_ldap_user_search | length > 0
+      - tomcat_stig_ldap_role_base | length > 0
+      - tomcat_stig_ldap_role_name | length > 0
+      - tomcat_stig_ldap_role_search | length > 0
+    fail_msg: >-
+      Current V3R4 requires LDAP realm authentication for installed management applications and
+      LDAPS for JNDIRealm. Supply the site-approved LDAP schema/connection inputs; the role will
+      not invent directory structure or credentials.
+  when: tomcat_stig_installed_management_apps | length > 0
+  tags: [V-222962, V-222965]
+
+- name: "V-222970 | Require management network restriction input"
+  ansible.builtin.assert:
+    that:
+      - tomcat_stig_management_allowed_cidr_regex | length > 0
+    fail_msg: >-
+      Manager is installed. Set tomcat_stig_management_allowed_cidr_regex to localhost and/or
+      the SSP-approved management network expression.
+  when: "'manager' in tomcat_stig_installed_management_apps"
+  tags: [V-222970]
+
+- name: "V-222926/V-222962/V-222965/V-222970/V-222980/V-222981/V-222982 | Configure manager context security"
   ansible.builtin.shell: |
-    python3 - "{{ tomcat_webapps_dir_resolved }}/manager/META-INF/context.xml" "{{ tomcat_webapps_dir_resolved }}/manager/WEB-INF/web.xml" "{{ tomcat_stig_manager_max_active_sessions | int }}" <<'PY'
-    import os, sys, xml.etree.ElementTree as ET
-    context, web, limit = sys.argv[1], sys.argv[2], sys.argv[3]
-    changed = False
+    python3 - "{{ tomcat_webapps_dir_resolved }}" '{{ tomcat_stig_installed_management_apps | to_json }}' "{{ tomcat_stig_manager_max_active_sessions | default(0, true) | int }}" "{{ tomcat_stig_management_allowed_cidr_regex }}" "{{ tomcat_stig_ldap_connection_url }}" "{{ tomcat_stig_ldap_user_base }}" "{{ tomcat_stig_ldap_user_search }}" "{{ tomcat_stig_ldap_role_base }}" "{{ tomcat_stig_ldap_role_name }}" "{{ tomcat_stig_ldap_role_search }}" "{{ tomcat_stig_ldap_connection_name }}" "{{ tomcat_stig_ldap_connection_password }}" <<'PY'
+    import json, os, sys, xml.etree.ElementTree as ET
 
-    ct = ET.parse(context)
-    cr = ct.getroot()
-    manager = cr.find("Manager")
-    if manager is None:
-        manager = ET.SubElement(cr, "Manager")
-        changed = True
-    if manager.get("maxActiveSessions") != limit:
-        manager.set("maxActiveSessions", limit)
-        changed = True
-    if changed:
-        ct.write(context, encoding="UTF-8", xml_declaration=True)
+    (webapps, apps_json, max_sessions, allow_regex, connection_url, user_base,
+     user_search, role_base, role_name, role_search, connection_name,
+     connection_password) = sys.argv[1:13]
+    apps = json.loads(apps_json)
+    any_changed = False
 
-    web_changed = False
-    wt = ET.parse(web)
-    wr = wt.getroot()
-    ns = wr.tag.split("}")[0] + "}" if wr.tag.startswith("{") else ""
-    q = lambda n: ns + n
-    sc = wr.find(q("session-config"))
-    if sc is None:
-        sc = ET.SubElement(wr, q("session-config"))
-        web_changed = True
-    timeout = sc.find(q("session-timeout"))
-    if timeout is None:
-        timeout = ET.SubElement(sc, q("session-timeout"))
-        web_changed = True
-    if (timeout.text or "").strip() != "10":
-        timeout.text = "10"
-        web_changed = True
-    if web_changed:
-        wt.write(web, encoding="UTF-8", xml_declaration=True)
+    def set_attr(elem, key, value):
+        global any_changed
+        if value is not None and elem.get(key) != value:
+            elem.set(key, value)
+            any_changed = True
 
-    print("CHANGED" if changed or web_changed else "OK")
+    for app in apps:
+        path = os.path.join(webapps, app, "META-INF", "context.xml")
+        tree = ET.parse(path)
+        root = tree.getroot()
+        before_changed = any_changed
+
+        if app == "manager":
+            manager = root.find("Manager")
+            if manager is None:
+                manager = ET.SubElement(root, "Manager")
+                any_changed = True
+            set_attr(manager, "maxActiveSessions", str(max_sessions))
+
+            valves = [v for v in root.findall("Valve")
+                      if v.get("className") in (
+                          "org.apache.catalina.valves.RemoteAddrValve",
+                          "org.apache.catalina.valves.RemoteCIDRValve")]
+            if not valves:
+                valve = ET.SubElement(root, "Valve")
+                set_attr(valve, "className", "org.apache.catalina.valves.RemoteAddrValve")
+                valves = [valve]
+                any_changed = True
+            for valve in valves:
+                if valve.get("className") == "org.apache.catalina.valves.RemoteCIDRValve":
+                    # Do not rewrite a site-selected CIDR valve with regex semantics.
+                    continue
+                set_attr(valve, "allow", allow_regex)
+
+        realms = [r for r in root.findall("Realm")]
+        if len(realms) > 1:
+            raise SystemExit(f"{path}: multiple direct Realm elements found; refusing ambiguous rewrite")
+
+        if realms and realms[0].get("className") not in (
+                "org.apache.catalina.realm.LockOutRealm",
+                "org.apache.catalina.realm.JNDIRealm"):
+            raise SystemExit(
+                f"{path}: existing Realm {realms[0].get('className')} is not safely replaceable; review manually")
+
+        if realms and realms[0].get("className") == "org.apache.catalina.realm.LockOutRealm":
+            lockout = realms[0]
+        else:
+            existing_jndi = realms[0] if realms else None
+            if existing_jndi is not None:
+                root.remove(existing_jndi)
+            lockout = ET.SubElement(root, "Realm")
+            set_attr(lockout, "className", "org.apache.catalina.realm.LockOutRealm")
+            if existing_jndi is not None:
+                lockout.append(existing_jndi)
+            any_changed = True
+
+        set_attr(lockout, "failureCount", "5")
+        set_attr(lockout, "lockOutTime", "600")
+
+        nested = [r for r in lockout.findall("Realm")
+                  if r.get("className") == "org.apache.catalina.realm.JNDIRealm"]
+        if nested:
+            jndi = nested[0]
+        else:
+            jndi = ET.SubElement(lockout, "Realm")
+            set_attr(jndi, "className", "org.apache.catalina.realm.JNDIRealm")
+            any_changed = True
+
+        set_attr(jndi, "connectionURL", connection_url)
+        set_attr(jndi, "userBase", user_base)
+        set_attr(jndi, "userSearch", user_search)
+        set_attr(jndi, "roleBase", role_base)
+        set_attr(jndi, "roleName", role_name)
+        set_attr(jndi, "roleSearch", role_search)
+        if connection_name:
+            set_attr(jndi, "connectionName", connection_name)
+        if connection_password:
+            set_attr(jndi, "connectionPassword", connection_password)
+
+        if any_changed != before_changed:
+            tree.write(path, encoding="UTF-8", xml_declaration=True)
+
+    print("CHANGED" if any_changed else "OK")
     PY
   args:
     executable: /bin/bash
-  register: tomcat_stig_manager_session_result
-  changed_when: "'CHANGED' in tomcat_stig_manager_session_result.stdout"
-  when: tomcat_stig_manager_app.stat.exists
+  register: tomcat_stig_manager_context_result
+  changed_when: "'CHANGED' in tomcat_stig_manager_context_result.stdout"
+  no_log: "{{ tomcat_stig_ldap_connection_password | length > 0 }}"
+  when: tomcat_stig_installed_management_apps | length > 0
   notify: restart tomcat
-  tags: [V-222926, V-222979]
+  tags: [V-222926, V-222962, V-222965, V-222970, V-222980, V-222981, V-222982]
+
+- name: "V-222979 | Configure global 10-minute session timeout when manager is installed"
+  ansible.builtin.shell: |
+    python3 - "{{ tomcat_conf_dir_resolved }}/web.xml" <<'PY'
+    import sys, xml.etree.ElementTree as ET
+    path = sys.argv[1]
+    tree = ET.parse(path)
+    root = tree.getroot()
+    ns = root.tag.split('}')[0] + '}' if root.tag.startswith('{') else ''
+    q = lambda n: ns + n
+    changed = False
+    sc = root.find(q('session-config'))
+    if sc is None:
+        sc = ET.SubElement(root, q('session-config'))
+        changed = True
+    timeout = sc.find(q('session-timeout'))
+    if timeout is None:
+        timeout = ET.SubElement(sc, q('session-timeout'))
+        changed = True
+    if (timeout.text or '').strip() != '10':
+        timeout.text = '10'
+        changed = True
+    if changed:
+        tree.write(path, encoding='UTF-8', xml_declaration=True)
+    print('CHANGED' if changed else 'OK')
+    PY
+  args:
+    executable: /bin/bash
+  register: tomcat_stig_manager_timeout_result
+  changed_when: "'CHANGED' in tomcat_stig_manager_timeout_result.stdout"
+  when: "'manager' in tomcat_stig_installed_management_apps"
+  notify: restart tomcat
+  tags: [V-222979]
+
+- name: "V-222976 | Replace manager sample error pages with generic responses"
+  ansible.builtin.copy:
+    dest: "{{ tomcat_webapps_dir_resolved }}/manager/WEB-INF/jsp/{{ item }}.jsp"
+    owner: root
+    group: "{{ tomcat_group }}"
+    mode: "0640"
+    content: |
+      <%@ page contentType="text/html; charset=UTF-8" %>
+      <!doctype html>
+      <html><head><title>Request Error</title></head>
+      <body><h1>Request could not be completed</h1>
+      <p>Contact the system administrator if access is required.</p></body></html>
+  loop: [401, 402, 403]
+  when: "'manager' in tomcat_stig_installed_management_apps"
+  notify: restart tomcat
+  tags: [V-222976]
