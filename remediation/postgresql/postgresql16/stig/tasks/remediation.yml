@@ -2,14 +2,21 @@
 # Keep shared capabilities together. Per-V-ID tags preserve assessment traceability
 # without allowing multiple controls to overwrite the same PostgreSQL parameter.
 
-- name: PostgreSQL 16 STIG | Validate supplied connection limits
+- name: PostgreSQL 16 STIG | Validate supplied cluster connection limit
   ansible.builtin.assert:
     that:
       - postgres16_max_connections is none or (postgres16_max_connections | int) > 0
+    fail_msg: >-
+      postgres16_max_connections must be a positive integer when supplied.
+  tags:
+    - V-261857
+
+- name: PostgreSQL 16 STIG | Validate supplied per-role connection limits
+  ansible.builtin.assert:
+    that:
       - (item.value | int) >= 0
     fail_msg: >-
-      Connection limits must be explicit nonnegative integers. Use null/omit
-      max_connections when the organization has not supplied an approved value.
+      Per-role connection limits must be nonnegative integers.
   loop: "{{ postgres16_role_connection_limits | dict2items }}"
   loop_control:
     label: "{{ item.key }}"
@@ -28,7 +35,42 @@
   tags:
     - V-261857
 
-- name: PostgreSQL 16 STIG | Apply approved per-role connection limits
+- name: PostgreSQL 16 STIG | Read current approved-role connection limits
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - >-
+        SELECT rolconnlimit FROM pg_roles
+        WHERE rolname = '{{ item.key | replace("'", "''") }}';
+  loop: "{{ postgres16_role_connection_limits | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  register: postgres16_role_limit_current
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261857
+
+- name: PostgreSQL 16 STIG | Require supplied roles to exist
+  ansible.builtin.assert:
+    that:
+      - item.stdout | trim | length > 0
+    fail_msg: >-
+      Approved connection limit was supplied for role {{ item.item.key }},
+      but that role does not exist. Refusing to create an account implicitly.
+  loop: "{{ postgres16_role_limit_current.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.key }}"
+  tags:
+    - V-261857
+
+- name: PostgreSQL 16 STIG | Apply changed approved per-role connection limits
   become: true
   become_user: "{{ postgres16_admin_user }}"
   ansible.builtin.command:
@@ -40,14 +82,12 @@
       - ON_ERROR_STOP=1
       - -c
       - >-
-        ALTER ROLE "{{ item.key | replace('"', '""') }}"
-        CONNECTION LIMIT {{ item.value | int }};
-  loop: "{{ postgres16_role_connection_limits | dict2items }}"
+        ALTER ROLE "{{ item.item.key | replace('"', '""') }}"
+        CONNECTION LIMIT {{ item.item.value | int }};
+  loop: "{{ postgres16_role_limit_current.results | default([]) }}"
   loop_control:
-    label: "{{ item.key }}"
-  register: postgres16_role_limit_changes
-  changed_when: true
-  when: postgres16_role_connection_limits | length > 0
+    label: "{{ item.item.key }}"
+  when: (item.stdout | trim | int) != (item.item.value | int)
   tags:
     - V-261857
 
@@ -177,6 +217,7 @@
     - V-261876
     - V-261877
     - V-261879
+    - V-261909
 
 - name: PostgreSQL 16 STIG | Configure connection audit settings
   become: true
@@ -237,6 +278,7 @@
     - V-261868
     - V-261869
     - V-261871
+    - V-261961
 
 - name: PostgreSQL 16 STIG | Configure pgAudit event classes
   become: true
