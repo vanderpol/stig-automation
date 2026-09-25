@@ -9,6 +9,40 @@ The repository has two primary roots:
 
 Both use the same technology/benchmark hierarchy so a DISA V-ID can be traced across validation, remediation, intentional failure, and regression testing.
 
+## Apache HTTP Server 2.4 tester quick start
+
+Current Apache implementation targets:
+
+- Apache Server 2.4 UNIX Server STIG V3R3
+- Apache Server 2.4 UNIX Site STIG V2R7
+- RHEL 8/9/10 and Ubuntu 22.04/24.04/26.04
+
+**First-time Apache users should start with `docs/APACHE24_QUICK_START.md`.**
+
+Server and Site are intentionally separate. Apply and validate the Server role first, then apply the Site role for each hosted site/application. Do not edit files under `remediation/apache/apache24/` to customize an environment; put approved site decisions in inventory/group variables.
+
+From the repository root, the basic Server sequence is:
+
+    cp inventories/lab/hosts.apache24.example.yml inventories/lab/hosts.yml
+    cp inventories/lab/group_vars/apache24.yml.example inventories/lab/group_vars/apache24.yml
+    # Edit both copied files for the real test system and approved values.
+    ansible apache24 -m ping
+    ansible-playbook playbooks/apache24_server_preflight.yml
+    ansible-playbook playbooks/apache24_server_stig.yml --check --diff
+    ansible-playbook playbooks/apache24_server_stig.yml
+
+After the Server baseline is tested, create the Site profile and follow the Site steps in `docs/APACHE24_QUICK_START.md`.
+
+A successful Ansible run is not by itself proof of STIG compliance. Some controls require organization/application decisions or evidence. The preflight output identifies site-input and evidence requirements.
+
+Detailed Apache documentation:
+
+- `docs/APACHE24_QUICK_START.md` — start here.
+- `docs/APACHE24_SERVER_USER_GUIDE.md` — Server role decisions and responsibilities.
+- `docs/APACHE24_SITE_USER_GUIDE.md` — Site/application decisions and responsibilities.
+- `docs/APACHE24_FIRST_PASS_STATUS.md` — implementation/testing status.
+- `docs/APACHE24_DUPLICATE_REVIEW.md` — current duplicate candidates.
+
 ## Tomcat 9 tester quick start
 
 The current Tomcat stabilization target is RHEL 8/9 with Tomcat 9.
@@ -23,4 +57,4 @@ From the repository root:
 
 See `TESTING.md` before applying the role and record the exact Git tag/commit with SCAP results.
 
-Current work also includes Apache HTTP Server 2.4 UNIX Server/Site. Anti-STIG implementation is deferred until the corresponding remediation has established a verified compliant baseline.
+Anti-STIG implementation is deferred until the corresponding remediation has established a verified compliant baseline.
