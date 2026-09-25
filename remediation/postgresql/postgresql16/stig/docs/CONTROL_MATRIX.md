@@ -46,6 +46,26 @@ Risk: `HIGH | MEDIUM | BASELINE`
 | V-261882 | CD16-00-002700 | I | EVIDENCE | ORIGINAL | HIGH | Installation-account access/procedures; no invented authorized-user list. |
 | V-261883 | CD16-00-002800 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Dedicated software directory; relocation/reinstall is disruptive. |
 | V-261884 | CD16-00-002900 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Object ownership must reconcile to approved principals. |
+| V-261885 | CD16-00-003000 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Structure/logic modification privileges require approved-state comparison. |
+| V-261886 | CD16-00-003200 | II | AUDIT/REMEDIATION | ORIGINAL | HIGH | Unapproved extensions; never DROP EXTENSION without explicit approval. |
+| V-261887 | CD16-00-003300 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Installed PostgreSQL packages must reconcile to required component list. |
+| V-261888 | CD16-00-003400 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | External executable access depends on approved superusers/extensions. |
+| V-261889 | CD16-00-003500 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | PPSM listen addresses/port are organization-defined and restart-sensitive. |
+| V-261890 | CD16-00-003600 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Unique identity must reconcile to organizational user/account design. |
+| V-261891 | CD16-00-003800 | I | REMEDIATION/AUDIT | COMMON | HIGH | Enforce password_encryption=scram-sha-256; existing hashes require credential reset, not invention. |
+| V-261892 | CD16-00-003900 | I | GUARDED REMEDIATION/AUDIT | ORIGINAL | HIGH | password/md5 HBA methods fail; bulk auth change can cause lockout. |
+| V-261893 | CD16-00-004000 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | PKI CRL and cert validation require site trust material. |
+| V-261894 | CD16-00-004100 | I | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | Private-key paths/permissions and approved access are site-owned. |
+| V-261895 | CD16-00-004200 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Certificate CN/user-map semantics depend on identity architecture. |
+| V-261896 | CD16-00-004400 | I | AUDIT/EVIDENCE | ORIGINAL | HIGH | Host/platform FIPS boundary; no silent host conversion. |
+| V-261897 | CD16-00-004500 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Nonorganizational identities require organizational documentation. |
+| V-261898 | CD16-00-004600 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Admin/user separation; do not revoke privileges without approved state. |
+| V-261899 | CD16-00-004700 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Timeout/keepalive values are organization-defined; zero fails current check. |
+| V-261900 | CD16-00-004900 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | ssl=on plus valid site certificate/key; enabling blindly may break startup. |
+| V-261901 | CD16-00-005200 | I | AUDIT/EVIDENCE | ORIGINAL | HIGH | At-rest protection depends on AO/data-owner decision and actual protected data. |
+| V-261902 | CD16-00-005300 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Security-function schema isolation is application/database-design owned. |
+| V-261903 | CD16-00-005400 | II | EVIDENCE | ORIGINAL | HIGH | Organization data-transfer policy and operational procedures. |
+| V-261904 | CD16-00-005600 | II | AUDIT/REMEDIATION | ORIGINAL | HIGH | PGDATA/log/backup access; recursive mutation needs platform-aware review. |
 | V-261930 | CD16-00-008500 | I | REMEDIATION/EVIDENCE | NEW-CURRENT | HIGH | V1R3 severity changed to CAT I; at-rest integrity is site/data-owner dependent. |
 | V-261931 | CD16-00-008600 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | At-rest confidentiality; may be DB, filesystem, or disk control. |
 | V-261932 | CD16-00-008800 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | Conditional on data-owner requirement; SSL alone may not prove full path. |
