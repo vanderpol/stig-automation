@@ -1,0 +1,13 @@
+---
+- name: PostgreSQL 16 STIG | Reload configuration
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SELECT pg_reload_conf();"
+  listen: PostgreSQL 16 STIG | Reload configuration
