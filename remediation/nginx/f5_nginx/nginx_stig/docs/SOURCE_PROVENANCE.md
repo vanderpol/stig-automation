@@ -20,8 +20,21 @@ All 32 controls are initially `ORIGINAL` or `COMMON` because no external impleme
 
 - Current V-ID enumeration: complete (32/32).
 - Executable/evidence representation: first pass complete (32/32).
+- Static current-check/vendor reconciliation: complete (2026-09-25).
 - Syntax test: pending.
 - Lab test: pending.
 - Idempotency: pending.
 - Authoritative assessment: pending.
 - Anti-STIG: intentionally deferred until positive-baseline verification.
+
+
+## 2026-09-25 vendor-semantics reconciliation
+
+Current NGINX documentation was used as a semantic cross-check, not as an alternative compliance authority. Material conclusions:
+
+- `ssl_ocsp_responder` supports HTTP responder URLs; the V1R1 fix text shows an HTTPS responder in one place.
+- `ssl_stapling_file` is a file containing a pre-generated OCSP response; it is not documented as a writable response cache. The V1R1 instruction to create an empty cache file is therefore not implemented.
+- `ssl_ciphers` uses the OpenSSL cipher-list syntax; TLS 1.3 cipher-suite control is distinct and may require OpenSSL/provider configuration (for example via `ssl_conf_command` where appropriate). The role therefore does not claim that its TLS <=1.2 cipher string proves V-278405/V-278407.
+- NGINX documents TLS 1.2/TLS 1.3 as the current `ssl_protocols` default, but V-278381 explicitly requires the directive to be present, so the role sets it explicitly.
+
+These discrepancies are retained as HIGH-risk assessment items and should be reported upstream to the benchmark maintainer if lab validation confirms the conflict.
