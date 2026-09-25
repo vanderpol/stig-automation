@@ -29,12 +29,20 @@ nginx_stig_replay_resistance_evidence: ""
 nginx_stig_consent_banner_applicable: false
 nginx_stig_consent_banner_evidence: ""
 
+# V-278404: the STIG requires an applied limit_req or limit_conn, not merely a zone.
+# Supply reviewed server/location configuration files where a per-client connection
+# limit can safely be inserted. Empty means audit-only for this control.
+nginx_stig_dos_scope_files: []
+nginx_stig_limit_conn_zone_name: stig_conn_limit
+nginx_stig_limit_conn_zone_size: 10m
+nginx_stig_limit_conn_per_client: 10
+
 # Safe deterministic defaults that directly match V1R1 checks.
 nginx_stig_client_body_timeout: 10
 nginx_stig_client_header_timeout: 10
 nginx_stig_send_timeout: 10
 nginx_stig_ssl_session_timeout_minutes: 15
-nginx_stig_limit_conn_zone_name: stig_conn_limit
-nginx_stig_limit_conn_zone_size: 10m
-nginx_stig_limit_conn_per_client: 10
+
+# TLS <=1.2 cipher policy. TLS 1.3 suites are controlled by the linked OpenSSL
+# provider/security policy; ssl_ciphers alone does not configure TLS 1.3 suites.
 nginx_stig_fips_cipher_string: "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256"
