@@ -1,0 +1,22 @@
+---
+apache24_site_stig_audit_only: false
+
+# Site/application values. Empty values intentionally require user decisions/evidence.
+apache24_site_document_root: ""
+apache24_site_server_name: ""
+apache24_site_approved_ports: [80, 443]
+apache24_site_ppsm_approval_reference: ""
+
+# PKI material is supplied and maintained by the end user/organization.
+apache24_site_pki_enabled: false
+apache24_site_client_ca_file: ""
+apache24_site_client_ca_approval_reference: ""
+apache24_site_rfc5280_validation_evidence: ""
+apache24_site_private_key_file: ""
+apache24_site_private_key_approved_accounts: []
+
+# Architecture/process evidence.
+apache24_site_user_management_evidence: ""
+apache24_site_disaster_recovery_evidence: ""
+apache24_site_application_tuning_evidence: ""
+apache24_site_network_restriction_evidence: ""
