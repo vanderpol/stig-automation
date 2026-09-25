@@ -1,37 +1,48 @@
 ---
-- name: Require explicit site document root before site remediation
+- name: Require explicit site document root before Site remediation
   ansible.builtin.assert:
     that:
       - apache24_site_document_root | length > 0
       - apache24_site_document_root.startswith('/')
     fail_msg: Set apache24_site_document_root to the approved absolute document root for this hosted site.
 
-- name: Protect site document root from unintended write access
-  ansible.builtin.file:
-    path: "{{ apache24_site_document_root }}"
-    state: directory
+- name: Create Site managed configuration
+  ansible.builtin.copy:
+    dest: "{{ apache24.site_managed_conf }}"
     owner: root
-    group: "{{ apache24.group }}"
-    mode: "0750"
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by stig-automation - Apache Server 2.4 UNIX Site STIG V2R7
+  notify: restart apache
 
-- name: "V-214284/V-214292 | Install document-root containment policy"
+- name: Enable Site managed configuration on Ubuntu
+  ansible.builtin.file:
+    src: "{{ apache24.site_managed_conf }}"
+    dest: /etc/apache2/conf-enabled/01-stig-site.conf
+    state: link
+  when: ansible_facts.distribution == 'Ubuntu'
+  notify: restart apache
+
+- name: "V-214284/V-214292 | Contain site and disable directory indexes"
   ansible.builtin.blockinfile:
-    path: "{{ apache24.managed_conf }}"
+    path: "{{ apache24.site_managed_conf }}"
     marker: "# {mark} STIG SITE DOCUMENT ROOT"
     block: |
       <Directory "{{ apache24_site_document_root }}">
-          Options {{ '-Indexes' if not apache24_site_indexes_enabled else 'Indexes' }} {{ '-FollowSymLinks' if not apache24_site_follow_symlinks else 'FollowSymLinks' }}
+          Options -Indexes {{ '-FollowSymLinks' if not apache24_site_follow_symlinks else '+FollowSymLinks' }}
           AllowOverride None
-          Require all granted
       </Directory>
+  notify: restart apache
   tags: [V-214284, V-214292]
 
 - name: "V-214301 | Disable TLS compression"
   ansible.builtin.blockinfile:
-    path: "{{ apache24.managed_conf }}"
+    path: "{{ apache24.site_managed_conf }}"
     marker: "# {mark} STIG SITE TLS"
     block: |
-      SSLCompression {{ apache24_site_tls_compression }}
+      SSLCompression Off
+  notify: restart apache
   tags: [V-214301]
 
 - name: "V-214303 | Enable headers module on Ubuntu"
@@ -41,32 +52,19 @@
   when:
     - ansible_facts.distribution == 'Ubuntu'
     - apache24_site_cookie_secure_enforcement | bool
+  notify: restart apache
+  tags: [V-214303]
 
-- name: "V-214303 | Force Secure property on cookies"
+- name: "V-214303 | Force Secure property on response cookies when site approves server-side enforcement"
   ansible.builtin.blockinfile:
-    path: "{{ apache24.managed_conf }}"
+    path: "{{ apache24.site_managed_conf }}"
     marker: "# {mark} STIG SITE COOKIE SECURITY"
     block: |
       Header always edit Set-Cookie ^((?:(?!;[[:space:]]*Secure).)*)$ "$1; Secure"
   when: apache24_site_cookie_secure_enforcement | bool
+  notify: restart apache
   tags: [V-214303]
 
-- name: "V-214297 | Install site nonsecure-zone deny list"
-  ansible.builtin.blockinfile:
-    path: "{{ apache24.managed_conf }}"
-    marker: "# {mark} STIG SITE NONSECURE ZONES"
-    block: |
-      <Directory "{{ apache24_site_document_root }}">
-          <RequireAll>
-              Require all granted
-      {% for network in apache24_site_blocked_networks %}
-              Require not ip {{ network }}
-      {% endfor %}
-          </RequireAll>
-      </Directory>
-  when: apache24_site_blocked_networks | length > 0
-  tags: [V-214297]
-
-- name: Validate Apache configuration after site remediation
+- name: Validate Apache configuration after Site remediation
   ansible.builtin.command: "{{ apache24.apachectl }} configtest"
   changed_when: false
