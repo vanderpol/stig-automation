@@ -1,0 +1,48 @@
+---
+- name: "V-214229 | Report server-side session management evidence"
+  ansible.builtin.debug:
+    msg:
+      requirement: "Hosted application sessions must be managed server-side."
+      evidence: "{{ apache24_stig_session_management_evidence | default('') }}"
+      status: "{{ 'SITE-EVIDENCE-PROVIDED' if apache24_stig_session_management_evidence | length > 0 else 'REVIEW-REQUIRED' }}"
+  tags: [V-214229, audit]
+
+- name: "V-214250 | Report session invalidation evidence"
+  ansible.builtin.debug:
+    msg:
+      requirement: "Session identifiers must be invalidated at logout or other session termination."
+      evidence: "{{ apache24_stig_session_invalidation_evidence | default('') }}"
+      status: "{{ 'SITE-EVIDENCE-PROVIDED' if apache24_stig_session_invalidation_evidence | length > 0 else 'REVIEW-REQUIRED' }}"
+  tags: [V-214250, audit]
+
+- name: "V-214251 | Report cookie scope evidence"
+  ansible.builtin.debug:
+    msg:
+      requirement: "Cookie domain/path scope must prevent access outside the originating server/application."
+      evidence: "{{ apache24_stig_cookie_scope_evidence | default('') }}"
+      status: "{{ 'SITE-EVIDENCE-PROVIDED' if apache24_stig_cookie_scope_evidence | length > 0 else 'REVIEW-REQUIRED' }}"
+  tags: [V-214251, audit]
+
+- name: "V-214252 | Report session identifier length evidence"
+  ansible.builtin.debug:
+    msg:
+      requirement: "Session identifiers must provide at least 128 bits of strength."
+      evidence: "{{ apache24_stig_session_id_length_evidence | default('') }}"
+      status: "{{ 'SITE-EVIDENCE-PROVIDED' if apache24_stig_session_id_length_evidence | length > 0 else 'REVIEW-REQUIRED' }}"
+  tags: [V-214252, audit]
+
+- name: "V-214258 | Validate site-selected inactivity timeout"
+  ansible.builtin.assert:
+    that:
+      - apache24_stig_session_timeout_minutes | int in [5, 10, 20]
+    fail_msg: >-
+      Set apache24_stig_session_timeout_minutes to 5 (high-value), 10 (medium-value), or 20
+      (low-value) after categorizing the hosted application.
+  when: apache24_stig_session_timeout_minutes is not none
+  tags: [V-214258, audit]
+
+- name: "V-214258 | Report missing inactivity-timeout categorization"
+  ansible.builtin.debug:
+    msg: "REVIEW-REQUIRED: categorize the hosted application and set apache24_stig_session_timeout_minutes to 5, 10, or 20."
+  when: apache24_stig_session_timeout_minutes is none
+  tags: [V-214258, audit]
