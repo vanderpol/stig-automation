@@ -73,7 +73,7 @@
         path = os.path.join(webapps, app, "META-INF", "context.xml")
         tree = ET.parse(path)
         root = tree.getroot()
-        before_changed = any_changed
+        original_xml = ET.tostring(root, encoding='unicode')
 
         if app == "manager":
             manager = root.find("Manager")
@@ -142,8 +142,9 @@
         if connection_password:
             set_attr(jndi, "connectionPassword", connection_password)
 
-        if any_changed != before_changed:
+        if ET.tostring(root, encoding='unicode') != original_xml:
             tree.write(path, encoding="UTF-8", xml_declaration=True)
+            any_changed = True
 
     print("CHANGED" if any_changed else "OK")
     PY
@@ -201,7 +202,7 @@
       <html><head><title>Request Error</title></head>
       <body><h1>Request could not be completed</h1>
       <p>Contact the system administrator if access is required.</p></body></html>
-  loop: [401, 402, 403]
+  loop: [401, 402, 403, 404]
   when: "'manager' in tomcat_stig_installed_management_apps"
   notify: restart tomcat
   tags: [V-222976]
