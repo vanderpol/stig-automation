@@ -49,6 +49,8 @@ tomcat_stig_ldap_role_search: ""
 tomcat_stig_ldap_connection_name: ""
 tomcat_stig_ldap_connection_password: ""
 tomcat_stig_management_user_approval_evidence: ""
+# V-222970: choose one representation matching the SSP. CIDR values are preferred when practical.
+tomcat_stig_management_allowed_cidrs: []
 tomcat_stig_management_allowed_cidr_regex: ""
 
 tomcat_stig_remote_jmx_enabled: false
