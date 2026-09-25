@@ -15,3 +15,19 @@
       - "V-214270 patch timeliness requires authoritative-source and patch-process evidence."
       - "V-214273 vendor support status requires current vendor evidence."
   tags: [audit, evidence]
+
+- name: "V-214270 | Report patch-level evidence boundary"
+  ansible.builtin.debug:
+    msg:
+      running_version: "{{ apache24_version.stdout_lines | first | default('unknown') }}"
+      evidence: "{{ apache24_stig_patch_evidence }}"
+      requirement: "Compare the installed/vendor-supported build to the current authoritative patch level; package version strings may include vendor backports."
+  tags: [V-214270, audit]
+
+- name: "V-214273 | Report vendor-support evidence boundary"
+  ansible.builtin.debug:
+    msg:
+      running_version: "{{ apache24_version.stdout_lines | first | default('unknown') }}"
+      evidence: "{{ apache24_stig_vendor_support_evidence }}"
+      requirement: "The installed Apache build must be supported by its supplying vendor."
+  tags: [V-214273, audit]
