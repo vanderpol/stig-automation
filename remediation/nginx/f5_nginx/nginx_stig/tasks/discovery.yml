@@ -1,0 +1,33 @@
+---
+- name: Verify NGINX binary is present
+  ansible.builtin.command: "{{ nginx_stig_binary }} -v"
+  register: nginx_stig_version
+  changed_when: false
+
+- name: Dump effective NGINX configuration
+  ansible.builtin.command: "{{ nginx_stig_binary }} -qT -c {{ nginx_stig_main_conf }}"
+  register: nginx_stig_effective_config
+  changed_when: false
+  check_mode: false
+
+- name: Discover configured runtime user
+  ansible.builtin.set_fact:
+    nginx_stig_discovered_user: >-
+      {{ (nginx_stig_effective_config.stdout | regex_findall('(?m)^\s*user\s+([^;]+);') | first)
+         | default('nginx', true) }}
+
+- name: Select runtime user
+  ansible.builtin.set_fact:
+    nginx_stig_effective_user: "{{ nginx_stig_runtime_user if nginx_stig_runtime_user | length > 0 else nginx_stig_discovered_user }}"
+
+- name: Verify main configuration exists
+  ansible.builtin.stat:
+    path: "{{ nginx_stig_main_conf }}"
+  register: nginx_stig_main_conf_stat
+
+- name: Stop on unknown configuration layout
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_main_conf_stat.stat.exists
+      - nginx_stig_main_conf_stat.stat.isreg
+    fail_msg: "NGINX main configuration was not found at {{ nginx_stig_main_conf }}; set nginx_stig_main_conf explicitly."
