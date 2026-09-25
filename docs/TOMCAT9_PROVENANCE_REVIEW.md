@@ -42,3 +42,14 @@ V3R4 is the implementation authority. V-222927, V-222929, and V-222936 were remo
 All 79 current V3R4 controls are now represented as remediation, guarded remediation, audit/evidence, or explicit N/A/site-owned behavior. The newly added manager LDAP/LDAPS, LockOutRealm, session, network restriction, connector-address, FIPS, proxy mutual-authentication, cluster-evidence, manager-error-page, and ISSO-approval logic remains **untested**. Tomcat is therefore implementation-complete for this review round but is not yet assessment-verified or ready to be called compliant.
 
 Detailed per-control status is in `remediation/tomcat/tomcat9/stig/docs/SOURCE_PROVENANCE.md`.
+
+
+## Current V3R4 wording/assessment anomalies
+
+The review found several places where literal benchmark wording deserves tester attention:
+
+- **V-222971:** current check/fix wording mixes legacy `clientAuth` terminology with an `SSLHostConfig` attribute name/value that does not match current Tomcat 9 product syntax. Tomcat 9 documents `certificateVerification="required"` for `SSLHostConfig`. The role uses the product-valid `certificateVerification="required"` form and `CLIENT-CERT` application authentication rather than writing an invalid `certificationVerification="true"` attribute. Treat any scanner/manual-assessor discrepancy here as a benchmark/tool reconciliation issue and capture the exact evidence.
+- **V-222979:** the current check references `webapps/manager/META-INF/web.xml`, while normal servlet deployment uses `WEB-INF/web.xml`; the same check also explicitly accepts the 10-minute value in `$CATALINA_BASE/conf/web.xml`. The role therefore sets the global `conf/web.xml` timeout to 10 minutes so the current assessment path is unambiguous. Hosted applications may override their own timeout when authorized.
+- **V-222976:** the description mentions 401/403/404 pages, while the current check/fix text names 401/402/403. The role follows the current check/fix files (401/402/403) and does not overwrite 404 unnecessarily.
+
+These are not reasons to ignore the benchmark. They are reasons to preserve exact assessment output and distinguish a product-valid configuration from a potentially inconsistent literal check.
