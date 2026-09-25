@@ -67,3 +67,14 @@ Before team-test readiness:
 7. review OS/package-specific behavior without assuming a universal PostgreSQL layout.
 
 The branch should not be merged as a validated role until representative lab testing and current V1R3 assessment reconciliation are complete.
+
+## Latest literal-check reconciliation
+
+This review corrected several potentially misleading behaviors before lab testing:
+
+- V-261899 example timeout/keepalive numbers are no longer treated as organizational defaults;
+- V-261921 log timezone is site-selectable rather than silently forced;
+- V-261917/V-261967 can merge an approved syslog facility without discarding existing log destinations;
+- V-261879 now enforces mode 0600 on the actual discovered postgresql.conf and uses the discovered database-owner primary group;
+- reloadable settings are followed by effective-state reporting from pg_settings so include-file overrides are visible;
+- shared_preload_libraries remains explicitly restart-pending and is not represented as active until post-restart validation.
