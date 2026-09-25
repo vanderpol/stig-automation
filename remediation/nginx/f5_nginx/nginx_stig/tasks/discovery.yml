@@ -31,3 +31,16 @@
       - nginx_stig_main_conf_stat.stat.exists
       - nginx_stig_main_conf_stat.stat.isreg
     fail_msg: "NGINX main configuration was not found at {{ nginx_stig_main_conf }}; set nginx_stig_main_conf explicitly."
+
+- name: Gather local group database
+  ansible.builtin.getent:
+    database: group
+
+- name: Verify managed drop-in will be part of effective configuration
+  ansible.builtin.assert:
+    that:
+      - not nginx_stig_manage_dropin | bool or (nginx_stig_effective_config.stdout is search('(?m)^\s*include\s+[^;]*conf\.d/\*\.conf\s*;'))
+    fail_msg: >-
+      The effective NGINX configuration does not include a conf.d/*.conf path.
+      Set nginx_stig_manage_dropin=false and supply an explicitly reviewed integration path;
+      the role will not write hardening directives that NGINX will ignore.
