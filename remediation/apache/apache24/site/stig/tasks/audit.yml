@@ -99,3 +99,33 @@
       ppsm_reference: "{{ apache24_site_ppsm_approval_reference }}"
       requirement: "The site must restrict nonsecure/unnecessary ports, protocols, modules, and services; nonstandard use requires site authorization."
   tags: [V-214304, audit]
+
+- name: "V-214280 | Report application user-management boundary"
+  ansible.builtin.debug:
+    msg:
+      status: "{{ 'SITE-EVIDENCE-PROVIDED' if apache24_site_user_management_evidence | length > 0 else 'REVIEW-REQUIRED' }}"
+      evidence: "{{ apache24_site_user_management_evidence }}"
+  tags: [V-214280, audit]
+
+- name: "V-214282 | Report script-mapping decision"
+  ansible.builtin.debug:
+    msg:
+      approved_script_aliases: "{{ apache24_site_script_aliases_approved }}"
+      note: "Current Site V-214282 overlaps Server V-214244; both V-IDs remain traceable."
+  tags: [V-214282, audit]
+
+- name: "V-214298 | Report distinct administrative-account boundary"
+  ansible.builtin.debug:
+    msg:
+      approved_accounts: "{{ apache24_site_approved_admin_accounts }}"
+      audit_paths: "{{ apache24_site_admin_audit_paths }}"
+      requirement: "The organization must identify and document the administrative account boundary; the role will not invent accounts."
+  tags: [V-214298, audit]
+
+- name: "V-214297 | Report organization-defined network restriction boundary"
+  ansible.builtin.debug:
+    msg:
+      blocked_networks: "{{ apache24_site_blocked_networks }}"
+      evidence: "{{ apache24_site_network_restriction_evidence }}"
+      requirement: "Network-zone definitions are organization/site inputs; enforcement may occur outside Apache."
+  tags: [V-214297, audit]
