@@ -45,10 +45,10 @@
 - name: "V-222970 | Require management network restriction input"
   ansible.builtin.assert:
     that:
-      - tomcat_stig_management_allowed_cidr_regex | length > 0
+      - tomcat_stig_management_allowed_cidrs | length > 0 or tomcat_stig_management_allowed_cidr_regex | length > 0
     fail_msg: >-
-      Manager is installed. Set tomcat_stig_management_allowed_cidr_regex to localhost and/or
-      the SSP-approved management network expression.
+      Manager is installed. Supply either tomcat_stig_management_allowed_cidrs or
+      tomcat_stig_management_allowed_cidr_regex using the SSP-approved management networks.
   when: "'manager' in tomcat_stig_installed_management_apps"
   tags: [V-222970]
 
@@ -150,7 +150,8 @@
     import json, os, sys, xml.etree.ElementTree as ET
 
     webapps, apps_json, max_sessions = sys.argv[1:4]
-    allow_regex = os.environ["TC_STIG_ALLOW_REGEX"]
+    allow_regex = os.environ.get("TC_STIG_ALLOW_REGEX", "")
+    allow_cidrs = json.loads(os.environ.get("TC_STIG_ALLOW_CIDRS", "[]"))
     apps = json.loads(apps_json)
     any_changed = False
 
@@ -177,15 +178,19 @@
                       if v.get("className") in (
                           "org.apache.catalina.valves.RemoteAddrValve",
                           "org.apache.catalina.valves.RemoteCIDRValve")]
-            if not valves:
+            if valves:
+                valve = valves[0]
+                for extra in valves[1:]:
+                    root.remove(extra)
+                    any_changed = True
+            else:
                 valve = ET.SubElement(root, "Valve")
-                set_attr(valve, "className", "org.apache.catalina.valves.RemoteAddrValve")
-                valves = [valve]
                 any_changed = True
-            for valve in valves:
-                if valve.get("className") == "org.apache.catalina.valves.RemoteCIDRValve":
-                    # Do not rewrite a site-selected CIDR valve with regex semantics.
-                    continue
+            if allow_cidrs:
+                set_attr(valve, "className", "org.apache.catalina.valves.RemoteCIDRValve")
+                set_attr(valve, "allow", ",".join(allow_cidrs))
+            else:
+                set_attr(valve, "className", "org.apache.catalina.valves.RemoteAddrValve")
                 set_attr(valve, "allow", allow_regex)
 
         if ET.tostring(root, encoding='unicode') != original_xml:
@@ -198,6 +203,7 @@
     executable: /bin/bash
   environment:
     TC_STIG_ALLOW_REGEX: "{{ tomcat_stig_management_allowed_cidr_regex }}"
+    TC_STIG_ALLOW_CIDRS: "{{ tomcat_stig_management_allowed_cidrs | to_json }}"
   register: tomcat_stig_manager_context_result
   changed_when: "'CHANGED' in tomcat_stig_manager_context_result.stdout"
   when: tomcat_stig_installed_management_apps | length > 0
