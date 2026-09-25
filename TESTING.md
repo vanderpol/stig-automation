@@ -92,6 +92,24 @@ Supported stabilization targets are RHEL 8 and RHEL 9 running Tomcat 9.
 
 The role intentionally stops rather than guessing an unknown Tomcat installation layout. If discovery fails, set the explicit Tomcat path variables documented in the role defaults.
 
+### Tomcat V3R4 provenance-review priorities
+
+The September 2026 provenance/current-check review added or substantially changed the following controls. Treat all as HIGH scrutiny on the first RHEL 8/9 validation cycle:
+
+- V-222926 — manager maxActiveSessions must match the SSP.
+- V-222962/V-222965 — management applications require Engine-level LDAPS JNDIRealm configuration visible in server.xml.
+- V-222968 — AprLifecycleListener FIPSMode is guarded by RHEL/Java FIPS evidence; after restart, confirm catalina.out contains no FIPSMode failure.
+- V-222970 — manager network restriction must exactly match the SSP using RemoteCIDRValve or RemoteAddrValve semantics.
+- V-222971 — proxy/load-balancer mutual TLS requires connector client-certificate enforcement and CLIENT-CERT for associated applications unless approved risk acceptance applies.
+- V-222974 — actual configured Cluster elements require trusted-network/encryption evidence.
+- V-222976 — manager sample error pages are replaced with generic responses.
+- V-222979 — management idle timeout is 10 minutes.
+- V-222980/V-222981/V-222982 — LockOutRealm, failureCount=5, lockOutTime=600.
+- V-223006 — management-role users/roles require explicit ISSO approval evidence.
+- V-223009 — every active Connector requires an SSP-approved address.
+
+The Engine-level LDAP/LockOutRealm change can affect any application that inherits the Engine Realm. Functional authentication testing is mandatory before promotion.
+
 ## What to report
 
 Please report the Git tag or commit SHA, RHEL major/minor version, Tomcat version/package source, detected Tomcat layout, Ansible version, SCAP content/version, pass/fail/not-applicable counts, unexpected V-IDs, and whether the second Ansible run was idempotent.
