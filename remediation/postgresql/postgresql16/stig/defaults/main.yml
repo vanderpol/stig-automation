@@ -8,9 +8,6 @@ postgres16_admin_user: postgres
 postgres16_admin_db: postgres
 
 # Safety gates.
-postgres16_allow_restart: false
-postgres16_manage_pgaudit_package: false
-postgres16_pgaudit_package_name: ""
 postgres16_manage_hba: false
 postgres16_manage_authorization: false
 postgres16_manage_pki: false
