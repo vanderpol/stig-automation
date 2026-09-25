@@ -6,7 +6,7 @@ Retrospective review was performed against the current Apache Tomcat Application
 
 The review found a material coverage problem: the existing matrix claimed classification coverage for all 79 findings, while executable remediation/audit reconciliation found 14 current controls that were missing or only partially represented.
 
-## Current gaps found
+## Initial gaps found during reconciliation
 
 - V-222926 — manager simultaneous-session limit
 - V-222962 — LDAP realm authentication for management applications
