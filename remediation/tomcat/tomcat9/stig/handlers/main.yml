@@ -1,8 +1,14 @@
 ---
-- name: Reload systemd
+- name: daemon reload
   ansible.builtin.systemd:
     daemon_reload: true
 
-- name: Reload audit rules
+- name: restart tomcat
+  ansible.builtin.service:
+    name: "{{ tomcat_service }}"
+    state: restarted
+  when: tomcat_stig_restart | default(true) | bool
+
+- name: reload audit rules
   ansible.builtin.command: augenrules --load
   changed_when: true
