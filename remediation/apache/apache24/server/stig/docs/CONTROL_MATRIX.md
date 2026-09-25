@@ -7,7 +7,7 @@ Classification policy: AUTO means the STIG check/fix can be deterministically en
 | V-ID | Class | Requirement summary |
 |---|---|---|
 | V-214228 | AUTO-VAR | Limit simultaneous session requests |
-| V-214229 | APP | Server-side session management |
+| V-214229 | APP/EVIDENCE | Server-side session management |
 | V-214230 | AUTO-VAR | Cryptographic protection of remote sessions |
 | V-214231 | AUTO | System logging enabled |
 | V-214232 | AUTO | Startup/shutdown/access/authentication logging |
@@ -28,15 +28,15 @@ Classification policy: AUTO means the STIG check/fix can be deterministically en
 | V-214247 | AUDIT-VAR | Administrative accounts only for OS/directory-tree access |
 | V-214248 | AUDIT-VAR | Privileged access to app dirs/libraries/config |
 | V-214249 | EVIDENCE | Separate hosted apps from management |
-| V-214250 | APP | Invalidate session IDs at termination |
-| V-214251 | APP/AUTO-VAR | Cookie scope/security |
-| V-214252 | APP | Session ID >=128-bit strength |
-| V-214253 | APP | Session ID character-space strength |
+| V-214250 | APP/EVIDENCE | Invalidate session IDs at termination |
+| V-214251 | APP/EVIDENCE | Cookie scope/security |
+| V-214252 | APP/EVIDENCE | Session ID >=128-bit strength |
+| V-214253 | AUTO | Session ID character-space strength |
 | V-214254 | EVIDENCE | Fail to known safe state |
 | V-214255 | AUTO | Timeout <=60 seconds / operational tuning |
 | V-214256 | AUTO | Minimize server identity in errors |
 | V-214257 | AUTO | Disable debugging/trace |
-| V-214258 | APP/AUTO-VAR | Inactive session timeout |
+| V-214258 | AUDIT-VAR | Inactive session timeout |
 | V-214259 | AUTO-VAR | Restrict inbound nonsecure zones |
 | V-214260 | EVIDENCE | Immediate remote-access disconnect capability |
 | V-214261 | AUDIT-VAR | Distinct administrative account for security functions |
@@ -64,3 +64,9 @@ Suggested inputs:
 - `apache24_stig_privileged_paths`
 
 A reported match supports assessment; authorization of those accounts remains site evidence.
+
+## Session-control note
+
+V-214253 is server-remediable in the current benchmark check: compliance is determined by whether Apache's `unique_id_module` is loaded. The role therefore enables `mod_unique_id` rather than treating the rule as purely application evidence.
+
+V-214229, V-214250, V-214251, and V-214252 depend on hosted-application/session behavior and are retained as evidence-oriented checks. V-214258 requires application categorization before selecting the STIG timeout value (5/10/20 minutes), so the role validates a supplied value but does not invent the categorization.
