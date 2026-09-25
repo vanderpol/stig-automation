@@ -1,0 +1,9 @@
+---
+- name: Discover and preflight PostgreSQL 16 STIG target
+  hosts: postgresql16
+  become: true
+  tasks:
+    - name: Run PostgreSQL 16 discovery
+      ansible.builtin.include_role:
+        name: ../remediation/postgresql/postgresql16/stig
+        tasks_from: discovery.yml
