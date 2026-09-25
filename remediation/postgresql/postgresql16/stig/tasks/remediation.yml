@@ -82,6 +82,17 @@
     - V-261860
     - V-261863
 
+- name: PostgreSQL 16 STIG | Store newly set passwords with SCRAM-SHA-256
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\\s*#?\\s*password_encryption\\s*='
+    line: "password_encryption = 'scram-sha-256'"
+    backup: true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261891
+
 - name: PostgreSQL 16 STIG | Protect stderr audit log file creation mode
   become: true
   ansible.builtin.lineinfile:
