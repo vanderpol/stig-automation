@@ -83,5 +83,8 @@ Development/readiness documentation:
 - `remediation/postgresql/postgresql16/stig/docs/CONTROL_MATRIX.md` — current V-ID classification/coverage ledger.
 - `remediation/postgresql/postgresql16/stig/docs/SOURCE_PROVENANCE.md` — source/provenance ledger.
 - `remediation/postgresql/postgresql16/stig/docs/ISSUES_AND_CONCERNS.md` — known risk, assessor, and site-decision concerns.
+- `docs/POSTGRESQL16_QUICK_START.md` — initial tester workflow.
+- `docs/POSTGRESQL16_FIRST_PASS_STATUS.md` — implementation/readiness status.
+- `docs/POSTGRESQL16_TEST_REPORT.md` — team test-result template.
 
 No PostgreSQL role should be presented for team testing until the complete V1R3 control set has been reconciled to executable remediation/audit/evidence handling.
