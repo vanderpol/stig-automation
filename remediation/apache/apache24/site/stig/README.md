@@ -1,3 +1,9 @@
 # Apache 2.4 UNIX Site STIG remediation
 
-Site benchmark remediation remains separate from Server benchmark remediation.
+Implementation target: Apache Server 2.4 UNIX Site STIG V2R7.
+
+Site remediation remains separate from Server remediation because its compliance boundary is a hosted site/application.
+
+Before use, read `docs/APACHE24_SITE_USER_GUIDE.md` and the Site control matrix. Organization-owned PKI material, authorization decisions, application architecture, PPSM approval, and process evidence are not invented by this role.
+
+Recommended order: Server preflight/remediation/assessment, then Site preflight/remediation/assessment.
