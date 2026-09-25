@@ -236,13 +236,14 @@
   tags:
     - V-261899
 
-- name: PostgreSQL 16 STIG | Enforce UTC-mappable audit timestamps
+- name: PostgreSQL 16 STIG | Apply approved audit log timezone
   become: true
   ansible.builtin.lineinfile:
     path: "{{ postgres16_config_file }}"
     regexp: '^\s*#?\s*log_timezone\s*='
     line: "log_timezone = '{{ postgres16_log_timezone }}'"
     backup: true
+  when: postgres16_log_timezone is not none
   notify: PostgreSQL 16 STIG | Reload configuration
   tags:
     - V-261921
@@ -316,6 +317,18 @@
   notify: PostgreSQL 16 STIG | Reload configuration
   tags:
     - V-261891
+
+- name: PostgreSQL 16 STIG | Protect postgresql.conf ownership and mode
+  become: true
+  ansible.builtin.file:
+    path: "{{ postgres16_config_file }}"
+    owner: "{{ postgres16_admin_user }}"
+    group: "{{ postgres16_admin_group }}"
+    mode: "0600"
+  tags:
+    - V-261862
+    - V-261879
+    - V-261881
 
 - name: PostgreSQL 16 STIG | Protect stderr audit log file creation mode
   become: true
