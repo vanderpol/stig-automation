@@ -1,0 +1,165 @@
+---
+# Keep shared capabilities together. Per-V-ID tags preserve assessment traceability
+# without allowing multiple controls to overwrite the same PostgreSQL parameter.
+
+- name: PostgreSQL 16 STIG | Build required pgAudit class union
+  ansible.builtin.set_fact:
+    postgres16_pgaudit_classes: >-
+      {{ (postgres16_pgaudit_required_classes +
+          postgres16_pgaudit_additional_classes) | unique | list | sort }}
+
+- name: PostgreSQL 16 STIG | Check pgAudit extension availability
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SELECT count(*) FROM pg_available_extensions WHERE name = 'pgaudit';"
+  register: postgres16_pgaudit_available
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261860
+    - V-261861
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Require pgAudit to be available
+  ansible.builtin.assert:
+    that:
+      - postgres16_pgaudit_available.stdout | int > 0
+    fail_msg: >-
+      pgAudit is required by the current V1R3 audit controls but is not
+      available to PostgreSQL. Install the PostgreSQL-16-compatible pgAudit
+      package using the approved repository/package process. The role will not
+      guess a package source or package name.
+  when: not postgres16_manage_pgaudit_package | bool
+  tags:
+    - V-261860
+    - V-261861
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Read shared_preload_libraries
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SHOW shared_preload_libraries;"
+  register: postgres16_preload_raw
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261860
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Build merged shared_preload_libraries
+  ansible.builtin.set_fact:
+    postgres16_preload_merged: >-
+      {{ ((postgres16_preload_raw.stdout.split(',') |
+           map('trim') | reject('equalto', '') | list) + ['pgaudit'])
+         | unique | join(',') }}
+  tags:
+    - V-261860
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Configure merged shared_preload_libraries
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*shared_preload_libraries\s*='
+    line: "shared_preload_libraries = '{{ postgres16_preload_merged }}'"
+    backup: true
+  register: postgres16_preload_change
+  tags:
+    - V-261860
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Configure literal audit identity prefix
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*log_line_prefix\s*='
+    line: "log_line_prefix = '{{ postgres16_log_line_prefix }}'"
+    backup: true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261860
+
+- name: PostgreSQL 16 STIG | Configure pgAudit event classes
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*pgaudit\.log\s*='
+    line: "pgaudit.log = '{{ postgres16_pgaudit_classes | join(', ') }}'"
+    backup: true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261861
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Configure pgAudit catalog auditing
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*pgaudit\.log_catalog\s*='
+    line: "pgaudit.log_catalog = '{{ postgres16_pgaudit_log_catalog }}'"
+    backup: true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Validate PostgreSQL configuration file
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SELECT name, setting, sourcefile, sourceline FROM pg_file_settings WHERE error IS NOT NULL;"
+  register: postgres16_config_errors
+  changed_when: false
+  failed_when: postgres16_config_errors.stdout | trim | length > 0
+  check_mode: false
+
+- name: PostgreSQL 16 STIG | Report restart-required pgAudit preload change
+  ansible.builtin.debug:
+    msg: >-
+      shared_preload_libraries changed. PostgreSQL must be restarted before
+      pgAudit can become active. Automatic restart is disabled unless
+      postgres16_allow_restart=true. Functional and assessment testing is
+      required after restart.
+  when: postgres16_preload_change.changed
+  tags:
+    - V-261860
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Restart only with explicit authorization
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE false;"
+  changed_when: false
+  when:
+    - postgres16_preload_change.changed
+    - postgres16_allow_restart | bool
+  failed_when: true
+  tags:
+    - never
+    - postgres16_restart_gate
