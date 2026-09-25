@@ -72,6 +72,7 @@ tomcat_dod_ca_bundle: ""
 tomcat_stig_cluster_enabled: false
 tomcat_stig_cluster_trusted_network_documented: false
 tomcat_stig_proxy_mutual_tls_required: false
+tomcat_stig_proxy_mutual_tls_evidence: ""
 tomcat_stig_proxy_mutual_tls_risk_acceptance: ""
 
 # V-222968: only enable after the RHEL/Java cryptographic stack is configured for FIPS.
