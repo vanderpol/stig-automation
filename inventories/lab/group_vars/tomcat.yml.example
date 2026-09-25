@@ -33,6 +33,8 @@
 # tomcat_stig_management_allowed_cidr_regex: '^192\.0\.2\.[0-9]+$'
 #
 # V-222962/V-222965 require an LDAPS JNDIRealm for installed management applications.
+# Review impact on every application that inherits the Engine Realm before enabling:
+# tomcat_stig_replace_engine_realm_for_management: true
 # tomcat_stig_ldap_enabled: true
 # tomcat_stig_ldap_connection_url: "ldaps://ldap.example.invalid:636"
 # tomcat_stig_ldap_user_base: "ou=people,dc=example,dc=invalid"
