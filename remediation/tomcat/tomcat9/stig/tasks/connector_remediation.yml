@@ -96,13 +96,16 @@
   notify: restart tomcat
   tags: [V-222968]
 
-- name: "V-222971 | Require application CLIENT-CERT targets when proxy mutual TLS is required"
+- name: "V-222971 | Require explicit connector and application targets when proxy mutual TLS is required"
   ansible.builtin.assert:
     that:
+      - tomcat_stig_proxy_connector_ports | length > 0
       - tomcat_stig_proxy_client_cert_web_xml_files | length > 0
     fail_msg: >-
-      Proxy/load-balancer mutual TLS is required. List each associated application web.xml in
-      tomcat_stig_proxy_client_cert_web_xml_files so CLIENT-CERT authentication can be enforced.
+      Proxy/load-balancer mutual TLS is required. List the associated Tomcat Connector ports in
+      tomcat_stig_proxy_connector_ports and each associated application web.xml in
+      tomcat_stig_proxy_client_cert_web_xml_files. The role will not apply client-certificate
+      requirements to unrelated connectors or applications.
   when:
     - tomcat_stig_behind_proxy | bool
     - tomcat_stig_proxy_mutual_tls_required | bool
@@ -111,11 +114,16 @@
 
 - name: "V-222971 | Require client certificates on proxied TLS connectors"
   ansible.builtin.shell: |
-    python3 - "{{ tomcat_conf_dir_resolved }}/server.xml" <<'PY'
-    import sys, xml.etree.ElementTree as ET
-    path=sys.argv[1]
+    python3 - "{{ tomcat_conf_dir_resolved }}/server.xml" '{{ tomcat_stig_proxy_connector_ports | map("string") | list | to_json }}' <<'PY'
+    import json, sys, xml.etree.ElementTree as ET
+    path=sys.argv[1]; target_ports=set(json.loads(sys.argv[2]))
     tree=ET.parse(path); root=tree.getroot(); changed=False
+    found=set()
     for connector in root.findall(".//Connector"):
+        port=connector.get("port","")
+        if port not in target_ports:
+            continue
+        found.add(port)
         sslhosts=connector.findall("SSLHostConfig")
         if sslhosts:
             for shc in sslhosts:
@@ -124,6 +132,9 @@
         else:
             if connector.get("clientAuth")!="true":
                 connector.set("clientAuth","true"); changed=True
+    missing=target_ports-found
+    if missing:
+        raise SystemExit("Configured proxy connector ports not found in server.xml: %s" % ",".join(sorted(missing)))
     if changed:
         tree.write(path,encoding="UTF-8",xml_declaration=True)
     print("CHANGED" if changed else "OK")
