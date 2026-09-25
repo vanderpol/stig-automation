@@ -82,6 +82,44 @@
     - V-261860
     - V-261863
 
+- name: PostgreSQL 16 STIG | Configure connection audit settings
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: "^\\s*#?\\s*{{ item.key | regex_escape }}\\s*="
+    line: "{{ item.key }} = {{ item.value }}"
+    backup: true
+  loop:
+    - { key: "log_connections", value: "on" }
+    - { key: "log_disconnections", value: "on" }
+    - { key: "log_hostname", value: "on" }
+    - { key: "log_error_verbosity", value: "default" }
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261865
+    - V-261866
+    - V-261867
+    - V-261868
+    - V-261869
+    - V-261870
+    - V-261871
+
+- name: PostgreSQL 16 STIG | Configure pgAudit detail settings
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: "^\\s*#?\\s*{{ item.key | regex_escape }}\\s*="
+    line: "{{ item.key }} = '{{ item.value }}'"
+    backup: true
+  loop:
+    - { key: "pgaudit.log_level", value: "log" }
+    - { key: "pgaudit.log_parameter", value: "on" }
+    - { key: "pgaudit.log_statement_once", value: "off" }
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261870
+    - V-261872
+
 - name: PostgreSQL 16 STIG | Configure literal audit identity prefix
   become: true
   ansible.builtin.lineinfile:
@@ -92,6 +130,11 @@
   notify: PostgreSQL 16 STIG | Reload configuration
   tags:
     - V-261860
+    - V-261866
+    - V-261867
+    - V-261868
+    - V-261869
+    - V-261871
 
 - name: PostgreSQL 16 STIG | Configure pgAudit event classes
   become: true
