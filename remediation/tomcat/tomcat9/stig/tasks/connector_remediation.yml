@@ -17,7 +17,6 @@
   ansible.builtin.assert:
     that:
       - item | string in (tomcat_stig_connector_addresses.keys() | map('string') | list)
-      - tomcat_stig_connector_addresses[item | string] | default(tomcat_stig_connector_addresses[item] | default('')) | length > 0
     fail_msg: >-
       Active connector port {{ item }} has no SSP-approved address in tomcat_stig_connector_addresses.
       Current V3R4 requires an explicit approved address on every Connector.
@@ -56,9 +55,13 @@
 - name: "V-222971 | Require proxy mutual-authentication decision/evidence"
   ansible.builtin.assert:
     that:
-      - tomcat_stig_proxy_mutual_tls_required | bool or tomcat_stig_proxy_mutual_tls_risk_acceptance | length > 0
+      - >-
+        tomcat_stig_proxy_mutual_tls_risk_acceptance | length > 0 or
+        (tomcat_stig_proxy_mutual_tls_required | bool and tomcat_stig_proxy_mutual_tls_evidence | length > 0)
     fail_msg: >-
       Tomcat is documented behind a proxy/load balancer. Current V3R4 requires mutual
       authentication unless an approved risk acceptance/RMF determination documents otherwise.
+      Supply either tomcat_stig_proxy_mutual_tls_evidence for implemented mutual TLS or
+      tomcat_stig_proxy_mutual_tls_risk_acceptance.
   when: tomcat_stig_behind_proxy | bool
   tags: [V-222971]
