@@ -1,7 +1,7 @@
 ---
 - name: Load Apache platform map
   ansible.builtin.include_vars:
-    file: "{{ role_path }}/../../../common/vars/main.yml"
+    file: "{{ role_path }}/../../common/vars/main.yml"
 
 - name: Validate supported platform
   ansible.builtin.assert:
