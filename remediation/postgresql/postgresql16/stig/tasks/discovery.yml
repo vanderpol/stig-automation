@@ -61,6 +61,46 @@
       PostgreSQL reported a configuration path that does not exist. Refusing
       remediation rather than guessing a distro-specific location.
 
+- name: PostgreSQL 16 STIG | Resolve configured TLS file paths
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -F
+      - "|"
+      - -c
+      - >-
+        SELECT name,
+               CASE
+                 WHEN setting = '' THEN ''
+                 WHEN substring(setting,1,1) = '/' THEN setting
+                 ELSE current_setting('data_directory') || '/' || setting
+               END
+        FROM pg_settings
+        WHERE name IN ('ssl_ca_file','ssl_cert_file','ssl_crl_file','ssl_key_file')
+        ORDER BY name;
+  register: postgres16_tls_paths_raw
+  changed_when: false
+  check_mode: false
+
+- name: PostgreSQL 16 STIG | Build TLS path map
+  ansible.builtin.set_fact:
+    postgres16_tls_paths: >-
+      {{ dict(postgres16_tls_paths_raw.stdout_lines | map('split', '|') | list) }}
+
+- name: PostgreSQL 16 STIG | Audit configured TLS files
+  ansible.builtin.stat:
+    path: "{{ item.value }}"
+  loop: "{{ postgres16_tls_paths | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  when: item.value | length > 0
+  register: postgres16_tls_file_stats
+
 - name: PostgreSQL 16 STIG | Read settings that drive restart/reload decisions
   become: true
   become_user: "{{ postgres16_admin_user }}"
