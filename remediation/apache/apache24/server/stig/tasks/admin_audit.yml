@@ -1,0 +1,60 @@
+---
+- name: "V-214247/V-214261 | Require approved administrative accounts for automated audit"
+  ansible.builtin.assert:
+    that:
+      - apache24_stig_approved_admin_accounts | length > 0
+    fail_msg: >-
+      Define apache24_stig_approved_admin_accounts to automatically evaluate administrative ownership/access.
+      The role will not invent the site's administrative service accounts.
+  when: apache24_stig_admin_audit_paths | length > 0
+  tags: [V-214247, V-214261, audit]
+
+- name: "V-214247/V-214261 | Inspect site-defined administrative paths"
+  ansible.builtin.find:
+    paths: "{{ item }}"
+    recurse: true
+    file_type: any
+    hidden: true
+  loop: "{{ apache24_stig_admin_audit_paths }}"
+  register: apache24_admin_path_scan
+  when:
+    - apache24_stig_admin_audit_paths | length > 0
+    - apache24_stig_approved_admin_accounts | length > 0
+  tags: [V-214247, V-214261, audit]
+
+- name: "V-214247/V-214261 | Report ownership outside approved administrative accounts"
+  ansible.builtin.debug:
+    msg: "REVIEW: {{ item.path }} is owned by {{ item.pw_name | default(item.uid) }}"
+  loop: "{{ apache24_admin_path_scan.results | default([]) | map(attribute='files') | flatten }}"
+  loop_control:
+    label: "{{ item.path }}"
+  when:
+    - (item.pw_name | default('')) not in apache24_stig_approved_admin_accounts
+  tags: [V-214247, V-214261, audit]
+
+- name: "V-214248 | Inspect explicitly declared privileged paths"
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ apache24_stig_privileged_paths }}"
+  register: apache24_privileged_path_stats
+  tags: [V-214248, audit]
+
+- name: "V-214248 | Report privileged-path metadata"
+  ansible.builtin.debug:
+    msg:
+      path: "{{ item.stat.path | default(item.item) }}"
+      owner: "{{ item.stat.pw_name | default('unknown') }}"
+      group: "{{ item.stat.gr_name | default('unknown') }}"
+      mode: "{{ item.stat.mode | default('unknown') }}"
+  loop: "{{ apache24_privileged_path_stats.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item }}"
+  tags: [V-214248, audit]
+
+- name: "V-214249 | Report management-separation evidence status"
+  ansible.builtin.debug:
+    msg:
+      documented: "{{ apache24_stig_management_separation_documented }}"
+      management_endpoints: "{{ apache24_stig_management_endpoints }}"
+      requirement: "Hosted application functionality must be separated from Apache management functionality."
+  tags: [V-214249, audit]
