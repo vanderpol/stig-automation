@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: apache24_server_stig
+  author: stig-automation
+  description: DISA Apache Server 2.4 UNIX Server STIG V3R3 remediation
+  min_ansible_version: '2.14'
+dependencies: []
