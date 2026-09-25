@@ -37,7 +37,12 @@
   tags: [V-278397, CAT2]
 
 # V-278387
-- name: V-278387 | Protect approved external module directories
+- name: Discover external module paths from effective configuration
+  ansible.builtin.set_fact:
+    nginx_stig_loaded_module_paths: "{{ nginx_stig_effective_config.stdout | regex_findall('(?m)^\\s*load_module\\s+([^;]+);') | unique | list }}"
+  tags: [V-278387, V-278393, CAT2]
+
+- name: V-278387 | Protect explicitly approved external module directories
   ansible.builtin.file:
     path: "{{ item | dirname }}"
     owner: root
@@ -92,12 +97,9 @@
       server_tokens off;
       # V-278399
       ssl_session_timeout {{ nginx_stig_ssl_session_timeout_minutes }}m;
-      # V-278404
+      # V-278404: define the shared zone here. Enforcement is added only to
+      # explicitly reviewed server/location files below.
       limit_conn_zone $binary_remote_addr zone={{ nginx_stig_limit_conn_zone_name }}:{{ nginx_stig_limit_conn_zone_size }};
-      {% if nginx_stig_worker_connections is not none %}
-      # V-278380 requires this in events context; this value is documented here for validation.
-      # worker_connections={{ nginx_stig_worker_connections }}
-      {% endif %}
   when: nginx_stig_manage_dropin | bool
   notify:
     - validate nginx
@@ -121,3 +123,17 @@
     validate: "{{ nginx_stig_binary }} -t -c %s"
   notify: reload nginx
   tags: [V-278380, CAT2]
+
+# V-278404: a zone without an applied limit_conn/limit_req does not satisfy the check.
+- name: V-278404 | Apply reviewed per-client connection limit
+  ansible.builtin.blockinfile:
+    path: "{{ item }}"
+    marker: "# {mark} STIG V-278404"
+    insertafter: '^\\s*server\\s*\\{'
+    block: |
+      limit_conn {{ nginx_stig_limit_conn_zone_name }} {{ nginx_stig_limit_conn_per_client }};
+    validate: "{{ nginx_stig_binary }} -t -c {{ nginx_stig_main_conf }}"
+  loop: "{{ nginx_stig_dos_scope_files }}"
+  when: nginx_stig_dos_scope_files | length > 0
+  notify: reload nginx
+  tags: [V-278404, CAT2]
