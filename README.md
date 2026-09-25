@@ -48,6 +48,9 @@ Detailed Apache documentation:
 - `docs/APACHE24_SITE_USER_GUIDE.md` — Site/application decisions and responsibilities.
 - `docs/APACHE24_FIRST_PASS_STATUS.md` — implementation/testing status.
 - `docs/APACHE24_DUPLICATE_REVIEW.md` — current duplicate candidates.
+- `docs/APACHE24_PROVENANCE_SUMMARY.md` — source comparison, provenance counts, and risk-based testing priorities.
+- `remediation/apache/apache24/server/stig/docs/SOURCE_PROVENANCE.md` — per-V-ID Server provenance ledger.
+- `remediation/apache/apache24/site/stig/docs/SOURCE_PROVENANCE.md` — per-V-ID Site provenance ledger.
 
 ## Tomcat 9 tester quick start
 
