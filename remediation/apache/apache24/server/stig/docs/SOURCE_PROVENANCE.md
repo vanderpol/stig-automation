@@ -51,7 +51,7 @@
 | V-214253 | AUTO | ADAPTED | HIGH | Current STIG explicitly checks unique_id_module; local RHEL/Ubuntu enablement is newly implemented. |
 | V-214254 | EVIDENCE | EVIDENCE/AUDIT | HIGH | Safe-state behavior requires architecture/application evidence. |
 | V-214255 | AUTO | COMMON | MEDIUM | Direct current-STIG mapping to Timeout <=60; simple directive. |
-| V-214256 | AUTO | ORIGINAL | HIGH | Current check expects sanitized/custom ErrorDocument behavior; current local ServerTokens/Signature handling does not fully implement that check and needs test/reconciliation. |
+| V-214256 | AUTO | ORIGINAL | HIGH | Comparison exposed a first-pass gap: current check requires ErrorDocument handling. Local remediation was corrected during provenance review with sanitized 401/403/404/500 ErrorDocument directives; lab/assessment validation remains required. |
 | V-214257 | AUTO | COMMON | MEDIUM | TraceEnable/LogLevel hardening uses standard Apache directives. |
 | V-214258 | AUDIT-VAR | EVIDENCE/AUDIT | HIGH | Application categorization determines timeout. |
 | V-214259 | AUTO-VAR | ORIGINAL | HIGH | Organization-defined network-zone enforcement; prior global enforcement was intentionally removed pending exact safe scoping. |
