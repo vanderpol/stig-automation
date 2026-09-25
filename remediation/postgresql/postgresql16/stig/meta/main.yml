@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: postgresql16_stig
+  author: stig-automation contributors
+  description: Crunchy Data Postgres 16 STIG V1R3 remediation and evidence role
+  min_ansible_version: "2.15"
+dependencies: []
