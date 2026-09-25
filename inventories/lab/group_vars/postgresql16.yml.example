@@ -1,0 +1,39 @@
+---
+# Copy to inventories/lab/group_vars/postgresql16.yml and set only
+# organization-approved values. Keep secrets in Ansible Vault or an
+# approved external secret store.
+
+# Discovery defaults normally work when the PostgreSQL service account is
+# named postgres and psql is on PATH.
+# postgres16_psql_bin: /usr/bin/psql
+# postgres16_admin_user: postgres
+# postgres16_admin_db: postgres
+
+# Organization-defined connection/session limits.
+# postgres16_max_connections: 100
+# postgres16_role_connection_limits:
+#   application_role: 5
+#   dba_role: 20
+
+# Add organization-required pgAudit classes beyond the STIG baseline.
+# postgres16_pgaudit_additional_classes: []
+
+# Approved-state/evidence inputs. These are intentionally empty by default.
+# postgres16_approved_superusers:
+#   - postgres
+# postgres16_approved_auth_methods:
+#   - scram-sha-256
+# postgres16_authorization_evidence: "RMF artifact / SSP section ..."
+# postgres16_pki_evidence: "PKI trust / certificate evidence ..."
+# postgres16_fips_evidence: "Platform FIPS evidence ..."
+# postgres16_patch_evidence: "Approved package/security-update evidence ..."
+# postgres16_at_rest_protection_evidence: "Data-owner encryption determination ..."
+# postgres16_central_log_evidence: "SIEM/syslog offload evidence ..."
+
+# High-risk mutation gates remain false until dedicated guarded-remediation
+# tasks have been implemented and lab-tested.
+postgres16_manage_hba: false
+postgres16_manage_authorization: false
+postgres16_manage_pki: false
+postgres16_manage_fips: false
+postgres16_manage_package_updates: false
