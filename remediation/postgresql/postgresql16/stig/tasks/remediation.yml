@@ -140,6 +140,12 @@
     - V-261869
     - V-261870
     - V-261871
+    - V-261922
+    - V-261956
+    - V-261957
+    - V-261958
+    - V-261960
+    - V-261961
 
 - name: PostgreSQL 16 STIG | Configure pgAudit detail settings
   become: true
@@ -184,6 +190,18 @@
   tags:
     - V-261861
     - V-261863
+    - V-261938
+    - V-261940
+    - V-261942
+    - V-261944
+    - V-261946
+    - V-261948
+    - V-261950
+    - V-261952
+    - V-261954
+    - V-261959
+    - V-261962
+    - V-261964
 
 - name: PostgreSQL 16 STIG | Configure pgAudit catalog auditing
   become: true
