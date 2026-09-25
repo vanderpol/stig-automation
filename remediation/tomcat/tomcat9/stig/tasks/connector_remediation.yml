@@ -1,0 +1,56 @@
+---
+- name: "V-223009 | Read active connector ports"
+  ansible.builtin.shell: |
+    python3 - "{{ tomcat_conf_dir_resolved }}/server.xml" <<'PY'
+    import sys, xml.etree.ElementTree as ET
+    root = ET.parse(sys.argv[1]).getroot()
+    for connector in root.findall('.//Connector'):
+        print(connector.get('port',''))
+    PY
+  args:
+    executable: /bin/bash
+  register: tomcat_stig_connector_ports_detected
+  changed_when: false
+  tags: [V-223009]
+
+- name: "V-223009 | Require SSP-approved address for every active connector"
+  ansible.builtin.assert:
+    that:
+      - item | string in (tomcat_stig_connector_addresses.keys() | map('string') | list)
+      - tomcat_stig_connector_addresses[item | string] | default(tomcat_stig_connector_addresses[item] | default('')) | length > 0
+    fail_msg: >-
+      Active connector port {{ item }} has no SSP-approved address in tomcat_stig_connector_addresses.
+      Current V3R4 requires an explicit approved address on every Connector.
+  loop: "{{ tomcat_stig_connector_ports_detected.stdout_lines | reject('equalto','') | list }}"
+  tags: [V-223009]
+
+- name: "V-222968 | Require FIPS platform evidence before enabling Tomcat FIPSMode"
+  ansible.builtin.assert:
+    that:
+      - tomcat_stig_fips_platform_evidence | length > 0
+    fail_msg: >-
+      V-222968 also depends on the RHEL/Java cryptographic stack. Document the approved FIPS
+      platform configuration/evidence before setting tomcat_stig_fips_enabled=true.
+  when: tomcat_stig_fips_enabled | bool
+  tags: [V-222968]
+
+- name: "V-222974 | Require trusted-network or encryption evidence for clustered Tomcat"
+  ansible.builtin.assert:
+    that:
+      - tomcat_stig_cluster_trusted_network_documented | bool or tomcat_stig_cluster_encryption_evidence | length > 0
+    fail_msg: >-
+      Tomcat clustering is enabled. Document the private/trusted cluster network or provide
+      evidence of a correctly coordinated EncryptInterceptor deployment. The role will not
+      invent or distribute a cluster-wide pre-shared encryption key.
+  when: tomcat_stig_cluster_enabled | bool
+  tags: [V-222974]
+
+- name: "V-222971 | Require proxy mutual-authentication decision/evidence"
+  ansible.builtin.assert:
+    that:
+      - tomcat_stig_proxy_mutual_tls_required | bool or tomcat_stig_proxy_mutual_tls_risk_acceptance | length > 0
+    fail_msg: >-
+      Tomcat is documented behind a proxy/load balancer. Current V3R4 requires mutual
+      authentication unless an approved risk acceptance/RMF determination documents otherwise.
+  when: tomcat_stig_behind_proxy | bool
+  tags: [V-222971]
