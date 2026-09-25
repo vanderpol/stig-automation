@@ -262,7 +262,7 @@
       <html><head><title>Request Error</title></head>
       <body><h1>Request could not be completed</h1>
       <p>Contact the system administrator if access is required.</p></body></html>
-  loop: [401, 402, 403, 404]
+  loop: [401, 402, 403]
   when: "'manager' in tomcat_stig_installed_management_apps"
   notify: restart tomcat
   tags: [V-222976]
