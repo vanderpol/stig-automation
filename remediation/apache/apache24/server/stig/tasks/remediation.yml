@@ -13,12 +13,12 @@
       TraceEnable {{ apache24_stig_trace_enable }}
       LogLevel {{ apache24_stig_log_level }}
   notify: restart apache
-  tags: [V-214246, V-214255, V-214256, V-214257]
+  tags: [V-214255, V-214256, V-214257]
 
-- name: Enable managed configuration on Ubuntu
+- name: Enable managed server configuration on Ubuntu
   ansible.builtin.file:
     src: "{{ apache24.managed_conf }}"
-    dest: "/etc/apache2/conf-enabled/00-stig-server.conf"
+    dest: /etc/apache2/conf-enabled/00-stig-server.conf
     state: link
   when: ansible_facts.distribution == 'Ubuntu'
   notify: restart apache
@@ -45,43 +45,75 @@
     owner: root
     group: "{{ apache24.group }}"
     mode: "{{ apache24_stig_log_file_mode }}"
-  loop: "{{ apache24_log_files.files }}"
-  loop_control:
-    label: "{{ item.path }}"
+  loop: "{{ apache24_log_files.files | default([]) }}"
   tags: [V-214235, V-214236]
 
-- name: "V-214271 | Set Apache service account to nologin"
+- name: "V-214271 | Disable interactive service-account login"
   ansible.builtin.user:
     name: "{{ apache24.user }}"
     shell: /usr/sbin/nologin
     password_lock: true
   tags: [V-214271]
 
-- name: "V-214274 | Find htpasswd files"
+- name: "V-214274 | Find password files"
   ansible.builtin.find:
     paths: "{{ apache24.config_root }}"
     patterns: ["*.htpasswd", "htpasswd", ".htpasswd"]
-    file_type: file
     recurse: true
+    file_type: file
   register: apache24_htpasswd_files
   tags: [V-214274]
 
-- name: "V-214274 | Protect htpasswd files"
+- name: "V-214274 | Protect password files"
   ansible.builtin.file:
     path: "{{ item.path }}"
     owner: root
     group: "{{ apache24.group }}"
     mode: "{{ apache24_stig_htpasswd_mode }}"
-  loop: "{{ apache24_htpasswd_files.files }}"
-  loop_control:
-    label: "{{ item.path }}"
+  loop: "{{ apache24_htpasswd_files.files | default([]) }}"
   tags: [V-214274]
 
-- name: "V-214246 | Require site-approved listen endpoints"
+- name: "V-214246 | Require explicit approved Listen endpoints"
   ansible.builtin.assert:
     that:
       - apache24_stig_listen | length > 0
-      - apache24_stig_listen | select('match', '^[^:[:space:]]+:[0-9]+
+      - "'*' not in (apache24_stig_listen | join(' '))"
+      - "'0.0.0.0' not in (apache24_stig_listen | join(' '))"
+      - "'[::]' not in (apache24_stig_listen | join(' '))"
+    fail_msg: Set apache24_stig_listen to site-approved explicit IP:port endpoints.
+  tags: [V-214246]
+
+- name: "V-214246/V-214269 | Find Apache configuration files"
+  ansible.builtin.find:
+    paths: "{{ apache24.config_root }}"
+    patterns: "*.conf"
+    recurse: true
+    file_type: file
+  register: apache24_all_conf_files
+  tags: [V-214246, V-214269]
+
+- name: "V-214246 | Disable unmanaged Listen directives"
+  ansible.builtin.replace:
+    path: "{{ item.path }}"
+    regexp: '^(\s*Listen\s+.*)$'
+    replace: '# STIG replaced unmanaged Listen: \1'
+  loop: "{{ apache24_all_conf_files.files | default([]) }}"
+  when: item.path != apache24.managed_conf
+  notify: restart apache
+  tags: [V-214246]
+
+- name: "V-214246 | Configure approved Listen endpoints"
+  ansible.builtin.blockinfile:
+    path: "{{ apache24.managed_conf }}"
+    marker: "# {mark} STIG LISTEN ENDPOINTS"
+    block: |
+      {% for endpoint in apache24_stig_listen %}
+      Listen {{ endpoint }}
+      {% endfor %}
+  notify: restart apache
+  tags: [V-214246]
+
+- name: "V-214242 | Remove packaged Apache documentation"
   ansible.builtin.package:
     name: "{{ 'httpd-manual' if ansible_facts.distribution == 'RedHat' else 'apache2-doc' }}"
     state: absent
@@ -91,7 +123,7 @@
 - name: "V-214245 | Disable WebDAV modules on Ubuntu"
   ansible.builtin.command: a2dismod -f dav dav_fs dav_lock
   register: apache24_dav_disable
-  changed_when: "'Module dav disabled' in apache24_dav_disable.stdout or 'Module dav_fs disabled' in apache24_dav_disable.stdout or 'Module dav_lock disabled' in apache24_dav_disable.stdout"
+  changed_when: "'disabled' in apache24_dav_disable.stdout"
   failed_when: false
   when:
     - ansible_facts.distribution == 'Ubuntu'
@@ -101,7 +133,7 @@
 
 - name: "V-214245 | Find RHEL module configuration"
   ansible.builtin.find:
-    paths: /etc/httpd
+    paths: "{{ apache24.config_root }}"
     patterns: "*.conf"
     recurse: true
     file_type: file
@@ -114,14 +146,9 @@
 - name: "V-214245 | Disable WebDAV LoadModule directives on RHEL"
   ansible.builtin.replace:
     path: "{{ item.0.path }}"
-    regexp: '^(\\s*LoadModule\\s+{{ item.1 }}_module\\s+.*)
-  ansible.builtin.command: "{{ apache24.apachectl }} configtest"
-  changed_when: false
-
-    replace: '# STIG disabled: \\1'
-  loop: "{{ apache24_rhel_conf_files.files | default([]) | product(['dav','dav_fs','dav_lock']) | list }}"
-  loop_control:
-    label: "{{ item.0.path }} {{ item.1 }}"
+    regexp: '^(\s*LoadModule\s+{{ item.1 }}_module\s+.*)$'
+    replace: '# STIG disabled: \1'
+  loop: "{{ (apache24_rhel_conf_files.files | default([])) | product(['dav','dav_fs','dav_lock']) | list }}"
   when:
     - ansible_facts.distribution == 'RedHat'
     - apache24_stig_disable_webdav | bool
@@ -143,7 +170,7 @@
   notify: restart apache
   tags: [V-214230]
 
-- name: "V-214230/V-214231/V-214232/V-214241/V-214269 | Install core STIG directives"
+- name: "V-214230/V-214231/V-214232/V-214241/V-214269 | Install core directives"
   ansible.builtin.blockinfile:
     path: "{{ apache24.managed_conf }}"
     marker: "# {mark} STIG CORE DIRECTIVES"
@@ -152,30 +179,35 @@
       SSLProtocol {{ apache24_stig_ssl_protocol }}
       SSLCipherSuite {{ apache24_stig_ssl_cipher_suite }}
       LogFormat "{{ apache24_stig_log_format }}" {{ apache24_stig_log_format_name }}
-      {% if apache24_stig_custom_log | length > 0 %}
-      CustomLog "{{ apache24_stig_custom_log }}" {{ apache24_stig_log_format_name }}
-      {% else %}
-      CustomLog "{{ apache24.log_dir }}/access_log" {{ apache24_stig_log_format_name }}
-      {% endif %}
+      CustomLog "{{ apache24_stig_custom_log if apache24_stig_custom_log | length > 0 else apache24.log_dir + '/access_log' }}" {{ apache24_stig_log_format_name }}
   notify: restart apache
   tags: [V-214230, V-214231, V-214232, V-214241, V-214269]
 
-- name: "V-214243 | Install prohibited resource mappings"
+- name: "V-214269 | Ensure enabled cipher directives exclude export ciphers"
+  ansible.builtin.replace:
+    path: "{{ item.path }}"
+    regexp: '^(\s*SSLCipherSuite\s+)(?!.*!(?:EXPORT|EXP)(?:[:\s]|$))(.+)$'
+    replace: '\1\2:!EXPORT'
+  loop: "{{ apache24_all_conf_files.files | default([]) }}"
+  notify: restart apache
+  tags: [V-214269]
+
+- name: "V-214243 | Deny configured prohibited resource extensions"
   ansible.builtin.blockinfile:
     path: "{{ apache24.managed_conf }}"
     marker: "# {mark} STIG RESOURCE MAPPINGS"
     block: |
-      <FilesMatch "{{ apache24_stig_blocked_extensions | map('regex_escape') | join('|') }}">
+      <FilesMatch "(?i)({{ apache24_stig_blocked_extensions | map('regex_escape') | join('|') }})$">
           Require all denied
       </FilesMatch>
   when: apache24_stig_blocked_extensions | length > 0
   notify: restart apache
   tags: [V-214243]
 
-- name: "V-214244 | Disable CGI modules on Ubuntu when CGI is not approved"
+- name: "V-214244 | Disable CGI modules on Ubuntu when site declares CGI unused"
   ansible.builtin.command: a2dismod -f cgi cgid
   register: apache24_cgi_disable
-  changed_when: "'Module cgi disabled' in apache24_cgi_disable.stdout or 'Module cgid disabled' in apache24_cgi_disable.stdout"
+  changed_when: "'disabled' in apache24_cgi_disable.stdout"
   failed_when: false
   when:
     - ansible_facts.distribution == 'Ubuntu'
@@ -201,26 +233,6 @@
     state: directory
   tags: [V-214267]
 
-- name: "V-214268 | Enable headers module on Ubuntu for HttpOnly cookie enforcement"
-  ansible.builtin.command: a2enmod headers
-  register: apache24_headers_enable
-  changed_when: "'Enabling module headers' in apache24_headers_enable.stdout"
-  when:
-    - ansible_facts.distribution == 'Ubuntu'
-    - apache24_stig_cookie_httponly | bool
-  notify: restart apache
-  tags: [V-214268]
-
-- name: "V-214268 | Add HttpOnly to response cookies"
-  ansible.builtin.blockinfile:
-    path: "{{ apache24.managed_conf }}"
-    marker: "# {mark} STIG COOKIE PROTECTION"
-    block: |
-      Header always edit Set-Cookie ^((?:(?!;[[:space:]]*HttpOnly).)*)$ "$1; HttpOnly"
-  when: apache24_stig_cookie_httponly | bool
-  notify: restart apache
-  tags: [V-214268]
-
 - name: "V-214253 | Enable unique_id module on Ubuntu"
   ansible.builtin.command: a2enmod unique_id
   register: apache24_unique_id_enable
@@ -229,341 +241,29 @@
   notify: restart apache
   tags: [V-214253]
 
-- name: "V-214253 | Find unique_id module on RHEL"
-  ansible.builtin.find:
-    paths: /usr/lib64/httpd/modules
-    patterns: mod_unique_id.so
-    file_type: file
+- name: "V-214253 | Require unique_id module on RHEL"
+  ansible.builtin.stat:
+    path: "{{ apache24.modules_dir }}/mod_unique_id.so"
   register: apache24_unique_id_module
   when: ansible_facts.distribution == 'RedHat'
   tags: [V-214253]
 
-- name: "V-214253 | Require unique_id module availability on RHEL"
+- name: "V-214253 | Validate unique_id module availability on RHEL"
   ansible.builtin.assert:
-    that: apache24_unique_id_module.matched | default(0) > 0
-    fail_msg: "mod_unique_id.so is required by V-214253 but was not found."
+    that: apache24_unique_id_module.stat.exists | default(false)
+    fail_msg: mod_unique_id.so is required by V-214253 but was not found.
   when: ansible_facts.distribution == 'RedHat'
   tags: [V-214253]
 
 - name: "V-214253 | Load unique_id module on RHEL"
   ansible.builtin.lineinfile:
-    path: /etc/httpd/conf.modules.d/00-base.conf
-    regexp: '^\\s*#?\\s*LoadModule\\s+unique_id_module\\s+'
+    path: "{{ apache24.modules_conf }}"
+    regexp: '^\s*#?\s*LoadModule\s+unique_id_module\s+'
     line: 'LoadModule unique_id_module modules/mod_unique_id.so'
     insertafter: EOF
   when: ansible_facts.distribution == 'RedHat'
   notify: restart apache
   tags: [V-214253]
-
-- name: "V-214259 | Install nonsecure-zone deny list"
-  ansible.builtin.blockinfile:
-    path: "{{ apache24.managed_conf }}"
-    marker: "# {mark} STIG NONSECURE ZONES"
-    block: |
-      <Location "/">
-          <RequireAll>
-              Require all granted
-      {% for network in apache24_stig_blocked_networks %}
-              Require not ip {{ network }}
-      {% endfor %}
-          </RequireAll>
-      </Location>
-  when: apache24_stig_blocked_networks | length > 0
-  notify: restart apache
-  tags: [V-214259]
-
-- name: Validate Apache configuration after remediation
-  ansible.builtin.command: "{{ apache24.apachectl }} configtest"
-  changed_when: false
-) | list | length == apache24_stig_listen | length
-    fail_msg: "Set apache24_stig_listen to approved explicit IP:port endpoints; wildcard/implicit Listen values are not accepted."
-  tags: [V-214246]
-
-- name: "V-214246/V-214269 | Find Apache configuration files"
-  ansible.builtin.find:
-    paths: "{{ apache24.config_root }}"
-    patterns: "*.conf"
-    recurse: true
-    file_type: file
-  register: apache24_all_conf_files
-  tags: [V-214246, V-214269]
-
-- name: "V-214246 | Disable unmanaged Listen directives"
-  ansible.builtin.replace:
-    path: "{{ item.path }}"
-    regexp: '^(\\s*Listen\\s+.*)
-  ansible.builtin.package:
-    name: "{{ 'httpd-manual' if ansible_facts.distribution == 'RedHat' else 'apache2-doc' }}"
-    state: absent
-  when: apache24_stig_remove_documentation_packages | bool
-  tags: [V-214242]
-
-- name: "V-214245 | Disable WebDAV modules on Ubuntu"
-  ansible.builtin.command: a2dismod -f dav dav_fs dav_lock
-  register: apache24_dav_disable
-  changed_when: "'Module dav disabled' in apache24_dav_disable.stdout or 'Module dav_fs disabled' in apache24_dav_disable.stdout or 'Module dav_lock disabled' in apache24_dav_disable.stdout"
-  failed_when: false
-  when:
-    - ansible_facts.distribution == 'Ubuntu'
-    - apache24_stig_disable_webdav | bool
-  notify: restart apache
-  tags: [V-214245]
-
-- name: "V-214245 | Find RHEL module configuration"
-  ansible.builtin.find:
-    paths: /etc/httpd
-    patterns: "*.conf"
-    recurse: true
-    file_type: file
-  register: apache24_rhel_conf_files
-  when:
-    - ansible_facts.distribution == 'RedHat'
-    - apache24_stig_disable_webdav | bool
-  tags: [V-214245]
-
-- name: "V-214245 | Disable WebDAV LoadModule directives on RHEL"
-  ansible.builtin.replace:
-    path: "{{ item.0.path }}"
-    regexp: '^(\\s*LoadModule\\s+{{ item.1 }}_module\\s+.*)
-  ansible.builtin.command: "{{ apache24.apachectl }} configtest"
-  changed_when: false
-
-    replace: '# STIG disabled: \\1'
-  loop: "{{ apache24_rhel_conf_files.files | default([]) | product(['dav','dav_fs','dav_lock']) | list }}"
-  loop_control:
-    label: "{{ item.0.path }} {{ item.1 }}"
-  when:
-    - ansible_facts.distribution == 'RedHat'
-    - apache24_stig_disable_webdav | bool
-  notify: restart apache
-  tags: [V-214245]
-
-- name: "V-214230 | Ensure TLS module package is installed on RHEL"
-  ansible.builtin.package:
-    name: mod_ssl
-    state: present
-  when: ansible_facts.distribution == 'RedHat'
-  tags: [V-214230]
-
-- name: "V-214230 | Enable TLS module on Ubuntu"
-  ansible.builtin.command: a2enmod ssl
-  register: apache24_ssl_enable
-  changed_when: "'Enabling module ssl' in apache24_ssl_enable.stdout"
-  when: ansible_facts.distribution == 'Ubuntu'
-  notify: restart apache
-  tags: [V-214230]
-
-- name: "V-214230/V-214231/V-214232/V-214241/V-214269 | Install core STIG directives"
-  ansible.builtin.blockinfile:
-    path: "{{ apache24.managed_conf }}"
-    marker: "# {mark} STIG CORE DIRECTIVES"
-    block: |
-      ProxyRequests Off
-      SSLProtocol {{ apache24_stig_ssl_protocol }}
-      SSLCipherSuite {{ apache24_stig_ssl_cipher_suite }}
-      LogFormat "{{ apache24_stig_log_format }}" {{ apache24_stig_log_format_name }}
-      {% if apache24_stig_custom_log | length > 0 %}
-      CustomLog "{{ apache24_stig_custom_log }}" {{ apache24_stig_log_format_name }}
-      {% else %}
-      CustomLog "{{ apache24.log_dir }}/access_log" {{ apache24_stig_log_format_name }}
-      {% endif %}
-  notify: restart apache
-  tags: [V-214230, V-214231, V-214232, V-214241, V-214269]
-
-- name: Validate Apache configuration after remediation
-  ansible.builtin.command: "{{ apache24.apachectl }} configtest"
-  changed_when: false
-
-    replace: '# STIG replaced unmanaged Listen: \\1'
-  loop: "{{ apache24_all_conf_files.files }}"
-  loop_control:
-    label: "{{ item.path }}"
-  when: item.path != apache24.managed_conf
-  notify: restart apache
-  tags: [V-214246]
-
-- name: "V-214246 | Configure approved Listen endpoints"
-  ansible.builtin.blockinfile:
-    path: "{{ apache24.managed_conf }}"
-    marker: "# {mark} STIG LISTEN ENDPOINTS"
-    block: |
-      {% for endpoint in apache24_stig_listen %}
-      Listen {{ endpoint }}
-      {% endfor %}
-  notify: restart apache
-  tags: [V-214246]
-
-- name: "V-214269 | Ensure every enabled cipher directive excludes export ciphers"
-  ansible.builtin.replace:
-    path: "{{ item.path }}"
-    regexp: '^(\\s*SSLCipherSuite\\s+)(?!.*!(?:EXPORT|EXP)(?:[:[:space:]]|$))(.+)
-  ansible.builtin.package:
-    name: "{{ 'httpd-manual' if ansible_facts.distribution == 'RedHat' else 'apache2-doc' }}"
-    state: absent
-  when: apache24_stig_remove_documentation_packages | bool
-  tags: [V-214242]
-
-- name: "V-214245 | Disable WebDAV modules on Ubuntu"
-  ansible.builtin.command: a2dismod -f dav dav_fs dav_lock
-  register: apache24_dav_disable
-  changed_when: "'Module dav disabled' in apache24_dav_disable.stdout or 'Module dav_fs disabled' in apache24_dav_disable.stdout or 'Module dav_lock disabled' in apache24_dav_disable.stdout"
-  failed_when: false
-  when:
-    - ansible_facts.distribution == 'Ubuntu'
-    - apache24_stig_disable_webdav | bool
-  notify: restart apache
-  tags: [V-214245]
-
-- name: "V-214245 | Find RHEL module configuration"
-  ansible.builtin.find:
-    paths: /etc/httpd
-    patterns: "*.conf"
-    recurse: true
-    file_type: file
-  register: apache24_rhel_conf_files
-  when:
-    - ansible_facts.distribution == 'RedHat'
-    - apache24_stig_disable_webdav | bool
-  tags: [V-214245]
-
-- name: "V-214245 | Disable WebDAV LoadModule directives on RHEL"
-  ansible.builtin.replace:
-    path: "{{ item.0.path }}"
-    regexp: '^(\\s*LoadModule\\s+{{ item.1 }}_module\\s+.*)
-  ansible.builtin.command: "{{ apache24.apachectl }} configtest"
-  changed_when: false
-
-    replace: '# STIG disabled: \\1'
-  loop: "{{ apache24_rhel_conf_files.files | default([]) | product(['dav','dav_fs','dav_lock']) | list }}"
-  loop_control:
-    label: "{{ item.0.path }} {{ item.1 }}"
-  when:
-    - ansible_facts.distribution == 'RedHat'
-    - apache24_stig_disable_webdav | bool
-  notify: restart apache
-  tags: [V-214245]
-
-- name: "V-214230 | Ensure TLS module package is installed on RHEL"
-  ansible.builtin.package:
-    name: mod_ssl
-    state: present
-  when: ansible_facts.distribution == 'RedHat'
-  tags: [V-214230]
-
-- name: "V-214230 | Enable TLS module on Ubuntu"
-  ansible.builtin.command: a2enmod ssl
-  register: apache24_ssl_enable
-  changed_when: "'Enabling module ssl' in apache24_ssl_enable.stdout"
-  when: ansible_facts.distribution == 'Ubuntu'
-  notify: restart apache
-  tags: [V-214230]
-
-- name: "V-214230/V-214231/V-214232/V-214241/V-214269 | Install core STIG directives"
-  ansible.builtin.blockinfile:
-    path: "{{ apache24.managed_conf }}"
-    marker: "# {mark} STIG CORE DIRECTIVES"
-    block: |
-      ProxyRequests Off
-      SSLProtocol {{ apache24_stig_ssl_protocol }}
-      SSLCipherSuite {{ apache24_stig_ssl_cipher_suite }}
-      LogFormat "{{ apache24_stig_log_format }}" {{ apache24_stig_log_format_name }}
-      {% if apache24_stig_custom_log | length > 0 %}
-      CustomLog "{{ apache24_stig_custom_log }}" {{ apache24_stig_log_format_name }}
-      {% else %}
-      CustomLog "{{ apache24.log_dir }}/access_log" {{ apache24_stig_log_format_name }}
-      {% endif %}
-  notify: restart apache
-  tags: [V-214230, V-214231, V-214232, V-214241, V-214269]
-
-- name: Validate Apache configuration after remediation
-  ansible.builtin.command: "{{ apache24.apachectl }} configtest"
-  changed_when: false
-
-    replace: '\\1\\2:!EXPORT'
-  loop: "{{ apache24_all_conf_files.files }}"
-  loop_control:
-    label: "{{ item.path }}"
-  notify: restart apache
-  tags: [V-214269]
-
-- name: "V-214242 | Remove Apache documentation package"
-  ansible.builtin.package:
-    name: "{{ 'httpd-manual' if ansible_facts.distribution == 'RedHat' else 'apache2-doc' }}"
-    state: absent
-  when: apache24_stig_remove_documentation_packages | bool
-  tags: [V-214242]
-
-- name: "V-214245 | Disable WebDAV modules on Ubuntu"
-  ansible.builtin.command: a2dismod -f dav dav_fs dav_lock
-  register: apache24_dav_disable
-  changed_when: "'Module dav disabled' in apache24_dav_disable.stdout or 'Module dav_fs disabled' in apache24_dav_disable.stdout or 'Module dav_lock disabled' in apache24_dav_disable.stdout"
-  failed_when: false
-  when:
-    - ansible_facts.distribution == 'Ubuntu'
-    - apache24_stig_disable_webdav | bool
-  notify: restart apache
-  tags: [V-214245]
-
-- name: "V-214245 | Find RHEL module configuration"
-  ansible.builtin.find:
-    paths: /etc/httpd
-    patterns: "*.conf"
-    recurse: true
-    file_type: file
-  register: apache24_rhel_conf_files
-  when:
-    - ansible_facts.distribution == 'RedHat'
-    - apache24_stig_disable_webdav | bool
-  tags: [V-214245]
-
-- name: "V-214245 | Disable WebDAV LoadModule directives on RHEL"
-  ansible.builtin.replace:
-    path: "{{ item.0.path }}"
-    regexp: '^(\\s*LoadModule\\s+{{ item.1 }}_module\\s+.*)
-  ansible.builtin.command: "{{ apache24.apachectl }} configtest"
-  changed_when: false
-
-    replace: '# STIG disabled: \\1'
-  loop: "{{ apache24_rhel_conf_files.files | default([]) | product(['dav','dav_fs','dav_lock']) | list }}"
-  loop_control:
-    label: "{{ item.0.path }} {{ item.1 }}"
-  when:
-    - ansible_facts.distribution == 'RedHat'
-    - apache24_stig_disable_webdav | bool
-  notify: restart apache
-  tags: [V-214245]
-
-- name: "V-214230 | Ensure TLS module package is installed on RHEL"
-  ansible.builtin.package:
-    name: mod_ssl
-    state: present
-  when: ansible_facts.distribution == 'RedHat'
-  tags: [V-214230]
-
-- name: "V-214230 | Enable TLS module on Ubuntu"
-  ansible.builtin.command: a2enmod ssl
-  register: apache24_ssl_enable
-  changed_when: "'Enabling module ssl' in apache24_ssl_enable.stdout"
-  when: ansible_facts.distribution == 'Ubuntu'
-  notify: restart apache
-  tags: [V-214230]
-
-- name: "V-214230/V-214231/V-214232/V-214241/V-214269 | Install core STIG directives"
-  ansible.builtin.blockinfile:
-    path: "{{ apache24.managed_conf }}"
-    marker: "# {mark} STIG CORE DIRECTIVES"
-    block: |
-      ProxyRequests Off
-      SSLProtocol {{ apache24_stig_ssl_protocol }}
-      SSLCipherSuite {{ apache24_stig_ssl_cipher_suite }}
-      LogFormat "{{ apache24_stig_log_format }}" {{ apache24_stig_log_format_name }}
-      {% if apache24_stig_custom_log | length > 0 %}
-      CustomLog "{{ apache24_stig_custom_log }}" {{ apache24_stig_log_format_name }}
-      {% else %}
-      CustomLog "{{ apache24.log_dir }}/access_log" {{ apache24_stig_log_format_name }}
-      {% endif %}
-  notify: restart apache
-  tags: [V-214230, V-214231, V-214232, V-214241, V-214269]
 
 - name: Validate Apache configuration after remediation
   ansible.builtin.command: "{{ apache24.apachectl }} configtest"
