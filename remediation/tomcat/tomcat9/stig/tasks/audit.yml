@@ -193,12 +193,13 @@
       status: "REVIEW - verify effective management Realm is a LockOutRealm with failureCount=5 and lockOutTime=600."
   tags: [V-222980, V-222981, V-222982, audit]
 
-- name: "V-223006 | AUDIT | Management-role user approval"
+- name: "V-223006 | EVIDENCE | Management-role user approval"
   ansible.builtin.debug:
     msg:
       finding: V-223006
-      status: REVIEW
-      human_action: "Enumerate users assigned Tomcat management roles and compare every account to ISSO approval records."
+      evidence: "{{ tomcat_stig_management_user_approval_evidence }}"
+      status: "{{ 'DOCUMENTED' if tomcat_stig_management_user_approval_evidence | length > 0 else 'REVIEW' }}"
+      human_action: "Document all Tomcat management-role users/roles and ISSO approval. LDAP/local account approval remains an organization evidence requirement."
   tags: [V-223006, audit]
 
 - name: "V-223009 | AUDIT | Connector address completeness"
@@ -206,5 +207,5 @@
     msg:
       finding: V-223009
       approved_connector_addresses: "{{ tomcat_stig_connector_addresses }}"
-      status: "REVIEW - every active Connector must have an address attribute matching an SSP-approved interface."
+      status: "REMEDIATION-GUARDED - remediation now requires an SSP-approved address for every active Connector and XML management sets it."
   tags: [V-223009, audit]
