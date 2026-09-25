@@ -82,6 +82,18 @@
     - V-261860
     - V-261863
 
+- name: PostgreSQL 16 STIG | Limit client-visible PostgreSQL error detail
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\\s*#?\\s*client_min_messages\\s*='
+    line: "client_min_messages = error"
+    backup: true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261908
+    - V-261909
+
 - name: PostgreSQL 16 STIG | Store newly set passwords with SCRAM-SHA-256
   become: true
   ansible.builtin.lineinfile:
