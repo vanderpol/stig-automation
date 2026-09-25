@@ -1,0 +1,64 @@
+---
+- name: V-222946 V-222987 | Harden conf directory
+  ansible.builtin.file:
+    path: "{{ tomcat9_stig_paths.conf }}"
+    owner: root
+    group: "{{ tomcat9_stig_group }}"
+    mode: "{{ tomcat9_stig_conf_dir_mode }}"
+  tags: [V-222946, V-222987]
+
+- name: V-222943 | Harden logs directory
+  ansible.builtin.file:
+    path: "{{ tomcat9_stig_paths.logs }}"
+    owner: "{{ tomcat9_stig_user }}"
+    group: "{{ tomcat9_stig_group }}"
+    mode: "{{ tomcat9_stig_logs_dir_mode }}"
+  tags: [V-222943, V-222988]
+
+- name: V-222989 V-222990 | Harden temp directory
+  ansible.builtin.file:
+    path: "{{ tomcat9_stig_paths.temp }}"
+    owner: "{{ tomcat9_stig_user }}"
+    group: "{{ tomcat9_stig_group }}"
+    mode: "{{ tomcat9_stig_temp_dir_mode }}"
+  tags: [V-222989, V-222990]
+
+- name: V-222991 | Set work directory ownership
+  ansible.builtin.file:
+    path: "{{ tomcat9_stig_paths.work }}"
+    owner: "{{ tomcat9_stig_user }}"
+    group: "{{ tomcat9_stig_group }}"
+    state: directory
+  tags: [V-222991]
+
+- name: V-222945 | Find regular conf files
+  ansible.builtin.find:
+    paths: "{{ tomcat9_stig_paths.conf }}"
+    file_type: file
+    recurse: true
+  register: tomcat9_conf_files
+  tags: [V-222945]
+
+- name: V-222945 | Set regular conf files to 0640
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: "{{ tomcat9_stig_group }}"
+    mode: "{{ tomcat9_stig_conf_file_mode }}"
+  loop: "{{ tomcat9_conf_files.files }}"
+  tags: [V-222945]
+
+- name: V-222944 | Find regular log files
+  ansible.builtin.find:
+    paths: "{{ tomcat9_stig_paths.logs }}"
+    file_type: file
+    recurse: true
+  register: tomcat9_log_files
+  tags: [V-222944]
+
+- name: V-222944 | Set regular log files to 0640
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: "{{ tomcat9_stig_log_file_mode }}"
+  loop: "{{ tomcat9_log_files.files }}"
+  tags: [V-222944]
