@@ -31,14 +31,16 @@
   loop: "{{ tomcat_stig_connector_addresses | dict2items }}"
   tags: [V-223009]
 
-- name: "V-222968 | Require FIPS platform evidence before enabling Tomcat FIPSMode"
+- name: "V-222968 | Require FIPS-ready platform before Tomcat remediation"
   ansible.builtin.assert:
     that:
+      - tomcat_stig_fips_enabled | bool
       - tomcat_stig_fips_platform_evidence | length > 0
     fail_msg: >-
-      V-222968 also depends on the RHEL/Java cryptographic stack. Document the approved FIPS
-      platform configuration/evidence before setting tomcat_stig_fips_enabled=true.
-  when: tomcat_stig_fips_enabled | bool
+      V-222968 is a current CAT I requirement and cannot be silently skipped. Configure the
+      RHEL/Java cryptographic stack to use approved FIPS-validated modules, document that
+      configuration in tomcat_stig_fips_platform_evidence, then set
+      tomcat_stig_fips_enabled=true. The role will not claim or manufacture platform FIPS status.
   tags: [V-222968]
 
 - name: "V-222974 | Require trusted-network or encryption evidence for clustered Tomcat"
