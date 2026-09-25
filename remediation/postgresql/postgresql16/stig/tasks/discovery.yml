@@ -13,6 +13,17 @@
       This role is scoped only to PostgreSQL 16. Observed:
       {{ postgres16_psql_version.stdout | default('unknown') }}
 
+- name: PostgreSQL 16 STIG | Discover database owner primary group
+  ansible.builtin.command:
+    argv: ["id", "-gn", "{{ postgres16_admin_user }}"]
+  register: postgres16_admin_group_raw
+  changed_when: false
+  check_mode: false
+
+- name: PostgreSQL 16 STIG | Record database owner primary group
+  ansible.builtin.set_fact:
+    postgres16_admin_group: "{{ postgres16_admin_group_raw.stdout | trim }}"
+
 - name: PostgreSQL 16 STIG | Discover server configuration paths
   become: true
   become_user: "{{ postgres16_admin_user }}"
