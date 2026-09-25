@@ -29,3 +29,17 @@ apache24_stig_proxy_approved: false
 apache24_stig_remove_documentation_packages: true
 apache24_stig_disable_status_info: true
 apache24_stig_disable_webdav: true
+apache24_stig_pid_file: ""
+apache24_stig_pid_dir_mode: "0755"
+apache24_stig_control_binary_mode: "0755"
+apache24_stig_blocked_extensions:
+  - ".bak"
+  - ".old"
+  - ".orig"
+  - ".save"
+  - ".swp"
+  - ".tmp"
+apache24_stig_disable_cgi: false
+apache24_stig_cgi_approved: false
+apache24_stig_cookie_httponly: true
+apache24_stig_remote_ip_enabled: false
