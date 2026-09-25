@@ -61,3 +61,24 @@ Successful playbook execution is only remediation evidence. Compliance requires 
 ## 15. Anti-STIG deferred
 
 Negative/regression automation will not be built until a representative PostgreSQL 16 system reaches an authoritative known-good V1R3 baseline.
+
+
+## 16. Effective PostgreSQL configuration can differ from edited files
+
+PostgreSQL supports included configuration files and later definitions can override values written to the primary `postgresql.conf`. Therefore, a successful `lineinfile` change is not sufficient evidence that the runtime setting is effective.
+
+The role now reloads reloadable settings and reports effective values from `pg_settings`. Restart-only settings such as `shared_preload_libraries` remain pending until an approved restart and post-restart verification.
+
+## 17. Organization-defined examples are not policy defaults
+
+V-261899 includes example timeout/keepalive values, but its fix text explicitly says to set them to organizational requirements. Those example numbers are not role defaults. The role requires explicit approved nonzero inputs before changing these parameters.
+
+Similarly, V-261921 permits a UTC-mappable desired time zone. The role does not silently change operational log timezone unless a site value is supplied.
+
+## 18. Central syslog requires both PostgreSQL and enterprise evidence
+
+For V-261917 and V-261967, supplying an approved `postgres16_syslog_facility` enables guarded PostgreSQL configuration. Existing log destinations are preserved and `syslog` is merged in rather than replacing them. Compliance still requires evidence that the selected facility is routed/offloaded according to the organization's centralized logging design.
+
+## 19. V-261879 requires actual config-file protection
+
+The current check explicitly evaluates `postgresql.conf` ownership and mode. The role therefore protects the actual server-reported configuration file as the discovered database-owner account/group with mode `0600`; it does not assume `$PGDATA/postgresql.conf` is the effective path.
