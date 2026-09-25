@@ -49,7 +49,7 @@ tomcat_stig_ldap_role_search: ""
 tomcat_stig_ldap_connection_name: ""
 tomcat_stig_ldap_connection_password: ""
 tomcat_stig_management_user_approval_evidence: ""
-tomcat_stig_management_allowed_cidr_regex: '127\\.0\\.0\\.1|::1'
+tomcat_stig_management_allowed_cidr_regex: ""
 
 tomcat_stig_remote_jmx_enabled: false
 tomcat_stig_jmx_port: 9010
@@ -74,6 +74,9 @@ tomcat_stig_cluster_trusted_network_documented: false
 tomcat_stig_proxy_mutual_tls_required: false
 tomcat_stig_proxy_mutual_tls_evidence: ""
 tomcat_stig_proxy_mutual_tls_risk_acceptance: ""
+# When mutual TLS is required, list the application web.xml files served by the proxied connector(s).
+# These files will have <auth-method>CLIENT-CERT</auth-method> enforced.
+tomcat_stig_proxy_client_cert_web_xml_files: []
 
 # V-222968: only enable after the RHEL/Java cryptographic stack is configured for FIPS.
 tomcat_stig_fips_enabled: false
