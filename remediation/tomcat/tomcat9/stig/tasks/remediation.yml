@@ -257,6 +257,10 @@
   notify: reload audit rules
   tags: [V-222998, V-222999, V-223000, auditd]
 
+- name: Apply connector and current-V3R4 guardrails
+  ansible.builtin.include_tasks: connector_remediation.yml
+  tags: [V-222968, V-222971, V-222974, V-223009]
+
 - name: Apply manager-specific deterministic remediations
   ansible.builtin.include_tasks: manager_remediation.yml
   tags: [V-222926, V-222979]
