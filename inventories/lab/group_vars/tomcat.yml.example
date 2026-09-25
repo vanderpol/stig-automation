@@ -51,7 +51,8 @@
 # tomcat_stig_connector_addresses:
 #   "8443": "192.0.2.20"
 
-# V-222968: enable only after the RHEL/Java crypto stack is approved/configured for FIPS.
+# V-222968: remediation will stop until the RHEL/Java crypto stack is approved/configured for FIPS.
+# After preparing the platform, enable this and record the supporting evidence.
 # tomcat_stig_fips_enabled: true
 # tomcat_stig_fips_platform_evidence: "RHEL/Java FIPS validation/configuration record"
 
