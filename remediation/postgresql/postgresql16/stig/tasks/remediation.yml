@@ -82,6 +82,20 @@
     - V-261860
     - V-261863
 
+- name: PostgreSQL 16 STIG | Protect stderr audit log file creation mode
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\\s*#?\\s*log_file_mode\\s*='
+    line: "log_file_mode = 0600"
+    backup: true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261875
+    - V-261876
+    - V-261877
+    - V-261879
+
 - name: PostgreSQL 16 STIG | Configure connection audit settings
   become: true
   ansible.builtin.lineinfile:
