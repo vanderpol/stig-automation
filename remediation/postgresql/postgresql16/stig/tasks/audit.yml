@@ -51,3 +51,32 @@
     - V-261965
     - V-261966
     - evidence
+
+- name: PostgreSQL 16 STIG | Audit stored password representation
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SELECT usename FROM pg_shadow WHERE passwd IS NOT NULL AND passwd NOT LIKE 'SCRAM-SHA-256%';"
+  register: postgres16_non_scram_roles
+  changed_when: false
+  check_mode: false
+  no_log: true
+  tags:
+    - V-261891
+
+- name: PostgreSQL 16 STIG | Report non-SCRAM password role count without hashes
+  ansible.builtin.debug:
+    msg: >-
+      {{ postgres16_non_scram_roles.stdout_lines | length }} role(s) have a
+      non-SCRAM stored password representation. Existing credentials are not
+      automatically reset because the role cannot legitimately invent user
+      passwords.
+  when: postgres16_non_scram_roles.stdout_lines | length > 0
+  tags:
+    - V-261891
