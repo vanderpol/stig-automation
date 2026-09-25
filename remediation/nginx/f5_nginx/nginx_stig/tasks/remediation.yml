@@ -14,10 +14,18 @@
 
 # V-278383
 - name: V-278383 | Remove NGINX service account from common privileged supplemental groups
-  ansible.builtin.command: "gpasswd -d {{ nginx_stig_effective_user }} {{ item }}"
-  loop: "{{ ['sudo', 'wheel', 'admin'] | intersect(ansible_facts.getent_group.keys() | list if ansible_facts.getent_group is defined else []) }}"
+  ansible.builtin.command:
+    argv:
+      - gpasswd
+      - -d
+      - "{{ nginx_stig_effective_user }}"
+      - "{{ item }}"
+  loop: "{{ ['sudo', 'wheel', 'admin'] }}"
+  when:
+    - ansible_facts.getent_group is defined
+    - item in ansible_facts.getent_group
+    - nginx_stig_effective_user in (ansible_facts.getent_group[item][2] | default([]))
   changed_when: true
-  failed_when: false
   tags: [V-278383, CAT2]
 
 # V-278386, V-278397
@@ -107,6 +115,15 @@
   tags: [V-278381, V-278394, V-278395, V-278399, V-278404, V-278405, CAT1, CAT2]
 
 # V-278380 belongs in events {}, so modify the existing directive only when site value is supplied.
+- name: V-278380 | Verify an existing worker_connections directive was discovered
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_effective_config.stdout is search('(?m)^\\s*worker_connections\\s+\\d+\\s*;')
+    fail_msg: >-
+      V-278380: no existing worker_connections directive was found in the effective
+      configuration. The role will not guess where to create an events{} directive.
+  tags: [V-278380, CAT2]
+
 - name: V-278380 | Require organization-defined worker_connections value
   ansible.builtin.assert:
     that:
@@ -125,6 +142,19 @@
   tags: [V-278380, CAT2]
 
 # V-278404: a zone without an applied limit_conn/limit_req does not satisfy the check.
+- name: V-278404 | Refuse ambiguous multi-server mutation targets
+  ansible.builtin.shell: |
+    set -o pipefail
+    grep -Ec '^[[:space:]]*server[[:space:]]*\\{' "{{ item }}"
+  args:
+    executable: /bin/bash
+  loop: "{{ nginx_stig_dos_scope_files }}"
+  register: nginx_stig_dos_server_counts
+  changed_when: false
+  failed_when: nginx_stig_dos_server_counts.stdout | int != 1
+  when: nginx_stig_dos_scope_files | length > 0
+  tags: [V-278404, CAT2]
+
 - name: V-278404 | Apply reviewed per-client connection limit
   ansible.builtin.blockinfile:
     path: "{{ item }}"
@@ -134,5 +164,7 @@
       limit_conn {{ nginx_stig_limit_conn_zone_name }} {{ nginx_stig_limit_conn_per_client }};
   loop: "{{ nginx_stig_dos_scope_files }}"
   when: nginx_stig_dos_scope_files | length > 0
-  notify: reload nginx
+  notify:
+    - validate nginx
+    - reload nginx
   tags: [V-278404, CAT2]
