@@ -23,13 +23,26 @@
 #   - postgres
 # postgres16_approved_auth_methods:
 #   - scram-sha-256
+# postgres16_authentication_exception_evidence: "Approved non-enterprise HBA exceptions ..."
 # postgres16_authorization_evidence: "RMF artifact / SSP section ..."
+# postgres16_installation_account_evidence: "Controlled/tracked postgres account procedure ..."
+# postgres16_password_auth_ao_approval_evidence: "AO approval for password authentication ..."
 # postgres16_pki_evidence: "PKI trust / certificate evidence ..."
 # postgres16_fips_evidence: "Platform FIPS evidence ..."
 # postgres16_patch_evidence: "Approved package/security-update evidence ..."
-# postgres16_at_rest_protection_evidence: "Data-owner encryption determination ..."
+# postgres16_at_rest_protection_evidence: "AO/data-owner at-rest protection determination ..."
+# postgres16_environment_classification: "unclassified"  # or "classified"
+# postgres16_classified_crypto_evidence: "NSA-approved crypto/network-device evidence ..."
 # postgres16_central_log_evidence: "SIEM/syslog offload evidence ..."
 
 # High-risk HBA, PKI, FIPS, authorization, and package mutations are intentionally
 # not exposed as switches until dedicated guarded-remediation tasks are implemented
 # and lab-tested.
+
+# Guarded TLS enablement. Set true only after approved certificate/key material
+# is already configured at PostgreSQL's ssl_cert_file/ssl_key_file paths.
+# postgres16_enable_ssl: true
+
+# V-283674 current upstream PostgreSQL 16 minor for this test cycle.
+# The role currently defaults to 16.15 (current on 2026-09-25).
+# postgres16_required_server_version: "16.15"
