@@ -1,0 +1,53 @@
+---
+- name: PostgreSQL 16 STIG | Audit current pgAudit/logging state
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SELECT name || '=' || setting FROM pg_settings WHERE name IN ('shared_preload_libraries','log_line_prefix') ORDER BY name;"
+  register: postgres16_audit_logging_state
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261860
+    - V-261861
+    - V-261863
+    - V-261864
+    - V-261865
+
+- name: PostgreSQL 16 STIG | Report pgAudit/logging state
+  ansible.builtin.debug:
+    var: postgres16_audit_logging_state.stdout_lines
+  tags:
+    - V-261860
+    - V-261861
+    - V-261863
+    - V-261864
+    - V-261865
+
+- name: PostgreSQL 16 STIG | Flag site-owned authorization evidence
+  ansible.builtin.debug:
+    msg: >-
+      V-261858/V-261859 require organization authentication/authorization
+      decisions and evidence. pg_hba.conf and application/database privileges
+      will not be broadly rewritten without explicit approved-state inputs.
+  tags:
+    - V-261858
+    - V-261859
+    - evidence
+
+- name: PostgreSQL 16 STIG | Flag FIPS/crypto platform evidence
+  ansible.builtin.debug:
+    msg: >-
+      FIPS and data-owner cryptographic requirements cross the PostgreSQL/host
+      boundary. This role will audit supplied evidence and will not silently
+      convert an existing host into FIPS mode.
+  tags:
+    - V-261965
+    - V-261966
+    - evidence
