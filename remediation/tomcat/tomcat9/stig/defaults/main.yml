@@ -77,6 +77,9 @@ tomcat_dod_ca_bundle: ""
 tomcat_stig_cluster_enabled: false
 tomcat_stig_cluster_trusted_network_documented: false
 tomcat_stig_proxy_mutual_tls_required: false
+# Active Tomcat Connector ports that terminate the proxied/load-balanced application traffic.
+# Required when proxy mutual TLS remediation is enabled so unrelated connectors are not modified.
+tomcat_stig_proxy_connector_ports: []
 tomcat_stig_proxy_mutual_tls_evidence: ""
 tomcat_stig_proxy_mutual_tls_risk_acceptance: ""
 # When mutual TLS is required, list the application web.xml files served by the proxied connector(s).
