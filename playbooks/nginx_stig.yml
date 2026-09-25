@@ -1,0 +1,7 @@
+---
+- name: Apply F5 NGINX STIG V1R1 remediation
+  hosts: nginx
+  become: true
+  gather_facts: true
+  roles:
+    - role: nginx_stig
