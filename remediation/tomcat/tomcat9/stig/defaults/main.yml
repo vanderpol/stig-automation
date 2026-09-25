@@ -24,7 +24,6 @@ tomcat_stig_production: true
 
 # SSP / ISSO inputs. Empty values are deliberately NOT guessed.
 tomcat_stig_manager_max_active_sessions: null
-tomcat_stig_manager_session_timeout_minutes: 10
 tomcat_stig_hsts_include_subdomains: false
 tomcat_stig_behind_proxy: false
 tomcat_stig_internal_proxies_regex: ""
