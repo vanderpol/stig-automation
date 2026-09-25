@@ -1,0 +1,22 @@
+---
+apache24_stig_audit_only: false
+apache24_stig_restart: true
+apache24_stig_timeout: 60
+apache24_stig_server_tokens: Prod
+apache24_stig_server_signature: 'Off'
+apache24_stig_trace_enable: 'Off'
+apache24_stig_listen: []
+apache24_stig_disable_webdav: true
+apache24_stig_disable_proxy: true
+apache24_stig_log_dir_mode: '0750'
+apache24_stig_log_file_mode: '0640'
+apache24_stig_htpasswd_mode: '0640'
+apache24_stig_document_root: ''
+apache24_stig_management_separated: false
+apache24_stig_log_backup_documented: false
+apache24_stig_log_failure_alerting_documented: false
+apache24_stig_module_approval_documented: false
+apache24_stig_capacity_documented: false
+apache24_stig_security_integration_documented: false
+apache24_stig_patch_process_documented: false
+apache24_stig_vendor_support_documented: false
