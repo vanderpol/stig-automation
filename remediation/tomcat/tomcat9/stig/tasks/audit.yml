@@ -136,10 +136,12 @@
   ansible.builtin.debug:
     msg:
       finding: V-222968
-      status: REVIEW
+      tomcat_fipsmode_requested: "{{ tomcat_stig_fips_enabled }}"
+      platform_evidence: "{{ tomcat_stig_fips_platform_evidence }}"
+      status: "{{ 'READY-FOR-TECHNICAL-CHECK' if tomcat_stig_fips_enabled and tomcat_stig_fips_platform_evidence | length > 0 else 'REVIEW-REQUIRED' }}"
       human_action: >-
-        Verify current V3R4 FIPSMode/connector requirements and confirm the RHEL Java/OS cryptographic
-        modules in use are FIPS validated. Tomcat configuration alone cannot establish this evidence.
+        Verify FIPSMode=on in server.xml, confirm catalina.out contains no FIPSMode failure,
+        and retain evidence that the RHEL/Java cryptographic modules are approved/FIPS validated.
   tags: [V-222968, audit]
 
 - name: "V-222970 | AUDIT | Manager network restriction"
