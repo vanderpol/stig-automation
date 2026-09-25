@@ -1,0 +1,19 @@
+---
+- name: Require explicit site document root before site remediation
+  ansible.builtin.assert:
+    that:
+      - apache24_site_document_root | length > 0
+      - apache24_site_document_root.startswith('/')
+    fail_msg: Set apache24_site_document_root to the approved absolute document root for this hosted site.
+
+- name: Protect site document root from unintended write access
+  ansible.builtin.file:
+    path: "{{ apache24_site_document_root }}"
+    state: directory
+    owner: root
+    group: "{{ apache24.group }}"
+    mode: "0750"
+
+- name: Validate Apache configuration after site remediation
+  ansible.builtin.command: "{{ apache24.apachectl }} configtest"
+  changed_when: false
