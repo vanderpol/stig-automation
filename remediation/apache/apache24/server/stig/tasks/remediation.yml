@@ -1,0 +1,84 @@
+---
+- name: "V-214255/V-214256/V-214257 | Install managed server hardening"
+  ansible.builtin.copy:
+    dest: "{{ apache24.managed_conf }}"
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by stig-automation - Apache Server 2.4 UNIX Server STIG V3R3
+      Timeout {{ apache24_stig_timeout }}
+      ServerTokens {{ apache24_stig_server_tokens }}
+      ServerSignature {{ apache24_stig_server_signature }}
+      TraceEnable {{ apache24_stig_trace_enable }}
+      {% for endpoint in apache24_stig_listen %}
+      Listen {{ endpoint }}
+      {% endfor %}
+  notify: restart apache
+  tags: [V-214246, V-214255, V-214256, V-214257]
+
+- name: Enable managed configuration on Ubuntu
+  ansible.builtin.file:
+    src: "{{ apache24.managed_conf }}"
+    dest: "/etc/apache2/conf-enabled/00-stig-server.conf"
+    state: link
+  when: ansible_facts.distribution == 'Ubuntu'
+  notify: restart apache
+
+- name: "V-214235/V-214236 | Protect Apache log directory"
+  ansible.builtin.file:
+    path: "{{ apache24.log_dir }}"
+    owner: root
+    group: "{{ apache24.group }}"
+    mode: "{{ apache24_stig_log_dir_mode }}"
+    state: directory
+  tags: [V-214235, V-214236]
+
+- name: "V-214235/V-214236 | Find Apache log files"
+  ansible.builtin.find:
+    paths: "{{ apache24.log_dir }}"
+    file_type: file
+  register: apache24_log_files
+  tags: [V-214235, V-214236]
+
+- name: "V-214235/V-214236 | Protect Apache log files"
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: "{{ apache24.group }}"
+    mode: "{{ apache24_stig_log_file_mode }}"
+  loop: "{{ apache24_log_files.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  tags: [V-214235, V-214236]
+
+- name: "V-214271 | Set Apache service account to nologin"
+  ansible.builtin.user:
+    name: "{{ apache24.user }}"
+    shell: /usr/sbin/nologin
+    password_lock: true
+  tags: [V-214271]
+
+- name: "V-214274 | Find htpasswd files"
+  ansible.builtin.find:
+    paths: "{{ apache24.config_root }}"
+    patterns: ["*.htpasswd", "htpasswd", ".htpasswd"]
+    file_type: file
+    recurse: true
+  register: apache24_htpasswd_files
+  tags: [V-214274]
+
+- name: "V-214274 | Protect htpasswd files"
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: "{{ apache24.group }}"
+    mode: "{{ apache24_stig_htpasswd_mode }}"
+  loop: "{{ apache24_htpasswd_files.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  tags: [V-214274]
+
+- name: Validate Apache configuration after remediation
+  ansible.builtin.command: "{{ apache24.apachectl }} configtest"
+  changed_when: false
