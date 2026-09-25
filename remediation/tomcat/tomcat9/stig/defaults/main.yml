@@ -1,0 +1,43 @@
+---
+# Tomcat 9 STIG V3R4 — RHEL 8/9 stabilization defaults
+tomcat9_stig_service_name: tomcat
+tomcat9_stig_user: tomcat
+tomcat9_stig_group: tomcat
+
+# Optional explicit overrides. Leave empty to use discovery.
+tomcat9_stig_catalina_home: ""
+tomcat9_stig_catalina_base: ""
+
+# Site/SSP values are intentionally unset until supplied.
+tomcat9_stig_manager_max_active_sessions: null
+tomcat9_stig_hsts_include_subdomains: null
+tomcat9_stig_approved_connector_ports: []
+tomcat9_stig_enforce_approved_connectors: false
+tomcat9_stig_connector_bind_addresses: {}
+tomcat9_stig_behind_proxy: false
+tomcat9_stig_proxy_internal_proxies: ""
+tomcat9_stig_manager_allowed_networks: []
+tomcat9_stig_remove_default_root: false
+tomcat9_stig_hosted_environment: false
+tomcat9_stig_devsecops_exception: false
+tomcat9_stig_strict_servlet_exception: false
+tomcat9_stig_allow_backslash_exception: false
+
+# LDAP/JMX/PKI inputs remain site supplied.
+tomcat9_stig_ldap_url: ""
+tomcat9_stig_keystore_path: ""
+tomcat9_stig_dod_ca_bundle: ""
+tomcat9_stig_jmx_enabled: false
+tomcat9_stig_jmx_bind_address: ""
+tomcat9_stig_jmx_password_file: ""
+tomcat9_stig_jmx_access_file: ""
+
+# Deterministic hardening values.
+tomcat9_stig_umask: "0027"
+tomcat9_stig_conf_dir_mode: "0750"
+tomcat9_stig_conf_file_mode: "0640"
+tomcat9_stig_logs_dir_mode: "0750"
+tomcat9_stig_log_file_mode: "0640"
+tomcat9_stig_bin_dir_mode: "0750"
+tomcat9_stig_bin_jar_mode: "0640"
+tomcat9_stig_temp_dir_mode: "0750"
