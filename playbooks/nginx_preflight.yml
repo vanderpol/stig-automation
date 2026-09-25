@@ -1,0 +1,10 @@
+---
+- name: Preflight F5 NGINX STIG V1R1 target
+  hosts: nginx
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Run NGINX STIG discovery only
+      ansible.builtin.import_role:
+        name: nginx_stig
+        tasks_from: discovery.yml
