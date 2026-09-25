@@ -1,0 +1,24 @@
+---
+- name: Build Server STIG readiness facts
+  ansible.builtin.set_fact:
+    apache24_server_site_input_required:
+      - "{{ 'V-214246: approved explicit Listen endpoints' if apache24_stig_listen | length == 0 else '' }}"
+      - "{{ 'V-214247/V-214261: approved administrative accounts (when automated comparison is desired)' if apache24_stig_approved_admin_accounts | length == 0 else '' }}"
+      - "{{ 'V-214258: application value/category and inactivity timeout' if apache24_stig_session_timeout_minutes is none else '' }}"
+    apache24_server_evidence_required:
+      - "{{ 'V-214234: log-processing failure alerting' if not apache24_stig_log_failure_alerting_documented else '' }}"
+      - "{{ 'V-214237: log backup' if not apache24_stig_log_backup_documented else '' }}"
+      - "{{ 'V-214238/V-214240: module/software approval' if not apache24_stig_module_approval_documented else '' }}"
+      - "{{ 'V-214249: management separation' if not apache24_stig_management_separation_documented else '' }}"
+      - "{{ 'V-214262: log capacity' if not apache24_stig_capacity_documented else '' }}"
+      - "{{ 'V-214263/V-214264: remote audit/security integration' if not apache24_stig_remote_audit_logging_documented or not apache24_stig_security_integration_documented else '' }}"
+      - "{{ 'V-214270: patch/update evidence' if apache24_stig_patch_evidence | length == 0 else '' }}"
+      - "{{ 'V-214273: vendor support evidence' if apache24_stig_vendor_support_evidence | length == 0 else '' }}"
+
+- name: Server STIG preflight summary
+  ansible.builtin.debug:
+    msg:
+      benchmark: "Apache Server 2.4 UNIX Server STIG V3R3"
+      status: "{{ 'SITE INPUT REQUIRED' if (apache24_server_site_input_required | reject('equalto','') | list | length) > 0 else ('EVIDENCE REQUIRED' if (apache24_server_evidence_required | reject('equalto','') | list | length) > 0 else 'READY') }}"
+      site_input_required: "{{ apache24_server_site_input_required | reject('equalto','') | list }}"
+      evidence_required: "{{ apache24_server_evidence_required | reject('equalto','') | list }}"
