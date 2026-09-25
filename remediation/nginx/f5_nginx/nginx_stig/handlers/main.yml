@@ -1,11 +1,14 @@
 ---
-- name: Validate nginx configuration
-  ansible.builtin.command: "{{ nginx_stig_binary }} -t -c {{ nginx_stig_main_conf }}"
-  changed_when: false
-  listen: validate nginx
+- name: Validate and reload nginx
+  block:
+    - name: Validate nginx configuration
+      ansible.builtin.command: "{{ nginx_stig_binary }} -t -c {{ nginx_stig_main_conf }}"
+      changed_when: false
 
-- name: Reload nginx
-  ansible.builtin.service:
-    name: "{{ nginx_stig_service }}"
-    state: reloaded
-  listen: reload nginx
+    - name: Reload nginx after successful validation
+      ansible.builtin.service:
+        name: "{{ nginx_stig_service }}"
+        state: reloaded
+  listen:
+    - validate nginx
+    - reload nginx
