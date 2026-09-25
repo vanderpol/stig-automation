@@ -14,7 +14,7 @@ Classification policy matches the Server role: AUTO, AUTO-VAR, AUDIT-VAR, APP/EV
 | V-214288 | APP/AUDIT-VAR | Cookie domain/path scope prevents cross-site/application access |
 | V-214289 | EVIDENCE | Support re-creation from a stable known baseline |
 | V-214290 | AUDIT-VAR | Document root resides on a separate partition/filesystem |
-| V-214292 | AUTO-VAR | Prevent directory listing / provide default site page behavior |
+| V-214292 | AUDIT-VAR | Verify default document exists in applicable document-root directories; -Indexes is defense-in-depth but not sufficient for the current check |
 | V-214296 | APP/AUDIT-VAR | Inactive session timeout |
 | V-214297 | AUTO-VAR | Restrict inbound connections from organization-defined nonsecure zones |
 | V-214298 | AUDIT-VAR | Distinct administrative account boundary |
