@@ -389,6 +389,43 @@
   tags:
     - V-261863
 
+- name: PostgreSQL 16 STIG | Apply reloadable configuration before effective-state validation
+  ansible.builtin.meta: flush_handlers
+  when: not ansible_check_mode
+
+- name: PostgreSQL 16 STIG | Read effective reloadable STIG settings
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - >-
+        SELECT name || '=' || setting
+        FROM pg_settings
+        WHERE name IN (
+          'client_min_messages','password_encryption','log_file_mode',
+          'log_connections','log_disconnections','log_hostname',
+          'log_error_verbosity','log_line_prefix','log_timezone',
+          'statement_timeout','tcp_keepalives_idle',
+          'tcp_keepalives_interval','tcp_keepalives_count'
+        )
+        ORDER BY name;
+  register: postgres16_effective_settings
+  changed_when: false
+  check_mode: false
+  when: not ansible_check_mode
+
+- name: PostgreSQL 16 STIG | Report effective reloadable settings
+  ansible.builtin.debug:
+    var: postgres16_effective_settings.stdout_lines
+  when:
+    - not ansible_check_mode
+    - postgres16_effective_settings is defined
+
 - name: PostgreSQL 16 STIG | Validate PostgreSQL configuration file
   become: true
   become_user: "{{ postgres16_admin_user }}"
