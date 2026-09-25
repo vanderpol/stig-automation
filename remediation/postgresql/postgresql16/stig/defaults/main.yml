@@ -8,12 +8,6 @@ postgres16_admin_user: postgres
 postgres16_admin_db: postgres
 
 # Safety gates.
-postgres16_manage_hba: false
-postgres16_manage_authorization: false
-postgres16_manage_pki: false
-postgres16_manage_fips: false
-postgres16_manage_package_updates: false
-
 # V-261857 is organization-defined. Empty means fail the applicable
 # remediation prerequisite rather than inventing a connection limit.
 postgres16_max_connections: null
