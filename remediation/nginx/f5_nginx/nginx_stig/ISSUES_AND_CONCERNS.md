@@ -151,3 +151,28 @@ Re-run the benchmark/current-vendor reconciliation whenever:
 - team testing finds an application-impact or idempotency issue.
 
 Do not silently resolve a benchmark/vendor conflict in code. Record the discrepancy here, cite the affected V-ID, and document the chosen behavior and validation evidence.
+
+
+## Structural validation round — 2026-09-25
+
+The pre-team-testing static structural pass corrected several implementation risks:
+
+- V-278383 privileged-group removal is now membership-conditioned and no longer suppresses command failures.
+- V-278380 now fails safely if no existing `worker_connections` directive is discoverable rather than silently making no change.
+- V-278404 refuses files with an ambiguous number of `server {}` blocks before inserting a limit.
+- Handler flow now gates reload through `nginx -t`.
+- Handlers are flushed and effective configuration is re-dumped before post-remediation audit, preventing stale pre-remediation facts from satisfying/failing checks.
+- V-278404 audit now requires the applied limit to appear in refreshed effective configuration.
+- V-278390 and V-278402 now have explicit applicability inputs rather than unconditionally requiring evidence for deployments where the feature is not used.
+- V-278396 now checks effective log directives for syslog-backed logging in addition to requiring the site-owned endpoint.
+
+This was a **static structural review**, not execution of `ansible-playbook --syntax-check`. The repository was reviewed through source control; no representative NGINX host or Ansible runtime was available in this review environment. Actual syntax/module execution remains the first tester gate.
+
+### Remaining first-test concerns
+
+- Confirm the handler notification chain validates before the service reload on the team's installed Ansible version.
+- Confirm `nginx -qT` output behavior and parser assumptions on each supported package/edition.
+- Confirm the managed `conf.d/*.conf` include is in a legal `http {}` context; `nginx -t` is the final guard against an invalid context.
+- V-278404 deliberately rejects ambiguous multi-server target files; more complex layouts require a more precise site-owned integration method.
+- V-278396's effective-config regex must be compared with the authoritative assessment and real logging layouts, including inherited/default logging behavior.
+- Configuration directory/file permission scope for V-278386/V-278397 and exact log permission semantics for V-278388 remain important authoritative-assessment reconciliation points.
