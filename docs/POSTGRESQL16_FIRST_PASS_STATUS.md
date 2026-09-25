@@ -9,8 +9,9 @@ Benchmark: **Crunchy Data Postgres 16 STIG V1R3**
 - Unique executable V-ID ownership: **111/111**
 - Deterministic remediation: **partial**
 - Technical audit/evidence handling: **first pass present**
-- Static YAML/logic review: **performed; Ansible executable syntax test unavailable in current execution environment**
-- Ansible syntax/lab validation: **pending first lab/control-node run**
+- Static YAML/logic review: **performed**
+- Ansible executable syntax validation: **passed in GitHub Actions**
+- Lab/runtime validation: **pending first PostgreSQL 16 test host**
 - Idempotency validation: **not yet complete**
 - Authoritative V1R3 assessment reconciliation: **not yet complete**
 - Anti-STIG: **deferred**
@@ -97,4 +98,4 @@ Key gates added in this round:
 - V-261928: classified/unclassified applicability must be declared; classified systems require NSA-approved crypto evidence and an SSL path;
 - V-283674: PostgreSQL 16.15 is pinned as the current test-cycle minor as of 2026-09-25, with no automatic upgrade.
 
-The current environment used for this desk review does not have `ansible-playbook` installed. Do not classify this branch as syntax-tested until `ansible-playbook --syntax-check` succeeds on the test control node.
+GitHub Actions workflow `.github/workflows/postgresql16-ansible-syntax.yml` installed Ansible Core on an Ubuntu runner and successfully completed `ansible-playbook --syntax-check` for both `playbooks/postgresql16_preflight.yml` and `playbooks/postgresql16_stig.yml` on 2026-09-25. Runtime/database behavior remains unvalidated until the first PostgreSQL 16 lab deployment.
