@@ -1,0 +1,65 @@
+---
+- name: "Manager controls | Detect manager application"
+  ansible.builtin.stat:
+    path: "{{ tomcat_webapps_dir_resolved }}/manager"
+  register: tomcat_stig_manager_app
+  tags: [V-222926, V-222976, V-222979, V-222980, V-222981, V-222982]
+
+- name: "V-222926/V-222979 | Require SSP session limit when manager is installed"
+  ansible.builtin.assert:
+    that:
+      - tomcat_stig_manager_max_active_sessions is not none
+      - tomcat_stig_manager_max_active_sessions | int > 0
+    fail_msg: >-
+      Manager is installed. Set tomcat_stig_manager_max_active_sessions to the SSP-approved
+      simultaneous management-session limit before remediation.
+  when: tomcat_stig_manager_app.stat.exists
+  tags: [V-222926, V-222979]
+
+- name: "V-222926/V-222979 | Configure manager session controls"
+  ansible.builtin.shell: |
+    python3 - "{{ tomcat_webapps_dir_resolved }}/manager/META-INF/context.xml" "{{ tomcat_webapps_dir_resolved }}/manager/WEB-INF/web.xml" "{{ tomcat_stig_manager_max_active_sessions | int }}" <<'PY'
+    import os, sys, xml.etree.ElementTree as ET
+    context, web, limit = sys.argv[1], sys.argv[2], sys.argv[3]
+    changed = False
+
+    ct = ET.parse(context)
+    cr = ct.getroot()
+    manager = cr.find("Manager")
+    if manager is None:
+        manager = ET.SubElement(cr, "Manager")
+        changed = True
+    if manager.get("maxActiveSessions") != limit:
+        manager.set("maxActiveSessions", limit)
+        changed = True
+    if changed:
+        ct.write(context, encoding="UTF-8", xml_declaration=True)
+
+    web_changed = False
+    wt = ET.parse(web)
+    wr = wt.getroot()
+    ns = wr.tag.split("}")[0] + "}" if wr.tag.startswith("{") else ""
+    q = lambda n: ns + n
+    sc = wr.find(q("session-config"))
+    if sc is None:
+        sc = ET.SubElement(wr, q("session-config"))
+        web_changed = True
+    timeout = sc.find(q("session-timeout"))
+    if timeout is None:
+        timeout = ET.SubElement(sc, q("session-timeout"))
+        web_changed = True
+    if (timeout.text or "").strip() != "10":
+        timeout.text = "10"
+        web_changed = True
+    if web_changed:
+        wt.write(web, encoding="UTF-8", xml_declaration=True)
+
+    print("CHANGED" if changed or web_changed else "OK")
+    PY
+  args:
+    executable: /bin/bash
+  register: tomcat_stig_manager_session_result
+  changed_when: "'CHANGED' in tomcat_stig_manager_session_result.stdout"
+  when: tomcat_stig_manager_app.stat.exists
+  notify: restart tomcat
+  tags: [V-222926, V-222979]
