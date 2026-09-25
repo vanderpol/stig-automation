@@ -24,6 +24,7 @@ tomcat_stig_production: true
 
 # SSP / ISSO inputs. Empty values are deliberately NOT guessed.
 tomcat_stig_manager_max_active_sessions: null
+tomcat_stig_manager_session_timeout_minutes: 10
 tomcat_stig_hsts_include_subdomains: false
 tomcat_stig_behind_proxy: false
 tomcat_stig_internal_proxies_regex: ""
@@ -44,6 +45,10 @@ tomcat_stig_ldap_user_search: ""
 tomcat_stig_ldap_role_base: ""
 tomcat_stig_ldap_role_name: "cn"
 tomcat_stig_ldap_role_search: ""
+# Optional bind identity/secret for JNDIRealm. Store passwords in Vault, not source.
+tomcat_stig_ldap_connection_name: ""
+tomcat_stig_ldap_connection_password: ""
+tomcat_stig_management_user_approval_evidence: ""
 tomcat_stig_management_allowed_cidr_regex: '127\\.0\\.0\\.1|::1'
 
 tomcat_stig_remote_jmx_enabled: false
@@ -67,6 +72,16 @@ tomcat_dod_ca_bundle: ""
 tomcat_stig_cluster_enabled: false
 tomcat_stig_cluster_trusted_network_documented: false
 tomcat_stig_proxy_mutual_tls_required: false
+tomcat_stig_proxy_mutual_tls_risk_acceptance: ""
+
+# V-222968: only enable after the RHEL/Java cryptographic stack is configured for FIPS.
+tomcat_stig_fips_enabled: false
+tomcat_stig_fips_platform_evidence: ""
+
+# V-222974: EncryptInterceptor is not generated automatically because it requires a
+# cluster-wide pre-shared key and coordinated rollout. Document a trusted/private
+# cluster network or configure encryption under site change control.
+tomcat_stig_cluster_encryption_evidence: ""
 
 tomcat_stig_approved_webapps: []
 tomcat_stig_high_availability_required: false
