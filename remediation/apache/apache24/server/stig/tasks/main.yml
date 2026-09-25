@@ -24,5 +24,8 @@
 - name: Audit administrative access boundaries
   ansible.builtin.import_tasks: admin_audit.yml
 
+- name: Audit application session requirements
+  ansible.builtin.import_tasks: session_audit.yml
+
 - name: Evaluate evidence-dependent controls
   ansible.builtin.import_tasks: audit.yml
