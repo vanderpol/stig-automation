@@ -30,7 +30,7 @@ postgres16_pgaudit_additional_classes: []
 postgres16_pgaudit_log_catalog: "on"
 
 # Literal current-check minimum for V-261860.
-postgres16_log_line_prefix: "< %m %a %u %d %r %p %i %e %s >"
+postgres16_log_line_prefix: "< %m %a %u %d %r %p %i %e %s %c >"
 
 # Do not assume an enterprise syslog facility/destination.
 postgres16_syslog_facility: null
