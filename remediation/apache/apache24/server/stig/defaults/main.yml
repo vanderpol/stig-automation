@@ -8,6 +8,11 @@ apache24_stig_server_tokens: Prod
 apache24_stig_server_signature: "Off"
 apache24_stig_trace_enable: "Off"
 apache24_stig_log_level: "info"
+apache24_stig_error_documents:
+  401: "Authorization required."
+  403: "Access denied."
+  404: "The requested resource was not found."
+  500: "The server could not complete the request."
 apache24_stig_disable_webdav: true
 apache24_stig_remove_documentation_packages: true
 apache24_stig_log_dir_mode: "0750"
