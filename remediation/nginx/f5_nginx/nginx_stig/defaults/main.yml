@@ -13,6 +13,8 @@ nginx_stig_worker_connections: null
 nginx_stig_syslog_server: ""
 nginx_stig_allowed_cidrs: []
 nginx_stig_required_proxy_headers: {}
+nginx_stig_proxying_in_use: false
+nginx_stig_network_authentication_in_use: false
 nginx_stig_tls_server_snippet_files: []
 nginx_stig_approved_module_paths: []
 nginx_stig_approved_listen_endpoints: []
