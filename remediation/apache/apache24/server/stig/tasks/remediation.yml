@@ -126,6 +126,21 @@
   notify: restart apache
   tags: [V-214245]
 
+- name: "V-214230 | Ensure TLS module package is installed on RHEL"
+  ansible.builtin.package:
+    name: mod_ssl
+    state: present
+  when: ansible_facts.distribution == 'RedHat'
+  tags: [V-214230]
+
+- name: "V-214230 | Enable TLS module on Ubuntu"
+  ansible.builtin.command: a2enmod ssl
+  register: apache24_ssl_enable
+  changed_when: "'Enabling module ssl' in apache24_ssl_enable.stdout"
+  when: ansible_facts.distribution == 'Ubuntu'
+  notify: restart apache
+  tags: [V-214230]
+
 - name: "V-214230/V-214231/V-214232/V-214241/V-214269 | Install core STIG directives"
   ansible.builtin.blockinfile:
     path: "{{ apache24.managed_conf }}"
