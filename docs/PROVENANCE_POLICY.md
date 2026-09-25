@@ -12,13 +12,16 @@ This rule applies to new work and to changes of existing content, regardless of 
 
 STIG automation often resembles existing public implementations because the benchmark prescribes the same underlying configuration. Similarity alone does not prove derivation. Conversely, adapted or inherited implementation should not lose its history.
 
+Recording provenance at implementation time is also a **test-risk control**, not merely attribution. Newly created or substantially modified implementations have less inherited operational history and should receive greater scrutiny during the first validation cycles.
+
 Recording provenance at implementation time lets maintainers:
 - distinguish work derived directly from current DISA requirements from work influenced by another project;
 - identify inherited/adapted code and applicable licenses/attribution;
 - understand what was changed and why;
 - evaluate upstream fixes and future benchmark changes;
 - identify controls that appear genuinely new for the current benchmark;
-- avoid reconstructing development history after the fact.
+- avoid reconstructing development history after the fact;
+- identify which controls need the most intensive testing because their implementation is new, substantially modified, platform-specific, or otherwise less proven.
 
 ## Required ledger fields
 
@@ -38,6 +41,9 @@ Each current V-ID/control must record, as applicable:
 | Local changes | What this repository changed from the source |
 | Reason | Why the local implementation differs |
 | Contributor/date | Useful development-history context |
+| Test-risk | HIGH, MEDIUM, or BASELINE scrutiny |
+| Test-risk reason | Why this control deserves additional or normal scrutiny |
+| Validation status | Untested, syntax-tested, lab-tested, idempotency-tested, assessment-verified, etc. |
 
 ## Classification definitions
 
@@ -49,6 +55,26 @@ Each current V-ID/control must record, as applicable:
 - **EVIDENCE/AUDIT** — repository implementation primarily performs evidence collection, validation, or assessment because deterministic remediation would invent organization/application policy.
 
 More than one source may be recorded. The classification describes implementation provenance, not ownership of the STIG requirement itself.
+
+## Provenance-driven test scrutiny
+
+Provenance must influence the test plan. It is not a claim that inherited code is correct or that original code is defective; it identifies where there is less prior implementation history and therefore where additional scrutiny is prudent.
+
+Default scrutiny guidance:
+
+| Provenance/change condition | Default scrutiny |
+|---|---|
+| NEW-CURRENT or ORIGINAL implementation with no prior comparable implementation | HIGH |
+| ADAPTED with substantial logic/platform changes | HIGH |
+| New distro/version port, path abstraction, parser, regex, XML/config mutation, or cross-file logic | HIGH |
+| EVIDENCE/AUDIT logic that determines PASS/FAIL/review state | HIGH when it affects assessment conclusions |
+| INHERITED with only small, understood compatibility changes | MEDIUM |
+| COMMON deterministic directive with simple current-benchmark mapping | MEDIUM |
+| Previously assessment-verified implementation unchanged for the same supported platform/benchmark | BASELINE |
+
+HIGH scrutiny should normally include syntax validation, check/diff review where meaningful, positive remediation testing, idempotency testing, authoritative assessment comparison, application/service functional testing, and a deliberate negative/edge-case test. Once Anti-STIG content exists, applicable HIGH-risk controls should also receive deterministic fail -> remediate -> pass regression testing.
+
+Scrutiny may be raised for any control. It should not be lowered merely because code was inherited from a mature public repository; current benchmark semantics, platform differences, and local modifications still require validation.
 
 ## Development workflow
 
