@@ -30,12 +30,12 @@ A September 2026 retrospective comparison against the current 79-control V3R4 be
 | V-222962 | Management applications LDAP realm | REMEDIATION — installed management apps require site-supplied JNDIRealm inputs |
 | V-222965 | Secure LDAP authentication | REMEDIATION — LDAPS required for management JNDIRealm |
 | V-222968 | FIPS-validated secured connectors | REMEDIATION/EVIDENCE — FIPSMode opt-in only after RHEL/Java FIPS evidence is supplied |
-| V-222970 | Restrict manager application access | REMEDIATION — RemoteAddrValve restricted to site-approved regex |
-| V-222971 | Mutual authentication with proxy/load balancer | AUDIT/EVIDENCE — mutual-auth decision or approved risk acceptance required; no unsafe automatic SSLHostConfig rewrite |
+| V-222970 | Restrict manager application access | REMEDIATION — manager context uses SSP-approved RemoteCIDRValve or RemoteAddrValve semantics |
+| V-222971 | Mutual authentication with proxy/load balancer | REMEDIATION/EVIDENCE — explicit proxied connector/application scope required; certificateVerification=required plus CLIENT-CERT, or approved risk acceptance |
 | V-222974 | Cluster trusted network | AUDIT/EVIDENCE — trusted/private network or coordinated EncryptInterceptor evidence required |
-| V-222976 | Customize manager default error pages | REMEDIATION — generic 401/402/403/404 manager JSPs installed |
+| V-222976 | Customize manager default error pages | REMEDIATION — current check/fix 401/402/403 manager JSPs replaced with generic responses |
 | V-222979 | Manager idle timeout 10 minutes | REMEDIATION — global conf/web.xml timeout set to 10 when manager exists |
-| V-222980 | LockOutRealm for management | REMEDIATION — management contexts get LockOutRealm |
+| V-222980 | LockOutRealm for management | REMEDIATION — Engine-level server.xml LockOutRealm after explicit application-impact acknowledgement |
 | V-222981 | LockOutRealm failureCount=5 | REMEDIATION |
 | V-222982 | LockOutRealm lockOutTime=600 | REMEDIATION |
 | V-223006 | Management-role users approved by ISSO | EVIDENCE — explicit approval evidence required |
