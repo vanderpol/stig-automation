@@ -1,0 +1,33 @@
+---
+- name: Check Apache control utility
+  ansible.builtin.stat:
+    path: "{{ apache24.apachectl }}"
+  register: _apache24_ctl
+
+- name: Require installed Apache
+  ansible.builtin.assert:
+    that: _apache24_ctl.stat.exists
+    fail_msg: "Apache control utility {{ apache24.apachectl }} was not found."
+
+- name: Read Apache version and build paths
+  ansible.builtin.command: "{{ apache24.apachectl }} -V"
+  register: apache24_version
+  changed_when: false
+
+- name: Require Apache 2.4
+  ansible.builtin.assert:
+    that: "'Apache/2.4' in apache24_version.stdout"
+    fail_msg: This role applies only to Apache HTTP Server 2.4.
+
+- name: Read loaded modules
+  ansible.builtin.command: "{{ apache24.apachectl }} -M"
+  register: apache24_modules
+  changed_when: false
+
+- name: Report discovered installation
+  ansible.builtin.debug:
+    msg:
+      platform: "{{ ansible_facts.distribution }} {{ ansible_facts.distribution_version }}"
+      apachectl: "{{ apache24.apachectl }}"
+      main_config: "{{ apache24.main_config }}"
+      log_dir: "{{ apache24.log_dir }}"
