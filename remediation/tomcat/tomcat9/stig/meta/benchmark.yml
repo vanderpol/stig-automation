@@ -1,0 +1,12 @@
+---
+benchmark:
+  title: "Apache Tomcat 9 Security Technical Implementation Guide"
+  version: 3
+  release: 4
+scope:
+  operating_systems:
+    - "RHEL 8"
+    - "RHEL 9"
+  tomcat_major: 9
+status:
+  anti_stig: "deferred pending compliant testing"
