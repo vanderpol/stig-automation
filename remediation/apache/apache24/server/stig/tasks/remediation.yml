@@ -215,7 +215,7 @@
     path: "{{ apache24.managed_conf }}"
     marker: "# {mark} STIG COOKIE PROTECTION"
     block: |
-      Header always edit Set-Cookie ^(.*)$ "$1; HttpOnly"
+      Header always edit Set-Cookie ^((?:(?!;[[:space:]]*HttpOnly).)*)$ "$1; HttpOnly"
   when: apache24_stig_cookie_httponly | bool
   notify: restart apache
   tags: [V-214268]
