@@ -31,7 +31,8 @@ Each current V-ID/control must record, as applicable:
 |---|---|
 | V-ID/control | Current benchmark identifier |
 | Benchmark | Version/release used as implementation authority |
-| Classification | ORIGINAL, COMMON, ADAPTED, INHERITED, NEW-CURRENT, or EVIDENCE/AUDIT |
+| Provenance | ORIGINAL, COMMON, ADAPTED, INHERITED, or NEW-CURRENT |
+| Implementation type | REMEDIATION, AUDIT, EVIDENCE, APP/EVIDENCE, or mixed form such as REMEDIATION/AUDIT |
 | Primary authority | Current DISA STIG/check/fix source |
 | Reference source(s) | Public repository/project/document consulted |
 | Source version | Tag, release, or commit when available |
@@ -52,9 +53,17 @@ Each current V-ID/control must record, as applicable:
 - **ADAPTED** — another implementation materially informed this implementation, but substantial local changes were made.
 - **INHERITED** — implementation substantially follows or incorporates another project's implementation.
 - **NEW-CURRENT** — current requirement/implementation has no identified equivalent in the consulted prior/public automation.
-- **EVIDENCE/AUDIT** — repository implementation primarily performs evidence collection, validation, or assessment because deterministic remediation would invent organization/application policy.
+More than one source may be recorded. Provenance describes implementation ancestry, not ownership of the STIG requirement itself.
 
-More than one source may be recorded. The classification describes implementation provenance, not ownership of the STIG requirement itself.
+## Implementation type definitions
+
+- **REMEDIATION** — deterministic configuration change can legitimately enforce the requirement.
+- **AUDIT** — automation can inspect/compare technical state but should not invent the authorization or policy boundary.
+- **EVIDENCE** — compliance primarily depends on organization/process/architecture evidence not created by the role.
+- **APP/EVIDENCE** — compliance depends primarily on hosted-application behavior and supporting evidence.
+- Mixed forms such as **REMEDIATION/AUDIT** are allowed when the role can enforce part of a requirement but must separately validate site-owned facts.
+
+Implementation type and provenance are independent. For example, an audit can be ORIGINAL and a remediation can be COMMON.
 
 ## Provenance-driven test scrutiny
 
@@ -67,7 +76,7 @@ Default scrutiny guidance:
 | NEW-CURRENT or ORIGINAL implementation with no prior comparable implementation | HIGH |
 | ADAPTED with substantial logic/platform changes | HIGH |
 | New distro/version port, path abstraction, parser, regex, XML/config mutation, or cross-file logic | HIGH |
-| EVIDENCE/AUDIT logic that determines PASS/FAIL/review state | HIGH when it affects assessment conclusions |
+| AUDIT/EVIDENCE logic that determines PASS/FAIL/review state | HIGH when it affects assessment conclusions |
 | INHERITED with only small, understood compatibility changes | MEDIUM |
 | COMMON deterministic directive with simple current-benchmark mapping | MEDIUM |
 | Previously assessment-verified implementation unchanged for the same supported platform/benchmark | BASELINE |
