@@ -17,6 +17,9 @@
 - name: Discover Apache installation
   ansible.builtin.import_tasks: discovery.yml
 
+- name: Summarize Server STIG readiness
+  ansible.builtin.import_tasks: preflight.yml
+
 - name: Apply deterministic remediation
   ansible.builtin.import_tasks: remediation.yml
   when: not apache24_stig_audit_only | bool
