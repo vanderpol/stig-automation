@@ -1,0 +1,7 @@
+---
+- name: Apply Apache Server 2.4 UNIX Server STIG V3R3 remediation
+  hosts: apache24
+  become: true
+  gather_facts: true
+  roles:
+    - role: server/stig
