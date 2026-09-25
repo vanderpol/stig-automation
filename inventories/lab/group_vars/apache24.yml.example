@@ -1,0 +1,15 @@
+---
+# REQUIRED for V-214246. Use only site-approved explicit IP:port endpoints.
+apache24_stig_listen:
+  - "192.0.2.20:443"
+
+# Optional operational/site inputs.
+# apache24_stig_document_root: /var/www/html
+# apache24_stig_proxy_approved: false
+# apache24_stig_custom_log: /var/log/httpd/access_log
+
+# Evidence variables are intentionally false until the site has documentation.
+# apache24_stig_management_separated: false
+# apache24_stig_log_backup_documented: false
+# apache24_stig_log_failure_alerting_documented: false
+# apache24_stig_module_approval_documented: false
