@@ -1,0 +1,25 @@
+---
+# Optional Tomcat test overrides.
+# Defaults are intentionally conservative; uncomment only values your site has approved.
+
+# tomcat_layout: auto
+# tomcat_stig_restart: true
+# tomcat_stig_manage_xml: true
+# tomcat_stig_production: true
+
+# If automatic discovery cannot identify the authoritative installation, set explicit paths:
+# tomcat_layout: apache_standard
+# tomcat_home: /opt/tomcat
+# tomcat_base: /opt/tomcat
+
+# Site-authorized connector configuration:
+# tomcat_stig_approved_connector_ports: ["8443"]
+# tomcat_stig_enforce_approved_connectors: true
+# tomcat_stig_connector_addresses:
+#   "8443": "127.0.0.1"
+
+# Keep passwords/secrets in Ansible Vault or another approved secret store.
+# tomcat_keystore_file: /path/to/keystore
+# tomcat_truststore_file: /path/to/truststore
+# tomcat_truststore_password: !vault |
+#   ...
