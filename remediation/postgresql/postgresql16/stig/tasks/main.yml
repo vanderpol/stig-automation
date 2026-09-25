@@ -8,7 +8,17 @@
   when: postgres16_stig_enabled | bool
   tags: [remediation]
 
+- name: PostgreSQL 16 STIG | Technical audit
+  ansible.builtin.import_tasks: technical_audit.yml
+  when: postgres16_stig_enabled | bool
+  tags: [audit, preflight]
+
 - name: PostgreSQL 16 STIG | Audit and evidence
   ansible.builtin.import_tasks: audit.yml
   when: postgres16_stig_enabled | bool
   tags: [audit, evidence]
+
+- name: PostgreSQL 16 STIG | Site and application evidence gates
+  ansible.builtin.import_tasks: evidence.yml
+  when: postgres16_stig_enabled | bool
+  tags: [evidence]
