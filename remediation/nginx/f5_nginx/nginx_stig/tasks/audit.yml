@@ -126,7 +126,7 @@
 - name: V-278388 | Assert file-based audit logs are not group/other writable
   ansible.builtin.assert:
     that:
-      - not item.stat.exists or (item.stat.mode | int(base=8) | bitwise_and(18)) == 0
+      - not item.stat.exists or item.stat.mode[-2:] in ['00', '04', '40', '44']
     fail_msg: "V-278388: {{ item.item }} is writable by group or other."
   loop: "{{ nginx_stig_log_stats.results }}"
   tags: [V-278388, CAT2]
