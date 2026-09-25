@@ -124,3 +124,11 @@ Prefer a ledger adjacent to the implementation or in docs with an unambiguous na
 - `docs/<technology>_SOURCE_PROVENANCE.md`
 
 The repository-level policy is this document. Technology-specific ledgers contain the per-control records.
+
+
+## Related development guidance
+
+- `AGENTS.md` defines the mandatory repository workflow for agents and contributors performing new lockdown or benchmark-port work.
+- `docs/LOCKDOWN_LESSONS_LEARNED.md` records the Apache/Tomcat implementation lessons that explain those rules.
+
+Read both before beginning a new technology lockdown or major benchmark revision.
