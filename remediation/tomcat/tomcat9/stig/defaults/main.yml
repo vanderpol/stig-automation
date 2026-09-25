@@ -61,6 +61,7 @@ tomcat_keystore_new_password: ""
 tomcat_keystore_password: ""
 tomcat_keystore_default_passwords: [changeit, changeme, tomcat]
 tomcat_truststore_file: ""
+tomcat_truststore_password: ""
 tomcat_dod_ca_bundle: ""
 
 tomcat_stig_cluster_enabled: false
