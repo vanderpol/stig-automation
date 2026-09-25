@@ -1,35 +1,50 @@
 ---
-- name: "V-214247/V-214261 | Require approved administrative accounts for automated audit"
+- name: "V-214247/V-214261 | Require approved administrative accounts for automated comparison"
   ansible.builtin.assert:
     that:
       - apache24_stig_approved_admin_accounts | length > 0
-    fail_msg: >-
-      Define apache24_stig_approved_admin_accounts to automatically evaluate administrative ownership/access.
-      The role will not invent the site's administrative service accounts.
+    fail_msg: Define apache24_stig_approved_admin_accounts before automated administrative-boundary comparison.
   when: apache24_stig_admin_audit_paths | length > 0
   tags: [V-214247, V-214261, audit]
 
-- name: "V-214247/V-214261 | Inspect site-defined administrative paths"
+- name: "V-214247/V-214261 | Inspect files under site-defined administrative paths"
   ansible.builtin.find:
     paths: "{{ item }}"
     recurse: true
-    file_type: any
+    file_type: file
     hidden: true
   loop: "{{ apache24_stig_admin_audit_paths }}"
-  register: apache24_admin_path_scan
+  register: apache24_admin_file_scan
   when:
     - apache24_stig_admin_audit_paths | length > 0
     - apache24_stig_approved_admin_accounts | length > 0
   tags: [V-214247, V-214261, audit]
 
-- name: "V-214247/V-214261 | Report ownership outside approved administrative accounts"
-  ansible.builtin.debug:
-    msg: "REVIEW: {{ item.path }} is owned by {{ item.pw_name | default(item.uid) }}"
-  loop: "{{ apache24_admin_path_scan.results | default([]) | map(attribute='files') | flatten }}"
-  loop_control:
-    label: "{{ item.path }}"
+- name: "V-214247/V-214261 | Inspect directories under site-defined administrative paths"
+  ansible.builtin.find:
+    paths: "{{ item }}"
+    recurse: true
+    file_type: directory
+    hidden: true
+  loop: "{{ apache24_stig_admin_audit_paths }}"
+  register: apache24_admin_dir_scan
   when:
-    - (item.pw_name | default('')) not in apache24_stig_approved_admin_accounts
+    - apache24_stig_admin_audit_paths | length > 0
+    - apache24_stig_approved_admin_accounts | length > 0
+  tags: [V-214247, V-214261, audit]
+
+- name: "V-214247/V-214261 | Report file ownership outside approved administrative accounts"
+  ansible.builtin.debug:
+    msg: "REVIEW: {{ item.1.path }} is owned by {{ item.1.pw_name | default(item.1.uid) }}"
+  loop: "{{ query('subelements', apache24_admin_file_scan.results | default([]), 'files', {'skip_missing': True}) }}"
+  when: (item.1.pw_name | default('')) not in apache24_stig_approved_admin_accounts
+  tags: [V-214247, V-214261, audit]
+
+- name: "V-214247/V-214261 | Report directory ownership outside approved administrative accounts"
+  ansible.builtin.debug:
+    msg: "REVIEW: {{ item.1.path }} is owned by {{ item.1.pw_name | default(item.1.uid) }}"
+  loop: "{{ query('subelements', apache24_admin_dir_scan.results | default([]), 'files', {'skip_missing': True}) }}"
+  when: (item.1.pw_name | default('')) not in apache24_stig_approved_admin_accounts
   tags: [V-214247, V-214261, audit]
 
 - name: "V-214248 | Inspect explicitly declared privileged paths"
@@ -47,8 +62,6 @@
       group: "{{ item.stat.gr_name | default('unknown') }}"
       mode: "{{ item.stat.mode | default('unknown') }}"
   loop: "{{ apache24_privileged_path_stats.results | default([]) }}"
-  loop_control:
-    label: "{{ item.item }}"
   tags: [V-214248, audit]
 
 - name: "V-214249 | Report management-separation evidence status"
@@ -56,5 +69,5 @@
     msg:
       documented: "{{ apache24_stig_management_separation_documented }}"
       management_endpoints: "{{ apache24_stig_management_endpoints }}"
-      requirement: "Hosted application functionality must be separated from Apache management functionality."
+      requirement: Hosted application functionality must be separated from Apache management functionality.
   tags: [V-214249, audit]
