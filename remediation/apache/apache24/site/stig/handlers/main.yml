@@ -1,0 +1,7 @@
+---
+- name: restart apache
+  ansible.builtin.service:
+    name: "{{ apache24.service }}"
+    state: restarted
+  when: apache24_site_stig_restart | default(true) | bool
+  listen: restart apache
