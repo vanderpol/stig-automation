@@ -30,10 +30,6 @@
 # postgres16_at_rest_protection_evidence: "Data-owner encryption determination ..."
 # postgres16_central_log_evidence: "SIEM/syslog offload evidence ..."
 
-# High-risk mutation gates remain false until dedicated guarded-remediation
-# tasks have been implemented and lab-tested.
-postgres16_manage_hba: false
-postgres16_manage_authorization: false
-postgres16_manage_pki: false
-postgres16_manage_fips: false
-postgres16_manage_package_updates: false
+# High-risk HBA, PKI, FIPS, authorization, and package mutations are intentionally
+# not exposed as switches until dedicated guarded-remediation tasks are implemented
+# and lab-tested.
