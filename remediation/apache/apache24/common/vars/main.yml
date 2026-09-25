@@ -10,6 +10,9 @@ apache24_platforms:
     conf_dir: /etc/httpd/conf.d
     log_dir: /var/log/httpd
     managed_conf: /etc/httpd/conf.d/00-stig-server.conf
+    site_managed_conf: /etc/httpd/conf.d/01-stig-site.conf
+    modules_dir: /usr/lib64/httpd/modules
+    modules_conf: /etc/httpd/conf.modules.d/00-base.conf
   Ubuntu:
     service: apache2
     user: www-data
@@ -20,3 +23,6 @@ apache24_platforms:
     conf_dir: /etc/apache2/conf-available
     log_dir: /var/log/apache2
     managed_conf: /etc/apache2/conf-available/00-stig-server.conf
+    site_managed_conf: /etc/apache2/conf-available/01-stig-site.conf
+    modules_dir: /usr/lib/apache2/modules
+    modules_conf: /etc/apache2/mods-available
