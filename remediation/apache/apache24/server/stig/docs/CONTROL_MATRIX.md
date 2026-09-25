@@ -25,8 +25,8 @@ Classification policy: AUTO means the STIG check/fix can be deterministically en
 | V-214244 | AUTO-VAR | Remove unused/vulnerable script mappings |
 | V-214245 | AUTO | Disable WebDAV |
 | V-214246 | AUTO-VAR | Bind specified IP address and port |
-| V-214247 | AUTO/EVIDENCE | Administrative accounts only for OS/directory-tree access |
-| V-214248 | AUTO | Privileged access to app dirs/libraries/config |
+| V-214247 | AUDIT-VAR | Administrative accounts only for OS/directory-tree access |
+| V-214248 | AUDIT-VAR | Privileged access to app dirs/libraries/config |
 | V-214249 | EVIDENCE | Separate hosted apps from management |
 | V-214250 | APP | Invalidate session IDs at termination |
 | V-214251 | APP/AUTO-VAR | Cookie scope/security |
@@ -39,7 +39,7 @@ Classification policy: AUTO means the STIG check/fix can be deterministically en
 | V-214258 | APP/AUTO-VAR | Inactive session timeout |
 | V-214259 | AUTO-VAR | Restrict inbound nonsecure zones |
 | V-214260 | EVIDENCE | Immediate remote-access disconnect capability |
-| V-214261 | EVIDENCE | Distinct administrative account for security functions |
+| V-214261 | AUDIT-VAR | Distinct administrative account for security functions |
 | V-214262 | EVIDENCE | Adequate log storage capacity |
 | V-214263 | EVIDENCE | Do not impede remote audit logging |
 | V-214264 | EVIDENCE | Integrate with organization security infrastructure |
@@ -53,3 +53,14 @@ Classification policy: AUTO means the STIG check/fix can be deterministically en
 | V-214274 | AUTO | Proper htpasswd ownership/permissions |
 
 This matrix is the implementation ledger. A control is not promoted to AUTO merely because a plausible hardening directive exists.
+
+## Administrative-boundary policy
+
+V-214247, V-214248, and V-214261 are intentionally non-destructive. The STIG relies on environment-defined administrative roles/accounts and privileged access boundaries. The role may discover and compare ownership/access against explicit site inputs, but it must not invent an administrative service account or recursively rewrite ownership to manufacture compliance.
+
+Suggested inputs:
+- `apache24_stig_approved_admin_accounts`
+- `apache24_stig_admin_audit_paths`
+- `apache24_stig_privileged_paths`
+
+A reported match supports assessment; authorization of those accounts remains site evidence.
