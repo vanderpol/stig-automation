@@ -9,6 +9,12 @@ The repository has two primary roots:
 
 Both use the same technology/benchmark hierarchy so a DISA V-ID can be traced across validation, remediation, intentional failure, and regression testing.
 
+## Contributor rule: provenance is mandatory
+
+All new implementation work and substantial modifications must update a provenance/source ledger **as the work is performed**. Do not defer provenance reconstruction until the end of a project.
+
+See `docs/PROVENANCE_POLICY.md` for required fields, classifications, licensing/attribution guidance, and the definition of implementation-complete. Existing work without a contemporaneous ledger must be explicitly identified as retrospective provenance.
+
 ## Apache HTTP Server 2.4 tester quick start
 
 Current Apache implementation targets:
