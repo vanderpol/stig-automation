@@ -32,7 +32,10 @@ apache24_site_inactive_timeout_minutes: null
 apache24_site_blocked_networks: []
 apache24_site_admin_audit_paths: []
 apache24_site_approved_admin_accounts: []
-apache24_site_cookie_secure_enforcement: true
+# V-214303 changes hosted-application session behavior. Opt in only after confirming
+# Apache mod_session owns the site's session cookie and defining the cookie name/options.
+apache24_site_cookie_secure_enforcement: false
+apache24_site_session_cookie_name: ""
 apache24_site_cookie_scope_evidence: ""
 apache24_site_tls_compression: "Off"
 apache24_site_approved_modules: []
