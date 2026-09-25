@@ -14,6 +14,59 @@
     group: "{{ apache24.group }}"
     mode: "0750"
 
+- name: "V-214284/V-214292 | Install document-root containment policy"
+  ansible.builtin.blockinfile:
+    path: "{{ apache24.managed_conf }}"
+    marker: "# {mark} STIG SITE DOCUMENT ROOT"
+    block: |
+      <Directory "{{ apache24_site_document_root }}">
+          Options {{ '-Indexes' if not apache24_site_indexes_enabled else 'Indexes' }} {{ '-FollowSymLinks' if not apache24_site_follow_symlinks else 'FollowSymLinks' }}
+          AllowOverride None
+          Require all granted
+      </Directory>
+  tags: [V-214284, V-214292]
+
+- name: "V-214301 | Disable TLS compression"
+  ansible.builtin.blockinfile:
+    path: "{{ apache24.managed_conf }}"
+    marker: "# {mark} STIG SITE TLS"
+    block: |
+      SSLCompression {{ apache24_site_tls_compression }}
+  tags: [V-214301]
+
+- name: "V-214303 | Enable headers module on Ubuntu"
+  ansible.builtin.command: a2enmod headers
+  register: apache24_site_headers_enable
+  changed_when: "'Enabling module headers' in apache24_site_headers_enable.stdout"
+  when:
+    - ansible_facts.distribution == 'Ubuntu'
+    - apache24_site_cookie_secure_enforcement | bool
+
+- name: "V-214303 | Force Secure property on cookies"
+  ansible.builtin.blockinfile:
+    path: "{{ apache24.managed_conf }}"
+    marker: "# {mark} STIG SITE COOKIE SECURITY"
+    block: |
+      Header always edit Set-Cookie ^((?:(?!;[[:space:]]*Secure).)*)$ "$1; Secure"
+  when: apache24_site_cookie_secure_enforcement | bool
+  tags: [V-214303]
+
+- name: "V-214297 | Install site nonsecure-zone deny list"
+  ansible.builtin.blockinfile:
+    path: "{{ apache24.managed_conf }}"
+    marker: "# {mark} STIG SITE NONSECURE ZONES"
+    block: |
+      <Directory "{{ apache24_site_document_root }}">
+          <RequireAll>
+              Require all granted
+      {% for network in apache24_site_blocked_networks %}
+              Require not ip {{ network }}
+      {% endfor %}
+          </RequireAll>
+      </Directory>
+  when: apache24_site_blocked_networks | length > 0
+  tags: [V-214297]
+
 - name: Validate Apache configuration after site remediation
   ansible.builtin.command: "{{ apache24.apachectl }} configtest"
   changed_when: false
