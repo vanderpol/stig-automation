@@ -82,3 +82,18 @@ For V-261917 and V-261967, supplying an approved `postgres16_syslog_facility` en
 ## 19. V-261879 requires actual config-file protection
 
 The current check explicitly evaluates `postgresql.conf` ownership and mode. The role therefore protects the actual server-reported configuration file as the discovered database-owner account/group with mode `0600`; it does not assume `$PGDATA/postgresql.conf` is the effective path.
+
+
+## 20. CAT I prerequisites deliberately block remediation
+
+The role now executes technical CAT I prerequisites before configuration changes. A target can therefore stop before remediation for missing authorization/install-account evidence, unsupported authentication methods, missing AO approval for password authentication, non-FIPS host crypto state, missing at-rest determination, classified-system crypto gaps, or an out-of-date PostgreSQL minor release.
+
+This is intentional. A successful remediation run must not imply CAT I coverage while a known CAT I prerequisite remains unmet.
+
+## 21. V-283674 is time-sensitive
+
+As of 2026-09-25, PostgreSQL upstream lists 16.15 as the current PostgreSQL 16 minor. The test-cycle default is pinned to 16.15 and must be deliberately updated when a newer PostgreSQL 16 minor is released. The role reports/fails version state but does not perform blind package upgrades.
+
+## 22. Parsed file state versus runtime state
+
+For shared_preload_libraries, the role now reads PostgreSQL's parsed file state via pg_file_settings and compares it with the running setting. This protects pending configuration from being overwritten and exposes restart-sensitive drift. pg_settings.pending_restart is also reported after remediation.
