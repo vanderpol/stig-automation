@@ -21,6 +21,17 @@
 | Apache Tomcat 9 configuration documentation | Product-semantic reference for Realm, Manager, Connector, SSLHostConfig, etc. | Current Tomcat 9 docs consulted during review | Apache Software Foundation |
 | Apache Tomcat community DISA STIG review | Secondary technical commentary/errata signal | Review based on 2021 STIG, last updated 2022 | Apache community commentary; not compliance authority |
 
+## Reference locations
+
+- Current DISA benchmark authority: https://public.cyber.mil/stigs/downloads/
+- Current V3R4 check/fix comparison view used during this retrospective review: https://www.stigviewer.com/stigs/apache_tomcat_application_server_9/v/V3R4
+- Public Ansible-Lockdown comparison role: https://github.com/ansible-lockdown/TOMCAT-9-STIG
+- Apache Tomcat 9 product documentation: https://tomcat.apache.org/tomcat-9.0-doc/
+- Apache Tomcat community review of the DISA STIG: https://cwiki.apache.org/confluence/spaces/TOMCAT/pages/199536782/Community+Review+of+DISA+STIG
+- Direct implementation baseline: project-owner-supplied `tomcat9_stig_ansible_rhel8_rhel9_v0.3` archive; not a public source.
+
+The public Ansible-Lockdown role was rechecked on 2026-09-25. Its project documentation currently labels TOMCAT-9-STIG maintained/remediation-capable, but the role README does not identify V3R4, lists RHEL 7/8, CentOS 7/8 and Ubuntu 16.04/18.04/20.04 as its supported platforms, and the repository page exposes no tagged release. The fetched GitHub view did not provide a latest-commit date sufficient to prove that the implementation was refreshed after V3R4's 2026-02-25 release. It therefore remains a secondary comparison source, not implementation authority.
+
 ## Important finding
 
 The initial reconciliation found **14 current V3R4 controls with missing or partial implementation/audit coverage**. This round closed the deterministic gaps where safe and converted the remaining architecture/process items into explicit evidence/guardrail controls. The review therefore found and corrected substantive coverage issues, not just attribution issues.
