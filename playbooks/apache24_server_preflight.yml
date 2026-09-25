@@ -1,0 +1,9 @@
+---
+- name: Preflight Apache Server 2.4 UNIX Server STIG target
+  hosts: apache24
+  become: true
+  gather_facts: true
+  vars:
+    apache24_stig_audit_only: true
+  roles:
+    - role: server/stig
