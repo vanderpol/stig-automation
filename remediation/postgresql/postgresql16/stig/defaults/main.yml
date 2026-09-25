@@ -55,8 +55,15 @@ postgres16_required_server_version: "16.15"
 # Site-owned evidence / approved-state inputs.
 postgres16_approved_superusers: []
 postgres16_approved_auth_methods: []
+postgres16_authentication_exception_evidence: null
 postgres16_authorization_evidence: null
+postgres16_installation_account_evidence: null
+postgres16_password_auth_ao_approval_evidence: null
 postgres16_pki_evidence: null
 postgres16_fips_evidence: null
 postgres16_patch_evidence: null
 postgres16_at_rest_protection_evidence: null
+
+# V-261928 applicability must be declared rather than inferred.
+postgres16_environment_classification: null
+postgres16_classified_crypto_evidence: null
