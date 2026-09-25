@@ -429,6 +429,22 @@
   tags:
     - V-261928
 
+- name: PostgreSQL 16 STIG | Require SSL path for classified deployments
+  ansible.builtin.assert:
+    that:
+      - >-
+        (postgres16_environment_classification == 'unclassified')
+        or
+        ('ssl=on' in postgres16_sensitive_settings.stdout_lines)
+        or
+        (postgres16_enable_ssl is true)
+    fail_msg: >-
+      V-261928 is CAT I. Classified deployments require PostgreSQL SSL in
+      addition to NSA-approved cryptographic network protection. SSL is
+      currently off and guarded TLS enablement was not requested.
+  tags:
+    - V-261928
+
 - name: PostgreSQL 16 STIG | Require PKI private-key protection evidence when key material exists
   ansible.builtin.assert:
     that:
