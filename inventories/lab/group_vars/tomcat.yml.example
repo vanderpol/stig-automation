@@ -59,6 +59,8 @@
 # explicitly require mutual TLS and list the associated application web.xml files.
 # tomcat_stig_behind_proxy: true
 # tomcat_stig_proxy_mutual_tls_required: true
+# tomcat_stig_proxy_connector_ports:
+#   - "8443"
 # tomcat_stig_proxy_mutual_tls_evidence: "architecture / certificate trust evidence"
 # tomcat_stig_proxy_client_cert_web_xml_files:
 #   - /var/lib/tomcat/webapps/myapp/WEB-INF/web.xml
