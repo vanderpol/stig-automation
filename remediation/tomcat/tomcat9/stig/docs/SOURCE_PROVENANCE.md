@@ -86,7 +86,7 @@ For **INHERITED/ADAPTED** rows, the material used is the implementation from the
 | V-222967 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
 | V-222969 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
 | V-222970 | REMEDIATION | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT | HIGH | UNTESTED |
-| V-222971 | AUDIT/EVIDENCE | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT-MIXED | HIGH | UNTESTED |
+| V-222971 | REMEDIATION/EVIDENCE | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT-MIXED | HIGH | UNTESTED |
 | V-222974 | AUDIT/EVIDENCE | ORIGINAL | Current V3R4 + Apache Tomcat product docs as applicable | PRESENT-MIXED | HIGH | UNTESTED |
 | V-222975 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
 | V-222977 | REMEDIATION/AUDIT | INHERITED/ADAPTED | Internal v0.3 baseline + current V3R4 reconciliation | PRESENT | HIGH | UNTESTED |
