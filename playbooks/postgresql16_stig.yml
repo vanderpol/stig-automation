@@ -1,0 +1,6 @@
+---
+- name: Apply Crunchy Data Postgres 16 STIG V1R3 remediation
+  hosts: postgresql16
+  become: true
+  roles:
+    - role: ../remediation/postgresql/postgresql16/stig
