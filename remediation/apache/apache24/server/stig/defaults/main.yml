@@ -57,3 +57,7 @@ apache24_stig_application_value: ""
 apache24_stig_blocked_networks: []
 apache24_stig_remote_audit_logging_documented: false
 apache24_stig_security_integration_documented: false
+apache24_stig_log_level: "info"
+apache24_stig_script_aliases_approved: []
+apache24_stig_patch_evidence: ""
+apache24_stig_vendor_support_evidence: ""
