@@ -181,6 +181,80 @@
     - V-261860
     - V-261863
 
+- name: PostgreSQL 16 STIG | Enforce nonzero session termination settings
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*{{ item.key | regex_escape }}\s*='
+    line: "{{ item.key }} = {{ item.value }}"
+    backup: true
+  loop:
+    - { key: "statement_timeout", value: "{{ postgres16_statement_timeout_ms | int }}" }
+    - { key: "tcp_keepalives_idle", value: "{{ postgres16_tcp_keepalives_idle | int }}" }
+    - { key: "tcp_keepalives_interval", value: "{{ postgres16_tcp_keepalives_interval | int }}" }
+    - { key: "tcp_keepalives_count", value: "{{ postgres16_tcp_keepalives_count | int }}" }
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261899
+
+- name: PostgreSQL 16 STIG | Enforce UTC-mappable audit timestamps
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*log_timezone\s*='
+    line: "log_timezone = '{{ postgres16_log_timezone }}'"
+    backup: true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261921
+
+- name: PostgreSQL 16 STIG | Read current log destinations for guarded syslog merge
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SHOW log_destination;"
+  register: postgres16_log_destination_raw
+  changed_when: false
+  check_mode: false
+  when: postgres16_syslog_facility is not none
+  tags:
+    - V-261917
+    - V-261967
+
+- name: PostgreSQL 16 STIG | Build merged log destinations
+  ansible.builtin.set_fact:
+    postgres16_log_destinations_merged: >-
+      {{ ((postgres16_log_destination_raw.stdout.split(',') |
+           map('trim') | reject('equalto', '') | list) + ['syslog'])
+         | unique | join(',') }}
+  when: postgres16_syslog_facility is not none
+  tags:
+    - V-261917
+    - V-261967
+
+- name: PostgreSQL 16 STIG | Configure approved centralized syslog settings
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*{{ item.key | regex_escape }}\s*='
+    line: "{{ item.key }} = '{{ item.value }}'"
+    backup: true
+  loop:
+    - { key: "log_destination", value: "{{ postgres16_log_destinations_merged | default('syslog') }}" }
+    - { key: "syslog_facility", value: "{{ postgres16_syslog_facility }}" }
+    - { key: "syslog_ident", value: "{{ postgres16_syslog_ident }}" }
+  when: postgres16_syslog_facility is not none
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261917
+    - V-261967
+
 - name: PostgreSQL 16 STIG | Limit client-visible PostgreSQL error detail
   become: true
   ansible.builtin.lineinfile:
