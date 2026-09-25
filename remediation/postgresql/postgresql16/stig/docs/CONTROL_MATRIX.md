@@ -27,6 +27,25 @@ Risk: `HIGH | MEDIUM | BASELINE`
 | V-261863 | CD16-00-000700 | II | REMEDIATION | ORIGINAL | HIGH | pgaudit catalog/read behavior. |
 | V-261864 | CD16-00-000800 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Denials require logging and negative verification. |
 | V-261865 | CD16-00-000900 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Startup/session auditing. |
+| V-261866 | CD16-00-001000 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Event type/detail; shared logging capability. |
+| V-261867 | CD16-00-001100 | II | REMEDIATION | COMMON | MEDIUM | Timestamp via log_line_prefix. |
+| V-261868 | CD16-00-001200 | II | REMEDIATION | ORIGINAL | HIGH | Literal check requires %m %u %d %s; shared prefix uses a superset. |
+| V-261869 | CD16-00-001300 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Source/origin; hostname and remote endpoint semantics. |
+| V-261870 | CD16-00-001400 | II | REMEDIATION/AUDIT | ORIGINAL | HIGH | Success/failure plus pgAudit detail settings. |
+| V-261871 | CD16-00-001500 | II | REMEDIATION | COMMON | MEDIUM | User/process identity in shared prefix. |
+| V-261872 | CD16-00-001600 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | Organization-defined extra audit detail; shared-account identity may be application-owned. |
+| V-261873 | CD16-00-001700 | II | EVIDENCE | ORIGINAL | HIGH | Audit-failure shutdown decision is application-owner/AO dependent. |
+| V-261874 | CD16-00-001800 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | FIFO/storage failure behavior spans PostgreSQL/OS/log platform. |
+| V-261875 | CD16-00-002000 | II | REMEDIATION/AUDIT | COMMON | MEDIUM | log_file_mode 0600; syslog ownership differs. |
+| V-261876 | CD16-00-002100 | II | REMEDIATION/AUDIT | COMMON | MEDIUM | Protect audit data from modification. |
+| V-261877 | CD16-00-002200 | II | REMEDIATION/AUDIT | COMMON | MEDIUM | Protect audit data from deletion. |
+| V-261878 | CD16-00-002300 | II | AUDIT/REMEDIATION | ORIGINAL | HIGH | PGDATA/PGLOG/pgAudit installation ownership plus approved superusers. |
+| V-261879 | CD16-00-002400 | II | REMEDIATION/AUDIT | COMMON | MEDIUM | postgresql.conf and log protection. |
+| V-261880 | CD16-00-002500 | II | AUDIT/REMEDIATION | ORIGINAL | HIGH | Product binary/library ownership is packaging/path dependent. |
+| V-261881 | CD16-00-002600 | II | AUDIT/REMEDIATION | ORIGINAL | HIGH | Config/library/executable modification protection. |
+| V-261882 | CD16-00-002700 | I | EVIDENCE | ORIGINAL | HIGH | Installation-account access/procedures; no invented authorized-user list. |
+| V-261883 | CD16-00-002800 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Dedicated software directory; relocation/reinstall is disruptive. |
+| V-261884 | CD16-00-002900 | II | AUDIT/EVIDENCE | ORIGINAL | HIGH | Object ownership must reconcile to approved principals. |
 | V-261930 | CD16-00-008500 | I | REMEDIATION/EVIDENCE | NEW-CURRENT | HIGH | V1R3 severity changed to CAT I; at-rest integrity is site/data-owner dependent. |
 | V-261931 | CD16-00-008600 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | At-rest confidentiality; may be DB, filesystem, or disk control. |
 | V-261932 | CD16-00-008800 | II | REMEDIATION/EVIDENCE | ORIGINAL | HIGH | Conditional on data-owner requirement; SSL alone may not prove full path. |
