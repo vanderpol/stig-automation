@@ -9,7 +9,8 @@ Benchmark: **Crunchy Data Postgres 16 STIG V1R3**
 - Unique executable V-ID ownership: **111/111**
 - Deterministic remediation: **partial**
 - Technical audit/evidence handling: **first pass present**
-- Syntax/lab validation: **not yet complete**
+- Static YAML/logic review: **performed; Ansible executable syntax test unavailable in current execution environment**
+- Ansible syntax/lab validation: **pending first lab/control-node run**
 - Idempotency validation: **not yet complete**
 - Authoritative V1R3 assessment reconciliation: **not yet complete**
 - Anti-STIG: **deferred**
@@ -78,3 +79,22 @@ This review corrected several potentially misleading behaviors before lab testin
 - V-261879 now enforces mode 0600 on the actual discovered postgresql.conf and uses the discovered database-owner primary group;
 - reloadable settings are followed by effective-state reporting from pg_settings so include-file overrides are visible;
 - shared_preload_libraries remains explicitly restart-pending and is not represented as active until post-restart validation.
+
+## CAT I focused review
+
+All 11 V1R3 CAT I controls now have explicit pre/post-remediation behavior documented in `remediation/postgresql/postgresql16/stig/docs/CAT_I_REVIEW.md`.
+
+Key gates added in this round:
+
+- V-261858: non-enterprise HBA methods require documented organization approval;
+- V-261859: authorization-policy evidence is mandatory;
+- V-261882: installation-account control/tracking evidence is mandatory;
+- V-261891: existing non-SCRAM stored password credentials hard-fail after safe configuration remediation;
+- V-261892: any HBA `password` or `md5` method hard-fails; SCRAM password authentication requires AO evidence;
+- V-261894: actual TLS key/certificate paths and parent directories are audited; existing private-key material requires PKI protection evidence;
+- V-261896: OS FIPS and OpenSSL FIPS readiness hard-gate before remediation;
+- V-261901/V-261930: explicit AO/data-owner at-rest determination/evidence is mandatory;
+- V-261928: classified/unclassified applicability must be declared; classified systems require NSA-approved crypto evidence and an SSL path;
+- V-283674: PostgreSQL 16.15 is pinned as the current test-cycle minor as of 2026-09-25, with no automatic upgrade.
+
+The current environment used for this desk review does not have `ansible-playbook` installed. Do not classify this branch as syntax-tested until `ansible-playbook --syntax-check` succeeds on the test control node.
