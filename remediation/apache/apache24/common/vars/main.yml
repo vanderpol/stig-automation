@@ -1,0 +1,22 @@
+---
+apache24_platforms:
+  RedHat:
+    service: httpd
+    user: apache
+    group: apache
+    apachectl: /usr/sbin/apachectl
+    config_root: /etc/httpd
+    main_config: /etc/httpd/conf/httpd.conf
+    conf_dir: /etc/httpd/conf.d
+    log_dir: /var/log/httpd
+    managed_conf: /etc/httpd/conf.d/00-stig-server.conf
+  Ubuntu:
+    service: apache2
+    user: www-data
+    group: www-data
+    apachectl: /usr/sbin/apache2ctl
+    config_root: /etc/apache2
+    main_config: /etc/apache2/apache2.conf
+    conf_dir: /etc/apache2/conf-available
+    log_dir: /var/log/apache2
+    managed_conf: /etc/apache2/conf-available/00-stig-server.conf
