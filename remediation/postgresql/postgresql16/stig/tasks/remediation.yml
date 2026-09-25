@@ -295,6 +295,58 @@
     - V-261917
     - V-261967
 
+- name: PostgreSQL 16 STIG | Validate guarded TLS enablement request
+  ansible.builtin.assert:
+    that:
+      - postgres16_enable_ssl in [none, true]
+    fail_msg: >-
+      postgres16_enable_ssl may be null (no change) or true. Disabling SSL is
+      not a supported STIG remediation action.
+  tags:
+    - V-261900
+    - V-261928
+    - V-261932
+    - V-261933
+
+- name: PostgreSQL 16 STIG | Require existing server certificate and private key before enabling TLS
+  ansible.builtin.assert:
+    that:
+      - postgres16_tls_paths.ssl_cert_file | default('') | length > 0
+      - postgres16_tls_paths.ssl_key_file | default('') | length > 0
+      - >-
+        (postgres16_tls_file_stats.results | default([])
+         | selectattr('item.key', 'equalto', 'ssl_cert_file')
+         | map(attribute='stat.exists') | list | first | default(false))
+      - >-
+        (postgres16_tls_file_stats.results | default([])
+         | selectattr('item.key', 'equalto', 'ssl_key_file')
+         | map(attribute='stat.exists') | list | first | default(false))
+    fail_msg: >-
+      TLS enablement was requested, but PostgreSQL's configured server
+      certificate/private-key paths are not both present. Supply approved PKI
+      material first; this role will not generate or select certificates.
+  when: postgres16_enable_ssl is true
+  tags:
+    - V-261900
+    - V-261928
+    - V-261932
+    - V-261933
+
+- name: PostgreSQL 16 STIG | Enable TLS only after explicit approval and file validation
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*ssl\s*='
+    line: "ssl = on"
+    backup: true
+  when: postgres16_enable_ssl is true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261900
+    - V-261928
+    - V-261932
+    - V-261933
+
 - name: PostgreSQL 16 STIG | Limit client-visible PostgreSQL error detail
   become: true
   ansible.builtin.lineinfile:
