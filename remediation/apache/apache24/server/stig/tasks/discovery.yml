@@ -31,3 +31,14 @@
       apachectl: "{{ apache24.apachectl }}"
       main_config: "{{ apache24.main_config }}"
       log_dir: "{{ apache24.log_dir }}"
+
+- name: Resolve Apache PID file
+  ansible.builtin.set_fact:
+    apache24_pid_file_resolved: >-
+      {{ apache24_stig_pid_file if apache24_stig_pid_file | length > 0 else
+         ('/run/httpd/httpd.pid' if ansible_facts.distribution == 'RedHat' else '/run/apache2/apache2.pid') }}
+
+- name: Report Apache PID file
+  ansible.builtin.debug:
+    msg:
+      pid_file: "{{ apache24_pid_file_resolved }}"
