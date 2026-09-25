@@ -20,3 +20,12 @@ apache24_stig_capacity_documented: false
 apache24_stig_security_integration_documented: false
 apache24_stig_patch_process_documented: false
 apache24_stig_vendor_support_documented: false
+apache24_stig_ssl_protocol: "-SSLv2 -SSLv3 -TLSv1 +TLSv1.2 +TLSv1.3"
+apache24_stig_ssl_cipher_suite: "HIGH:!NULL:!MD5:!SEED:!IDEA:!EXPORT"
+apache24_stig_log_format_name: stig_combined
+apache24_stig_log_format: '%a %A %h %H %l %m %s %t %u %U "%{Referer}i"'
+apache24_stig_custom_log: ""
+apache24_stig_proxy_approved: false
+apache24_stig_remove_documentation_packages: true
+apache24_stig_disable_status_info: true
+apache24_stig_disable_webdav: true
