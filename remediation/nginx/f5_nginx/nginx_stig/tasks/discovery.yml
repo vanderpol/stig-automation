@@ -1,6 +1,6 @@
 ---
-- name: Verify NGINX binary is present
-  ansible.builtin.command: "{{ nginx_stig_binary }} -v"
+- name: Verify NGINX binary is present and capture build options
+  ansible.builtin.command: "{{ nginx_stig_binary }} -V"
   register: nginx_stig_version
   changed_when: false
 
