@@ -36,7 +36,6 @@
       available to PostgreSQL. Install the PostgreSQL-16-compatible pgAudit
       package using the approved repository/package process. The role will not
       guess a package source or package name.
-  when: not postgres16_manage_pgaudit_package | bool
   tags:
     - V-261860
     - V-261861
@@ -86,7 +85,7 @@
   become: true
   ansible.builtin.lineinfile:
     path: "{{ postgres16_config_file }}"
-    regexp: '^\\s*#?\\s*client_min_messages\\s*='
+    regexp: '^\s*#?\s*client_min_messages\s*='
     line: "client_min_messages = error"
     backup: true
   notify: PostgreSQL 16 STIG | Reload configuration
@@ -98,7 +97,7 @@
   become: true
   ansible.builtin.lineinfile:
     path: "{{ postgres16_config_file }}"
-    regexp: '^\\s*#?\\s*password_encryption\\s*='
+    regexp: '^\s*#?\s*password_encryption\s*='
     line: "password_encryption = 'scram-sha-256'"
     backup: true
   notify: PostgreSQL 16 STIG | Reload configuration
@@ -109,7 +108,7 @@
   become: true
   ansible.builtin.lineinfile:
     path: "{{ postgres16_config_file }}"
-    regexp: '^\\s*#?\\s*log_file_mode\\s*='
+    regexp: '^\s*#?\s*log_file_mode\s*='
     line: "log_file_mode = 0600"
     backup: true
   notify: PostgreSQL 16 STIG | Reload configuration
@@ -123,7 +122,7 @@
   become: true
   ansible.builtin.lineinfile:
     path: "{{ postgres16_config_file }}"
-    regexp: "^\\s*#?\\s*{{ item.key | regex_escape }}\\s*="
+    regexp: "^\s*#?\s*{{ item.key | regex_escape }}\s*="
     line: "{{ item.key }} = {{ item.value }}"
     backup: true
   loop:
@@ -151,7 +150,7 @@
   become: true
   ansible.builtin.lineinfile:
     path: "{{ postgres16_config_file }}"
-    regexp: "^\\s*#?\\s*{{ item.key | regex_escape }}\\s*="
+    regexp: "^\s*#?\s*{{ item.key | regex_escape }}\s*="
     line: "{{ item.key }} = '{{ item.value }}'"
     backup: true
   loop:
@@ -234,9 +233,9 @@
   ansible.builtin.debug:
     msg: >-
       shared_preload_libraries changed. PostgreSQL must be restarted before
-      pgAudit can become active. Automatic restart is disabled unless
-      postgres16_allow_restart=true. Functional and assessment testing is
-      required after restart.
+      pgAudit can become active. This role intentionally does not restart a
+      database automatically. Perform the approved restart, then run functional
+      and authoritative assessment testing.
   when: postgres16_preload_change.changed
   tags:
     - V-261860
