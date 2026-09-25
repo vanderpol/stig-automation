@@ -11,6 +11,7 @@
       ServerTokens {{ apache24_stig_server_tokens }}
       ServerSignature {{ apache24_stig_server_signature }}
       TraceEnable {{ apache24_stig_trace_enable }}
+      LogLevel {{ apache24_stig_log_level }}
   notify: restart apache
   tags: [V-214246, V-214255, V-214256, V-214257]
 
