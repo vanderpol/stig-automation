@@ -6,6 +6,8 @@ This role separates deterministic STIG remediation from organization/application
 
 Before applying remediation, read:
 
+- `remediation/apache/apache24/server/stig/ISSUES_AND_CONCERNS.md`
+
 - `docs/APACHE24_SERVER_USER_GUIDE.md`
 - `inventories/lab/group_vars/apache24.yml.example`
 - `remediation/apache/apache24/server/stig/docs/CONTROL_MATRIX.md`
