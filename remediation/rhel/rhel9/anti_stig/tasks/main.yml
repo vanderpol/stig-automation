@@ -1,0 +1,34 @@
+---
+- name: Require explicit isolated-lab acknowledgement
+  ansible.builtin.assert:
+    that:
+      - rhel9_anti_stig_acknowledge | bool
+      - rhel9_anti_stig_lab_only | bool
+      - ansible_facts.os_family == 'RedHat'
+      - ansible_facts.distribution_major_version == '9'
+    fail_msg: >-
+      This role intentionally weakens security. Set rhel9_anti_stig_acknowledge=true
+      only for an isolated disposable RHEL 9.x lab host.
+
+- name: Record anti-STIG marker
+  ansible.builtin.copy:
+    dest: /etc/ANTI-STIG-LAB
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      INTENTIONALLY NONCOMPLIANT RHEL 9.x TEST SYSTEM
+      Benchmark authority: DISA RHEL 9 STIG V2R9
+      Purpose: SCC/assessment test fixture only.
+
+- name: Apply package and service anti-controls
+  ansible.builtin.import_tasks: packages_services.yml
+
+- name: Apply kernel and operating-system anti-controls
+  ansible.builtin.import_tasks: system_config.yml
+
+- name: Apply authentication and SSH anti-controls
+  ansible.builtin.import_tasks: ssh_auth.yml
+
+- name: Apply file-permission and audit anti-controls
+  ansible.builtin.import_tasks: files_audit.yml
