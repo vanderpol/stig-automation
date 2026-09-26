@@ -82,7 +82,7 @@
 - name: Configure safe-to-run but deliberately weak audit storage actions
   ansible.builtin.lineinfile:
     path: /etc/audit/auditd.conf
-    regexp: "^{{ item.key }}\s*="
+    regexp: '^{{ item.key }}\\s*='
     line: "{{ item.key }} = {{ item.value }}"
     create: false
   loop:
