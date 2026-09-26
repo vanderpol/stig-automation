@@ -2,7 +2,7 @@
 
 ## Mandatory rule for all future work
 
-Every implementation, remediation role, SCAP/OVAL check, Anti-STIG test, benchmark port, or substantial modification in this repository must maintain a provenance/source ledger **while the work is being created**.
+Every remediation implementation, audit/evidence control, Anti-STIG test, benchmark port, or substantial modification in this repository must maintain a provenance/source ledger **while the work is being created**.
 
 Provenance is not an optional after-the-fact documentation task. A work item is not considered implementation-complete until its ledger is updated.
 
@@ -121,7 +121,7 @@ Prefer a ledger adjacent to the implementation or in docs with an unambiguous na
 
 - `remediation/apache/apache24/server/stig/docs/SOURCE_PROVENANCE.md`
 - `remediation/apache/apache24/site/stig/docs/SOURCE_PROVENANCE.md`
-- `docs/<technology>_SOURCE_PROVENANCE.md`
+- `remediation/<technology>/<product>/stig/docs/SOURCE_PROVENANCE.md`
 
 The repository-level policy is this document. Technology-specific ledgers contain the per-control records.
 
