@@ -200,10 +200,10 @@
   ansible.builtin.replace:
     path: "{{ item.path }}"
     regexp: '^(\\s*SSLCipherSuite\\s+)(?!.*!(?:EXPORT|EXP)(?:[:\\s]|$))(.+)$'
-- name: "V-214269 | Ensure enabled cipher directives exclude export ciphers"
-  ansible.builtin.replace:
-    path: "{{ item.path }}"
-    regexp: '^(\\s*SSLCipherSuite\\s+)(?!.*!(?:EXPORT|EXP)(?:[:\\s]|$))(.+)
+    replace: '\\1\\2:!EXPORT'
+  loop: "{{ apache24_all_conf_files.files | default([]) }}"
+  notify: restart apache
+  tags: [V-214269]
 - name: "V-214269 | Re-scan enabled cipher directives after remediation"
   ansible.builtin.shell: >-
     grep -RhiE '^[[:space:]]*SSLCipherSuite[[:space:]]+' {{ apache24.config_root | quote }} --include='*.conf' || true
