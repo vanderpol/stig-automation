@@ -90,3 +90,13 @@ Development/readiness documentation:
 - `docs/POSTGRESQL16_TEST_REPORT.md` — team test-result template.
 
 No PostgreSQL role should be presented for team testing until the complete V1R3 control set has been reconciled to executable remediation/audit/evidence handling.
+
+
+## RHEL 9.x Anti-STIG lab fixture
+
+Development of an intentionally noncompliant RHEL 9.x test fixture is isolated under `remediation/rhel/rhel9/anti_stig/`. It targets DISA RHEL 9 STIG V2R9 and is intended only for disposable offline SCC/STIG testing.
+
+- Start with `docs/RHEL9_ANTI_STIG_QUICK_START.md`.
+- Every preserved/omitted failure mechanism is documented in `remediation/rhel/rhel9/anti_stig/docs/EXCLUSIONS.md`.
+- SCAP/OVAL content is explicitly prohibited as an implementation source for this role.
+- The role requires an explicit lab-only acknowledgement variable before it will run.
