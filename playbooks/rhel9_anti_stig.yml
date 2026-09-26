@@ -1,0 +1,7 @@
+---
+- name: Intentionally make a RHEL 9.x lab host noncompliant
+  hosts: rhel9_anti_stig
+  become: true
+  gather_facts: true
+  roles:
+    - role: ../remediation/rhel/rhel9/anti_stig
