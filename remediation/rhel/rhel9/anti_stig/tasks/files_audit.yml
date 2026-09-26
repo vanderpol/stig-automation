@@ -11,6 +11,7 @@
     - /etc/issue.net
   tags:
     - RHEL-09-211020
+    - RHEL-09-255025
 
 - name: Make selected account databases overly permissive without altering their contents
   ansible.builtin.file:
@@ -24,21 +25,94 @@
     - { path: /etc/shadow, mode: '0644' }
     - { path: /etc/gshadow, mode: '0644' }
   tags:
-    - RHEL-09-232010
-    - RHEL-09-232015
-    - RHEL-09-232020
+    - RHEL-09-232055
+    - RHEL-09-232065
+    - RHEL-09-232075
+    - RHEL-09-232270
+
+- name: Make backup account databases overly permissive when present
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: /etc/group-, mode: '0666' }
+    - { path: /etc/gshadow-, mode: '0644' }
+    - { path: /etc/passwd-, mode: '0666' }
+    - { path: /etc/shadow-, mode: '0644' }
+  failed_when: false
+  tags:
+    - RHEL-09-232060
+    - RHEL-09-232070
+    - RHEL-09-232080
+    - RHEL-09-232085
+
+- name: Make /var/log permissions intentionally too permissive
+  ansible.builtin.file:
+    path: /var/log
+    mode: '0777'
+  tags:
     - RHEL-09-232025
+
+- name: Make messages log permissions noncompliant when the file exists
+  ansible.builtin.file:
+    path: /var/log/messages
+    mode: '0666'
+  failed_when: false
+  tags:
     - RHEL-09-232030
-    - RHEL-09-232035
+
+- name: Make root shell initialization file intentionally too permissive
+  ansible.builtin.file:
+    path: /root/.bashrc
+    mode: '0777'
+  failed_when: false
+  tags:
+    - RHEL-09-232045
+
+- name: Make root home directory intentionally too permissive
+  ansible.builtin.file:
+    path: /root
+    mode: '0777'
+  tags:
+    - RHEL-09-232050
 
 - name: Make crontab permissions intentionally noncompliant when present
   ansible.builtin.file:
     path: /etc/crontab
     mode: '0666'
-  when: ansible_facts['distribution_major_version'] == '9'
   failed_when: false
   tags:
     - RHEL-09-232040
+
+- name: Create an isolated world-writable directory with deliberately orphaned ownership
+  ansible.builtin.file:
+    path: /opt/anti-stig-orphan
+    state: directory
+    owner: '424242'
+    group: '424242'
+    mode: '0777'
+  tags:
+    - RHEL-09-232240
+    - RHEL-09-232245
+    - RHEL-09-232250
+    - RHEL-09-232255
+
+- name: Discover SSH public host keys
+  ansible.builtin.find:
+    paths: /etc/ssh
+    patterns: 'ssh_host_*_key.pub'
+    file_type: file
+  register: anti_stig_ssh_public_keys
+  tags:
+    - RHEL-09-255125
+
+- name: Make SSH public host key files overly permissive
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: '0666'
+  loop: "{{ anti_stig_ssh_public_keys.files | default([]) }}"
+  tags:
+    - RHEL-09-255125
 
 - name: Make auditd.conf permissions fail V2R9 requirements when present
   ansible.builtin.file:
@@ -48,20 +122,23 @@
   tags:
     - RHEL-09-653110
 
-- name: Discover audit rule files without weakening directory traversal
+- name: Discover active audit log files
   ansible.builtin.find:
-    paths: /etc/audit/rules.d
-    patterns: '*.rules'
+    paths: /var/log/audit
+    patterns: '*.log'
     file_type: file
-  register: anti_stig_audit_rule_files
+  register: anti_stig_audit_logs
   failed_when: false
   tags:
-    - RHEL-09-653110
+    - RHEL-09-653080
+    - RHEL-09-653090
 
-- name: Make audit rule file permissions fail V2R9 requirements
+- name: Make existing audit logs overly permissive and group-accessible
   ansible.builtin.file:
     path: "{{ item.path }}"
-    mode: '0644'
-  loop: "{{ anti_stig_audit_rule_files.files | default([]) }}"
+    group: users
+    mode: '0666'
+  loop: "{{ anti_stig_audit_logs.files | default([]) }}"
   tags:
-    - RHEL-09-653110
+    - RHEL-09-653080
+    - RHEL-09-653090
