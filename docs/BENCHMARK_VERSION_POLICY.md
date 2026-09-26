@@ -20,6 +20,6 @@ Therefore:
 4. Do not assume two similarly worded current controls are duplicates; compare their current check/fix semantics and compliance boundary.
 5. When Server and Site overlap, document the overlap and choose the correct implementation/evidence owner rather than applying conflicting fixes twice.
 6. When a new benchmark release is adopted, create a deliberate delta review before changing classifications or remediation.
-7. SCAP/test results must identify the benchmark version/release used.
+7. Assessment/test results must identify the benchmark version/release used.
 
 Historical material can be cited in change notes, but never as justification for claiming compliance with the current release.
