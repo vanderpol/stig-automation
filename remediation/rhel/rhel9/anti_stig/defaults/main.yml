@@ -1,0 +1,14 @@
+---
+rhel9_anti_stig_acknowledge: false
+rhel9_anti_stig_lab_only: true
+rhel9_anti_stig_preserve_ssh: true
+rhel9_anti_stig_preserve_networking: true
+rhel9_anti_stig_preserve_journald: true
+rhel9_anti_stig_disable_firewalld: true
+rhel9_anti_stig_remove_rsyslog: true
+rhel9_anti_stig_remove_security_packages:
+  - aide
+  - fapolicyd
+  - usbguard
+  - chrony
+rhel9_anti_stig_ssh_dropin: /etc/ssh/sshd_config.d/99-anti-stig-lab.conf
