@@ -1,0 +1,53 @@
+---
+- name: Remove security packages that are safe to omit in an isolated lab
+  ansible.builtin.dnf:
+    name: "{{ rhel9_anti_stig_remove_security_packages }}"
+    state: absent
+  tags:
+    - RHEL-09-291010
+    - RHEL-09-433010
+    - RHEL-09-651010
+
+- name: Disable firewalld without changing interface configuration
+  when: rhel9_anti_stig_disable_firewalld | bool
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: false
+    state: stopped
+  failed_when: false
+  tags:
+    - RHEL-09-251010
+    - RHEL-09-251015
+
+- name: Remove rsyslog while preserving systemd-journald
+  when: rhel9_anti_stig_remove_rsyslog | bool
+  ansible.builtin.dnf:
+    name: rsyslog
+    state: absent
+  tags:
+    - RHEL-09-652010
+    - RHEL-09-652015
+    - RHEL-09-652020
+    - RHEL-09-652025
+    - RHEL-09-652030
+    - RHEL-09-652040
+    - RHEL-09-652045
+    - RHEL-09-652050
+    - RHEL-09-652055
+    - RHEL-09-652060
+
+- name: Enable debug shell to create a deterministic finding
+  ansible.builtin.systemd:
+    name: debug-shell.service
+    enabled: true
+  failed_when: false
+  tags:
+    - RHEL-09-211055
+
+- name: Disable auditd at boot without forcing a running audit daemon to stop
+  ansible.builtin.command: systemctl disable auditd.service
+  register: anti_stig_disable_auditd
+  changed_when: "'Removed' in anti_stig_disable_auditd.stdout or 'Removed' in anti_stig_disable_auditd.stderr"
+  failed_when: anti_stig_disable_auditd.rc not in [0, 1]
+  tags:
+    - RHEL-09-653010
