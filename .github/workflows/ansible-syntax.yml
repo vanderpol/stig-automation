@@ -2,9 +2,6 @@ name: Ansible Syntax Checks
 
 on:
   push:
-    branches:
-      - main
-      - '**'
     paths:
       - 'playbooks/**/*.yml'
       - 'playbooks/**/*.yaml'
