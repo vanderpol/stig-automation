@@ -8,7 +8,16 @@ rhel9_anti_stig_disable_firewalld: true
 rhel9_anti_stig_remove_rsyslog: true
 rhel9_anti_stig_remove_security_packages:
   - aide
-  - fapolicyd
-  - usbguard
+  - audispd-plugins
   - chrony
+  - fapolicyd
+  - gnutls-utils
+  - nss-tools
+  - opensc
+  - openssl-pkcs11
+  - pcsc-lite
+  - postfix
+  - rng-tools
+  - s-nail
+  - usbguard
 rhel9_anti_stig_ssh_dropin: /etc/ssh/sshd_config.d/99-anti-stig-lab.conf
