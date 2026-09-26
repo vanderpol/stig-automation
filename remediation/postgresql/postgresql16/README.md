@@ -12,5 +12,8 @@ See:
 - `stig/docs/SOURCE_PROVENANCE.md`
 - `stig/docs/ISSUES_AND_CONCERNS.md`
 - `stig/docs/CAT_I_REVIEW.md`
-- `../../../docs/POSTGRESQL16_TESTER_GUIDE.md`
+- `docs/QUICK_START.md`
+- `docs/TESTER_GUIDE.md`
+- `docs/FIRST_PASS_STATUS.md`
+- `docs/TEST_REPORT.md`
 - repository `docs/LOCKDOWN_LESSONS_LEARNED.md`
