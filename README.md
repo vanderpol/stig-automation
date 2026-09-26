@@ -1,15 +1,12 @@
 # STIG Automation
 
-Automation and validation content for DISA STIGs.
+Ansible remediation, audit/evidence handling, and Anti-STIG regression content for DISA STIGs.
 
 Future agent/contributor work must follow `AGENTS.md`. The rationale and reusable Apache/Tomcat lessons are documented in `docs/LOCKDOWN_LESSONS_LEARNED.md`.
 
-The repository has two primary roots:
+The primary implementation root is `remediation/`, which contains Ansible lockdown and deterministic Anti-STIG content organized by technology and benchmark.
 
-- `remediation/` — Ansible lockdown and deterministic Anti-STIG content.
-- `scap/` — SCAP/OVAL validation content.
-
-Both use the same technology/benchmark hierarchy so a DISA V-ID can be traced across validation, remediation, intentional failure, and regression testing.
+Shared `playbooks/`, `inventories/`, and repository-level documentation provide entry points and testing guidance. Assessment content is maintained separately from this repository.
 
 ## Contributor rule: provenance is mandatory
 
@@ -66,7 +63,7 @@ From the repository root:
     ansible-playbook playbooks/tomcat9_stig.yml --check --diff
     ansible-playbook playbooks/tomcat9_stig.yml
 
-See `TESTING.md` before applying the role and record the exact Git tag/commit with SCAP results.
+See `TESTING.md` before applying the role and record the exact Git tag/commit with authoritative assessment results.
 
 **Current Tomcat status:** a retrospective V3R4 provenance/current-check review found 14 previously missing/partial controls. This round added the safe deterministic remediation and explicit site/evidence guardrails needed to represent all 79 current controls. The new logic is not yet lab/assessment verified. See `docs/TOMCAT9_PROVENANCE_REVIEW.md` and `remediation/tomcat/tomcat9/stig/docs/SOURCE_PROVENANCE.md`.
 
