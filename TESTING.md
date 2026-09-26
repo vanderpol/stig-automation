@@ -120,7 +120,7 @@ Please report the Git tag or commit SHA, RHEL major/minor version, Tomcat versio
 - Back up or snapshot the target before the first apply.
 - Review application compatibility before removing the default ROOT application or enforcing production connector/Host settings.
 - Site-specific PKI, JMX, LDAP, proxy, connector, and architecture decisions must be supplied explicitly; the role does not invent them.
-- Anti-STIG content must not be run on production systems and remains deferred until a compliant baseline is verified.
+- Anti-STIG content must not be run on production systems. Remediation-regression Anti-STIG remains deferred until a compliant baseline is verified; the separately scoped RHEL 9.x Anti-STIG under `remediation/rhel/rhel9/anti_stig/` is an independent SCC test fixture and follows its own preservation/exclusion rules.
 
 
 ## PostgreSQL 16 V1R3 initial validation
@@ -143,3 +143,12 @@ If pgAudit is newly added to `shared_preload_libraries`, use the approved site r
 After functional testing, run the playbook again for idempotency and then run the current authoritative V1R3 assessment. Reconcile every unexpected V-ID. Store sanitized team artifacts under `remediation/postgresql/postgresql16/tests/results/`.
 
 PostgreSQL-specific high-risk areas include authentication/HBA, PKI, FIPS, PPSM ports/listen addresses, role/object privileges, package/support state, at-rest encryption, central audit offload, and application-owned controls. Do not turn those into generic defaults merely to clear a finding.
+
+
+## RHEL 9.x Anti-STIG SCC fixture
+
+This is an intentionally insecure, disposable-lab fixture targeting DISA RHEL 9 STIG V2R9. It is not a compliance-remediation regression suite and must never be run on an operational system.
+
+Start with `docs/RHEL9_ANTI_STIG_QUICK_START.md` and record the run with `remediation/rhel/rhel9/anti_stig/tests/RHEL9_ANTI_STIG_TEST_REPORT.md`. The role requires explicit acknowledgement, preserves SSH/networking/Python/DNF/journald, validates sshd before restart, and performs postflight recovery checks.
+
+The implementation must remain independent of SCAP/OVAL test logic. SCC results are used to identify unexpected PASS/FAIL outcomes, but any subsequent implementation change must be justified from the current DISA STIG text and non-SCAP product/automation sources.
