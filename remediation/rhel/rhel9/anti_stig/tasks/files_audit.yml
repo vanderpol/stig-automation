@@ -1,0 +1,52 @@
+---
+- name: Replace approved banners with an intentionally noncompliant lab banner
+  ansible.builtin.copy:
+    dest: "{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+    content: "RHEL 9 NONCOMPLIANT TEST LAB - AUTHORIZED TESTERS ONLY\n"
+  loop:
+    - /etc/issue
+    - /etc/issue.net
+  tags:
+    - RHEL-09-211020
+
+- name: Make selected account databases overly permissive without altering their contents
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: /etc/passwd, mode: '0666' }
+    - { path: /etc/group, mode: '0666' }
+    - { path: /etc/shadow, mode: '0644' }
+    - { path: /etc/gshadow, mode: '0644' }
+  tags:
+    - RHEL-09-232010
+    - RHEL-09-232015
+    - RHEL-09-232020
+    - RHEL-09-232025
+    - RHEL-09-232030
+    - RHEL-09-232035
+
+- name: Make crontab permissions intentionally noncompliant when present
+  ansible.builtin.file:
+    path: /etc/crontab
+    mode: '0666'
+  when: ansible_facts['distribution_major_version'] == '9'
+  failed_when: false
+  tags:
+    - RHEL-09-232040
+
+- name: Make audit configuration permissions fail V2R9 requirements when present
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: '0644'
+  loop:
+    - /etc/audit/auditd.conf
+    - /etc/audit/rules.d
+  failed_when: false
+  tags:
+    - RHEL-09-653110
