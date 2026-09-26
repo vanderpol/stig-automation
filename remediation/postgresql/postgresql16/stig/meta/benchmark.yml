@@ -1,0 +1,19 @@
+---
+benchmark:
+  product: "Crunchy Data Postgres 16"
+  version: "1"
+  release: "3"
+  release_date: "2026-07-01"
+  package: "U_CD_Postgres_16_V1R3_STIG.zip"
+  rule_count: 111
+  severity:
+    cat_i: 11
+    cat_ii: 100
+    cat_iii: 0
+scope:
+  postgresql_major: 16
+  legacy_postgresql_stig: false
+status:
+  implementation: development
+  lab_validated: false
+  assessment_validated: false
