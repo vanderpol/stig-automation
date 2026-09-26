@@ -13,6 +13,6 @@ Minimum test sequence:
 7. authoritative Crunchy Data Postgres 16 V1R3 assessment;
 8. V-ID reconciliation.
 
-Use `docs/POSTGRESQL16_TEST_REPORT.md` as the report template.
+Use `../docs/TEST_REPORT.md` as the report template.
 
 Never commit credentials, password hashes, private keys, tokens, sensitive connection strings, or production data.
