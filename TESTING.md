@@ -127,7 +127,7 @@ Please report the Git tag or commit SHA, RHEL major/minor version, Tomcat versio
 
 The PostgreSQL role targets the current Crunchy Data Postgres 16 STIG V1R3. This is an initial validation build, not a compliance-certified release.
 
-Start with `docs/POSTGRESQL16_QUICK_START.md` and use `docs/POSTGRESQL16_TEST_REPORT.md` for results.
+Start with `remediation/postgresql/postgresql16/docs/QUICK_START.md` and use `remediation/postgresql/postgresql16/docs/TEST_REPORT.md` for results.
 
 Basic sequence:
 
