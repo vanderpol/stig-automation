@@ -84,9 +84,9 @@ Development/readiness documentation:
 - `remediation/postgresql/postgresql16/stig/docs/SOURCE_PROVENANCE.md` — source/provenance ledger.
 - `remediation/postgresql/postgresql16/stig/docs/ISSUES_AND_CONCERNS.md` — known risk, assessor, and site-decision concerns.
 - `remediation/postgresql/postgresql16/stig/docs/CAT_I_REVIEW.md` — all 11 CAT I boundary decisions and test priorities.
-- `docs/POSTGRESQL16_QUICK_START.md` — concise initial tester workflow.
-- `docs/POSTGRESQL16_TESTER_GUIDE.md` — full PostgreSQL 16 tester procedure.
-- `docs/POSTGRESQL16_FIRST_PASS_STATUS.md` — implementation/readiness status.
-- `docs/POSTGRESQL16_TEST_REPORT.md` — team test-result template.
+- `remediation/postgresql/postgresql16/docs/QUICK_START.md` — concise initial tester workflow.
+- `remediation/postgresql/postgresql16/docs/TESTER_GUIDE.md` — full PostgreSQL 16 tester procedure.
+- `remediation/postgresql/postgresql16/docs/FIRST_PASS_STATUS.md` — implementation/readiness status.
+- `remediation/postgresql/postgresql16/docs/TEST_REPORT.md` — team test-result template.
 
 No PostgreSQL role should be presented for team testing until the complete V1R3 control set has been reconciled to executable remediation/audit/evidence handling.
