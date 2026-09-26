@@ -3,8 +3,8 @@
 ## Source hierarchy
 
 1. **Primary authority:** DISA Red Hat Enterprise Linux 9 STIG V2R9, released 01 Jul 2026.
-2. **Primary implementation reference:** DISA supplemental `U_RHEL_9_V2R9_STIG_Ansible.zip` (official Cyber Exchange catalog entry, uploaded 10 Jul 2026). Used conceptually as the preferred remediation-mechanics reference; SCAP content is prohibited.
-3. **Secondary implementation reference:** ansible-lockdown/RHEL9-STIG public role, devel commit `f6601bf8deb70302954863c9c90272b719b993ed`, MIT license. Its public branch states V2R8, so it is not authoritative for V2R9 requirements.
+2. **Preferred official implementation reference identified:** DISA supplemental `U_RHEL_9_V2R9_STIG_Ansible.zip` (official Cyber Exchange catalog entry, uploaded 10 Jul 2026). The archive itself was not retrievable through the connected tooling during this development pass, so no local task is claimed as inherited from or verified against its code.
+3. **Implementation-mechanics reference actually inspected:** ansible-lockdown/RHEL9-STIG public role, devel commit `f6601bf8deb70302954863c9c90272b719b993ed`, MIT license. Its public branch states V2R8, so it is not authoritative for V2R9 requirements. It was used to identify product paths, package names, control groupings, and ordinary Ansible techniques; current V2R9 release/delta information governs inclusion.
 4. **V2R9 delta cross-check:** public V2R9 change summaries were used only to verify that RHEL-09-255130 was removed and no rule was added.
 
 ## Implementation provenance
@@ -23,3 +23,11 @@
 ## SCAP contamination control
 
 No SCC results, SCAP benchmark XML, OVAL definitions, SCAP Security Guide rule logic, or scanner-specific test expressions were used to choose Anti-STIG values. SCC output is **validation evidence only after implementation**, never a design source for how a rule is detected.
+
+
+## Validation state
+
+- Repository Ansible syntax workflow: passing after the collection-free rewrite and YAML-regex correction.
+- Explicit anti-control mappings: 191 of 445 current V2R9 rule IDs before applicability/N/A is known.
+- Runtime RHEL 9.x deployment: not yet performed through this environment; team lab execution is the next source of evidence.
+- SCC/SCAP results: intentionally not consulted during implementation. First SCC results are validation evidence only.
