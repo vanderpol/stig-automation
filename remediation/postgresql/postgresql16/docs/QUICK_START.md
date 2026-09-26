@@ -105,4 +105,4 @@ Give extra scrutiny to:
 
 Ansible success is not proof of STIG compliance. This role intentionally leaves organization, application, PKI, FIPS, encryption, monitoring, and authorization decisions to approved evidence where automation cannot legitimately determine them.
 
-Use `docs/POSTGRESQL16_TEST_REPORT.md` for test results.
+Use `remediation/postgresql/postgresql16/docs/TEST_REPORT.md` for test results.
