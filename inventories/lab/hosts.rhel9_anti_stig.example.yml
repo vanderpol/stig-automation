@@ -1,0 +1,12 @@
+---
+all:
+  children:
+    rhel9_anti_stig:
+      hosts:
+        rhel9-lab:
+          ansible_host: 192.0.2.90
+          ansible_user: labadmin
+          ansible_ssh_private_key_file: ~/.ssh/rhel9-lab
+      vars:
+        rhel9_anti_stig_acknowledge: true
+        rhel9_anti_stig_lab_only: true
