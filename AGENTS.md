@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository automates DISA STIG remediation, audit/evidence handling, SCAP/OVAL validation, and later Anti-STIG regression testing.
+This repository automates DISA STIG remediation, audit/evidence handling, and later Anti-STIG regression testing.
 
 Any agent, contributor, or automation working in this repository must optimize for **current-benchmark correctness, explicit provenance, conservative remediation, minimal blast radius, and testability**.
 
