@@ -4,9 +4,31 @@
     name: "{{ rhel9_anti_stig_remove_security_packages }}"
     state: absent
   tags:
+    - RHEL-09-215075
+    - RHEL-09-215080
+    - RHEL-09-215085
+    - RHEL-09-215090
+    - RHEL-09-215095
+    - RHEL-09-215101
     - RHEL-09-291010
+    - RHEL-09-291015
+    - RHEL-09-291020
     - RHEL-09-433010
+    - RHEL-09-433015
+    - RHEL-09-433016
+    - RHEL-09-611160
+    - RHEL-09-611165
+    - RHEL-09-611170
+    - RHEL-09-611175
+    - RHEL-09-611180
+    - RHEL-09-611185
     - RHEL-09-651010
+    - RHEL-09-651015
+    - RHEL-09-651020
+    - RHEL-09-651025
+    - RHEL-09-651030
+    - RHEL-09-651035
+    - RHEL-09-653130
 
 - name: Disable firewalld without changing interface configuration
   when: rhel9_anti_stig_disable_firewalld | bool
