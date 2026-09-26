@@ -1,0 +1,181 @@
+---
+- name: Disable package signature verification in dnf.conf for the lab
+  ansible.builtin.lineinfile:
+    path: /etc/dnf/dnf.conf
+    regexp: '^gpgcheck='
+    line: gpgcheck=0
+    insertafter: '^\[main\]'
+  tags:
+    - RHEL-09-214015
+    - RHEL-09-214020
+    - RHEL-09-214025
+
+- name: Discover configured repository files
+  ansible.builtin.find:
+    paths: /etc/yum.repos.d
+    patterns: '*.repo'
+    file_type: file
+  register: anti_stig_repo_files
+  tags:
+    - RHEL-09-214015
+    - RHEL-09-214020
+    - RHEL-09-214025
+
+- name: Disable GPG checks in configured repositories
+  ansible.builtin.replace:
+    path: "{{ item.path }}"
+    regexp: '^(\s*)(repo_)?gpgcheck\s*=.*$'
+    replace: '\1\2gpgcheck=0'
+  loop: "{{ anti_stig_repo_files.files | default([]) }}"
+  tags:
+    - RHEL-09-214015
+    - RHEL-09-214020
+    - RHEL-09-214025
+
+- name: Add intentionally weak sudo authentication policy
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/99-anti-stig-lab
+    owner: root
+    group: root
+    mode: '0440'
+    validate: /usr/sbin/visudo -cf %s
+    content: |
+      # Intentionally insecure test fixture.
+      Defaults !authenticate
+      Defaults timestamp_timeout=60
+  tags:
+    - RHEL-09-432015
+    - RHEL-09-432025
+    - RHEL-09-611085
+    - RHEL-09-611145
+
+- name: Create a noncompliant trusted-host file without naming a real lab peer
+  ansible.builtin.copy:
+    dest: /etc/shosts.equiv
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      anti-stig.invalid
+  tags:
+    - RHEL-09-252070
+
+- name: Create a noncompliant root .shosts file without naming a real lab peer
+  ansible.builtin.copy:
+    dest: /root/.shosts
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      anti-stig.invalid
+  tags:
+    - RHEL-09-252075
+
+- name: Set zero failed-login prompt delay
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: '^FAIL_DELAY\s+'
+    line: 'FAIL_DELAY 0'
+  tags:
+    - RHEL-09-412050
+
+- name: Configure safe-to-run but deliberately weak audit storage actions
+  ansible.builtin.lineinfile:
+    path: /etc/audit/auditd.conf
+    regexp: "^{{ item.key }}\s*="
+    line: "{{ item.key }} = {{ item.value }}"
+    create: false
+  loop:
+    - { key: disk_error_action, value: IGNORE }
+    - { key: disk_full_action, value: IGNORE }
+    - { key: space_left_action, value: IGNORE }
+    - { key: admin_space_left_action, value: IGNORE }
+    - { key: max_log_file_action, value: ROTATE }
+    - { key: flush, value: NONE }
+  failed_when: false
+  tags:
+    - RHEL-09-653020
+    - RHEL-09-653025
+    - RHEL-09-653035
+    - RHEL-09-653040
+    - RHEL-09-653045
+    - RHEL-09-653050
+    - RHEL-09-653055
+    - RHEL-09-653065
+    - RHEL-09-653070
+    - RHEL-09-653095
+    - RHEL-09-654265
+
+- name: Discover configured audit rule files
+  ansible.builtin.find:
+    paths: /etc/audit/rules.d
+    patterns: '*.rules'
+    file_type: file
+  register: anti_stig_configured_audit_rules
+  failed_when: false
+  tags:
+    - audit_rules
+
+- name: Rename configured audit rules out of the active rules.d pattern
+  ansible.builtin.command:
+    argv:
+      - mv
+      - --
+      - "{{ item.path }}"
+      - "{{ item.path }}.anti-stig-disabled"
+  loop: "{{ anti_stig_configured_audit_rules.files | default([]) }}"
+  changed_when: true
+  tags:
+    - RHEL-09-654010
+    - RHEL-09-654015
+    - RHEL-09-654020
+    - RHEL-09-654025
+    - RHEL-09-654030
+    - RHEL-09-654035
+    - RHEL-09-654040
+    - RHEL-09-654045
+    - RHEL-09-654050
+    - RHEL-09-654055
+    - RHEL-09-654060
+    - RHEL-09-654065
+    - RHEL-09-654070
+    - RHEL-09-654075
+    - RHEL-09-654080
+    - RHEL-09-654085
+    - RHEL-09-654090
+    - RHEL-09-654095
+    - RHEL-09-654097
+    - RHEL-09-654100
+    - RHEL-09-654105
+    - RHEL-09-654110
+    - RHEL-09-654115
+    - RHEL-09-654120
+    - RHEL-09-654125
+    - RHEL-09-654130
+    - RHEL-09-654135
+    - RHEL-09-654140
+    - RHEL-09-654145
+    - RHEL-09-654150
+    - RHEL-09-654155
+    - RHEL-09-654160
+    - RHEL-09-654165
+    - RHEL-09-654170
+    - RHEL-09-654175
+    - RHEL-09-654180
+    - RHEL-09-654185
+    - RHEL-09-654190
+    - RHEL-09-654195
+    - RHEL-09-654200
+    - RHEL-09-654205
+    - RHEL-09-654210
+    - RHEL-09-654215
+    - RHEL-09-654220
+    - RHEL-09-654225
+    - RHEL-09-654230
+    - RHEL-09-654235
+    - RHEL-09-654240
+    - RHEL-09-654245
+    - RHEL-09-654250
+    - RHEL-09-654255
+    - RHEL-09-654270
+    - RHEL-09-654275
