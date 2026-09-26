@@ -18,7 +18,7 @@ Do not begin on a production database.
 
 ## Before you start
 
-Record the following in `docs/POSTGRESQL16_TEST_REPORT.md`:
+Record the following in `remediation/postgresql/postgresql16/docs/TEST_REPORT.md`:
 
 - tester name and date;
 - exact Git commit or branch;
@@ -36,7 +36,7 @@ Take an approved backup or snapshot before applying remediation.
 
 Check out the PostgreSQL development branch:
 
-    git checkout postgres16-v1r3
+    git checkout main
     git pull
 
 Copy the example inventory:
