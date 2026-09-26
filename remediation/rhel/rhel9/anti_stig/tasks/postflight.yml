@@ -1,0 +1,38 @@
+---
+- name: Validate sshd configuration after all anti-controls
+  ansible.builtin.command: /usr/sbin/sshd -t
+  changed_when: false
+
+- name: Verify sshd is still active
+  ansible.builtin.command: systemctl is-active sshd
+  register: anti_stig_postflight_sshd
+  changed_when: false
+  failed_when: anti_stig_postflight_sshd.stdout | trim != 'active'
+
+- name: Verify systemd-journald is still active
+  ansible.builtin.command: systemctl is-active systemd-journald
+  register: anti_stig_postflight_journald
+  changed_when: false
+  failed_when: anti_stig_postflight_journald.stdout | trim != 'active'
+
+- name: Verify Python remains available
+  ansible.builtin.command: python3 --version
+  changed_when: false
+
+- name: Verify DNF remains available
+  ansible.builtin.command: dnf --version
+  changed_when: false
+
+- name: Capture active network addresses for tester evidence
+  ansible.builtin.command: ip -brief address show up
+  register: anti_stig_postflight_addresses
+  changed_when: false
+  failed_when: anti_stig_postflight_addresses.rc != 0
+
+- name: Show preserved recovery-critical state
+  ansible.builtin.debug:
+    msg:
+      - "sshd={{ anti_stig_postflight_sshd.stdout | trim }}"
+      - "journald={{ anti_stig_postflight_journald.stdout | trim }}"
+      - "active interfaces:"
+      - "{{ anti_stig_postflight_addresses.stdout_lines }}"
