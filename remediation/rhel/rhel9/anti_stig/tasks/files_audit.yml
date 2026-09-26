@@ -40,13 +40,28 @@
   tags:
     - RHEL-09-232040
 
-- name: Make audit configuration permissions fail V2R9 requirements when present
+- name: Make auditd.conf permissions fail V2R9 requirements when present
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: /etc/audit/auditd.conf
     mode: '0644'
-  loop:
-    - /etc/audit/auditd.conf
-    - /etc/audit/rules.d
   failed_when: false
+  tags:
+    - RHEL-09-653110
+
+- name: Discover audit rule files without weakening directory traversal
+  ansible.builtin.find:
+    paths: /etc/audit/rules.d
+    patterns: '*.rules'
+    file_type: file
+  register: anti_stig_audit_rule_files
+  failed_when: false
+  tags:
+    - RHEL-09-653110
+
+- name: Make audit rule file permissions fail V2R9 requirements
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: '0644'
+  loop: "{{ anti_stig_audit_rule_files.files | default([]) }}"
   tags:
     - RHEL-09-653110
