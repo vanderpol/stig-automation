@@ -88,7 +88,7 @@ Supported stabilization targets are RHEL 8 and RHEL 9 running Tomcat 9.
 
    A stable target should have no unexpected changes on the second run.
 
-10. Run the corresponding SCAP benchmark and record results using `docs/TOMCAT9_TEST_REPORT.md`.
+10. Run the corresponding authoritative STIG assessment and record results using `docs/TOMCAT9_TEST_REPORT.md`.
 
 The role intentionally stops rather than guessing an unknown Tomcat installation layout. If discovery fails, set the explicit Tomcat path variables documented in the role defaults.
 
@@ -112,7 +112,7 @@ The Engine-level LDAP/LockOutRealm change can affect any application that inheri
 
 ## What to report
 
-Please report the Git tag or commit SHA, RHEL major/minor version, Tomcat version/package source, detected Tomcat layout, Ansible version, SCAP content/version, pass/fail/not-applicable counts, unexpected V-IDs, and whether the second Ansible run was idempotent.
+Please report the Git tag or commit SHA, RHEL major/minor version, Tomcat version/package source, detected Tomcat layout, Ansible version, assessment content/version, pass/fail/not-applicable counts, unexpected V-IDs, and whether the second Ansible run was idempotent.
 
 ## Current pre-release cautions
 
