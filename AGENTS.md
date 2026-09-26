@@ -99,9 +99,10 @@ Any agent, contributor, or automation working in this repository must optimize f
 14. **Do not call automation STIG-compliant because Ansible completed successfully.**
     Compliance requires authoritative assessment plus applicable organization/application evidence.
 
-15. **Anti-STIG comes after a known-good compliant baseline.**
-    - Do not build Anti-STIG first.
+15. **Anti-STIG normally comes after a known-good compliant baseline.**
+    - For remediation regression testing, do not build Anti-STIG first.
     - Once a control is assessment-verified, create deterministic fail -> remediate -> pass regression coverage where practical.
+    - Exception: a separately scoped, user-authorized Anti-STIG may be built as an independent scanner/SCC test fixture when it does not claim remediation regression validity, is isolated from compliant roles, preserves access/recovery capabilities, documents every intentional exclusion, and does not use SCAP/OVAL/scanner logic as an implementation source.
 
 ## New-lockdown workflow
 
