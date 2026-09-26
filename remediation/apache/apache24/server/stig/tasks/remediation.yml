@@ -303,16 +303,6 @@
 - name: Validate Apache configuration after remediation
   ansible.builtin.command: "{{ apache24.apachectl }} configtest"
   changed_when: false
-) or item is match('^\\[[0-9A-Fa-f:]+\\]:[0-9]{1,5}
-  ansible.builtin.blockinfile:
-    path: "{{ apache24.managed_conf }}"
-    marker: "# {mark} STIG LISTEN ENDPOINTS"
-    block: |
-      {% for endpoint in apache24_stig_listen %}
-      Listen {{ endpoint }}
-      {% endfor %}
-  notify: restart apache
-  tags: [V-214246]
 
 - name: "V-214242 | Remove packaged Apache documentation"
   ansible.builtin.package:
