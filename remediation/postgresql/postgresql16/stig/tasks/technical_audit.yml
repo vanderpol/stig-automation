@@ -1,0 +1,510 @@
+---
+- name: PostgreSQL 16 STIG | Audit organization-sensitive server settings
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - >-
+        SELECT name || '=' || setting
+        FROM pg_settings
+        WHERE name IN (
+          'max_connections','listen_addresses','port',
+          'ssl','ssl_ca_file','ssl_cert_file','ssl_crl_file','ssl_key_file',
+          'tcp_keepalives_idle','tcp_keepalives_interval','tcp_keepalives_count',
+          'log_destination','syslog_facility','syslog_ident','log_timezone',
+          'password_encryption','client_min_messages'
+        )
+        ORDER BY name;
+  register: postgres16_sensitive_settings
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261857
+    - V-261889
+    - V-261899
+    - V-261900
+    - V-261917
+    - V-261921
+    - V-261926
+    - V-261929
+    - V-261932
+    - V-261933
+    - V-261967
+
+- name: PostgreSQL 16 STIG | Report organization-sensitive server settings
+  ansible.builtin.debug:
+    var: postgres16_sensitive_settings.stdout_lines
+  tags:
+    - preflight
+    - evidence
+
+- name: PostgreSQL 16 STIG | Audit role security attributes and connection limits
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - >-
+        SELECT rolname || '|super=' || rolsuper ||
+               '|createrole=' || rolcreaterole ||
+               '|createdb=' || rolcreatedb ||
+               '|login=' || rolcanlogin ||
+               '|connlimit=' || rolconnlimit
+        FROM pg_roles
+        ORDER BY rolname;
+  register: postgres16_role_state
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261857
+    - V-261862
+    - V-261878
+    - V-261884
+    - V-261885
+    - V-261888
+    - V-261890
+    - V-261898
+    - V-261914
+    - V-261915
+    - V-261923
+    - V-261924
+
+- name: PostgreSQL 16 STIG | Report role state for approved-state reconciliation
+  ansible.builtin.debug:
+    var: postgres16_role_state.stdout_lines
+  tags:
+    - preflight
+    - evidence
+
+- name: PostgreSQL 16 STIG | Audit installed database extensions
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SELECT extname || '|' || extversion FROM pg_extension ORDER BY extname;"
+  register: postgres16_extensions
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261886
+    - V-261888
+    - V-261901
+    - V-261930
+    - V-261931
+
+- name: PostgreSQL 16 STIG | Report installed database extensions
+  ansible.builtin.debug:
+    var: postgres16_extensions.stdout_lines
+  tags:
+    - preflight
+    - evidence
+
+- name: PostgreSQL 16 STIG | Audit HBA authentication methods
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - >-
+        SELECT line_number || '|' ||
+               coalesce(type,'') || '|' ||
+               coalesce(array_to_string(database,','),'') || '|' ||
+               coalesce(array_to_string(user_name,','),'') || '|' ||
+               coalesce(address,'') || '|' ||
+               coalesce(auth_method,'') || '|' ||
+               coalesce(error,'')
+        FROM pg_hba_file_rules
+        ORDER BY line_number;
+  register: postgres16_hba_rules
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261858
+    - V-261892
+    - V-261893
+    - V-261895
+    - V-261897
+    - V-261900
+    - V-261929
+
+- name: PostgreSQL 16 STIG | Report HBA rules without modifying authentication
+  ansible.builtin.debug:
+    var: postgres16_hba_rules.stdout_lines
+  tags:
+    - preflight
+    - evidence
+
+- name: PostgreSQL 16 STIG | Audit PostgreSQL-owned filesystem objects
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - "{{ postgres16_data_directory }}"
+    - "{{ postgres16_config_file }}"
+    - "{{ postgres16_hba_file }}"
+  register: postgres16_security_file_stats
+  tags:
+    - V-261878
+    - V-261879
+    - V-261881
+    - V-261883
+    - V-261894
+    - V-261904
+
+- name: PostgreSQL 16 STIG | Report filesystem ownership and modes
+  ansible.builtin.debug:
+    msg: >-
+      {{ item.stat.path }} owner={{ item.stat.pw_name | default(item.stat.uid) }}
+      group={{ item.stat.gr_name | default(item.stat.gid) }}
+      mode={{ item.stat.mode }}
+  loop: "{{ postgres16_security_file_stats.results }}"
+  when: item.stat.exists
+  tags:
+    - preflight
+    - evidence
+
+- name: PostgreSQL 16 STIG | Read host FIPS indicator
+  ansible.builtin.slurp:
+    src: /proc/sys/crypto/fips_enabled
+  register: postgres16_fips_state
+  failed_when: false
+  changed_when: false
+  tags:
+    - V-261896
+    - V-261965
+    - V-261966
+
+- name: PostgreSQL 16 STIG | Report host FIPS indicator
+  ansible.builtin.debug:
+    msg: >-
+      host_fips={{ (postgres16_fips_state.content | default('') | b64decode | trim)
+      if not (postgres16_fips_state.failed | default(false)) else 'unavailable' }}
+  tags:
+    - V-261896
+    - V-261965
+    - V-261966
+
+- name: PostgreSQL 16 STIG | Audit OpenSSL version for FIPS controls
+  ansible.builtin.command:
+    argv: ["openssl", "version"]
+  register: postgres16_openssl_version
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - V-261896
+    - V-261965
+    - V-261966
+
+- name: PostgreSQL 16 STIG | Audit active OpenSSL providers
+  ansible.builtin.command:
+    argv: ["openssl", "list", "-providers"]
+  register: postgres16_openssl_providers
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - V-261896
+    - V-261965
+    - V-261966
+
+- name: PostgreSQL 16 STIG | Report OpenSSL FIPS evidence
+  ansible.builtin.debug:
+    msg:
+      - "openssl_version={{ postgres16_openssl_version.stdout | default('unavailable') }}"
+      - "openssl_providers={{ postgres16_openssl_providers.stdout_lines | default([]) }}"
+  tags:
+    - V-261896
+    - V-261965
+    - V-261966
+
+- name: PostgreSQL 16 STIG | Identify disallowed cleartext/password HBA methods
+  ansible.builtin.set_fact:
+    postgres16_weak_hba_rules: >-
+      {{ postgres16_hba_rules.stdout_lines
+         | select('search', '\\|(password|md5)\\|')
+         | list }}
+  tags:
+    - V-261892
+
+- name: PostgreSQL 16 STIG | Identify HBA rules outside enterprise authentication methods
+  ansible.builtin.set_fact:
+    postgres16_non_enterprise_hba_rules: >-
+      {{ postgres16_hba_rules.stdout_lines
+         | reject('search', '\\|(gss|sspi|ldap|cert)\\|')
+         | list }}
+  tags:
+    - V-261858
+
+- name: PostgreSQL 16 STIG | Require approval for non-enterprise HBA methods
+  ansible.builtin.assert:
+    that:
+      - >-
+        (postgres16_non_enterprise_hba_rules | length == 0)
+        or
+        (postgres16_authentication_exception_evidence is not none)
+    fail_msg: >-
+      V-261858 is CAT I. HBA rules outside gss/sspi/ldap/cert require documented
+      organization approval. Supply postgres16_authentication_exception_evidence
+      or correct the HBA design before remediation.
+  tags:
+    - V-261858
+
+- name: PostgreSQL 16 STIG | Report non-enterprise HBA rules requiring approval
+  ansible.builtin.debug:
+    msg: >-
+      non_enterprise_hba_rule_count={{ postgres16_non_enterprise_hba_rules | length }}.
+      V-261858 permits other methods only when they are documented and approved.
+  tags:
+    - V-261858
+
+- name: PostgreSQL 16 STIG | Identify SCRAM password-authentication HBA rules
+  ansible.builtin.set_fact:
+    postgres16_scram_hba_rules: >-
+      {{ postgres16_hba_rules.stdout_lines
+         | select('search', '\\|scram-sha-256\\|')
+         | list }}
+  tags:
+    - V-261891
+    - V-261892
+
+- name: PostgreSQL 16 STIG | Require AO approval when password authentication is used
+  ansible.builtin.assert:
+    that:
+      - >-
+        (postgres16_scram_hba_rules | length == 0)
+        or
+        (postgres16_password_auth_ao_approval_evidence is not none)
+    fail_msg: >-
+      Password authentication is present in pg_hba.conf. Current V1R3 text
+      states password authentication is permitted only when PKI cannot be used
+      and AO approval exists. Supply postgres16_password_auth_ao_approval_evidence.
+  tags:
+    - V-261891
+    - V-261892
+
+- name: PostgreSQL 16 STIG | Prohibit cleartext and MD5 HBA password methods
+  ansible.builtin.assert:
+    that:
+      - postgres16_weak_hba_rules | length == 0
+    fail_msg: >-
+      V-261892 is CAT I and the current check treats any pg_hba.conf password
+      or md5 authentication entry as a finding. Replace those entries with an
+      approved authentication design (for password fallback, scram-sha-256)
+      before remediation. This role will not bulk-rewrite HBA rules and risk
+      administrative/application lockout.
+  tags:
+    - V-261892
+
+- name: PostgreSQL 16 STIG | Report HBA password-authentication exposure
+  ansible.builtin.debug:
+    msg: >-
+      weak_password_hba_rule_count={{ postgres16_weak_hba_rules | length }}.
+      Password-based authentication also requires the applicable AO approval;
+      this role does not rewrite HBA rules automatically.
+  tags:
+    - V-261892
+
+- name: PostgreSQL 16 STIG | Enforce mandatory host FIPS readiness
+  ansible.builtin.assert:
+    that:
+      - not (postgres16_fips_state.failed | default(false))
+      - (postgres16_fips_state.content | default('') | b64decode | trim) == '1'
+      - postgres16_openssl_version.rc | default(1) == 0
+      - >-
+        ('OpenSSL 3' not in (postgres16_openssl_version.stdout | default('')))
+        or
+        ((postgres16_openssl_providers.stdout | default(''))
+         is regex('(?is).*fips.*status:\\s*active.*'))
+      - >-
+        ('OpenSSL 3' in (postgres16_openssl_version.stdout | default('')))
+        or
+        ('fips' in (postgres16_openssl_version.stdout | default('') | lower))
+    fail_msg: >-
+      V-261896 is CAT I and the current check requires OS FIPS mode plus a
+      FIPS-compliant OpenSSL implementation/provider. Prepare the host using the
+      approved platform lifecycle process before PostgreSQL STIG remediation.
+      This role will not convert or reboot the operating system automatically.
+  tags:
+    - V-261896
+
+- name: PostgreSQL 16 STIG | Report TLS file ownership and modes
+  ansible.builtin.debug:
+    msg: >-
+      {{ item.item.key }}={{ item.item.value }}
+      exists={{ item.stat.exists | default(false) }}
+      owner={{ item.stat.pw_name | default('unknown') }}
+      group={{ item.stat.gr_name | default('unknown') }}
+      mode={{ item.stat.mode | default('unknown') }}
+  loop: "{{ postgres16_tls_file_stats.results | default([]) }}"
+  when: item.item.value | length > 0
+  tags:
+    - V-261893
+    - V-261894
+    - V-261900
+    - V-261929
+
+- name: PostgreSQL 16 STIG | Audit TLS parent directories
+  ansible.builtin.stat:
+    path: "{{ item.value | dirname }}"
+  loop: "{{ postgres16_tls_paths | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  when: item.value | length > 0
+  register: postgres16_tls_directory_stats
+  tags:
+    - V-261893
+    - V-261894
+    - V-261929
+
+- name: PostgreSQL 16 STIG | Report TLS parent-directory protection
+  ansible.builtin.debug:
+    msg: >-
+      {{ item.item.key }}_directory={{ item.stat.path | default(item.item.value | dirname) }}
+      owner={{ item.stat.pw_name | default('unknown') }}
+      group={{ item.stat.gr_name | default('unknown') }}
+      mode={{ item.stat.mode | default('unknown') }}
+  loop: "{{ postgres16_tls_directory_stats.results | default([]) }}"
+  when: item.item.value | length > 0
+  tags:
+    - V-261893
+    - V-261894
+    - V-261929
+
+- name: PostgreSQL 16 STIG | Require CAT I authorization and installation-account evidence
+  ansible.builtin.assert:
+    that:
+      - postgres16_authorization_evidence is not none
+      - postgres16_installation_account_evidence is not none
+    fail_msg: >-
+      CAT I controls V-261859 and V-261882 require documented authorization
+      policy and controlled/tracked PostgreSQL installation-account access.
+      Supply the corresponding evidence references before remediation.
+  tags:
+    - V-261859
+    - V-261882
+
+- name: PostgreSQL 16 STIG | Require explicit data-at-rest determination
+  ansible.builtin.assert:
+    that:
+      - postgres16_at_rest_protection_evidence is not none
+    fail_msg: >-
+      CAT I controls V-261901 and V-261930 require a documented AO/data-owner
+      determination and evidence for the selected at-rest protection mechanism,
+      or documentation that encryption is not required where the check permits
+      that outcome. The role cannot infer this decision.
+  tags:
+    - V-261901
+    - V-261930
+
+- name: PostgreSQL 16 STIG | Require explicit classified-system applicability
+  ansible.builtin.assert:
+    that:
+      - postgres16_environment_classification in ['unclassified', 'classified']
+      - >-
+        (postgres16_environment_classification == 'unclassified')
+        or
+        (postgres16_classified_crypto_evidence is not none)
+    fail_msg: >-
+      V-261928 is CAT I. Set postgres16_environment_classification explicitly
+      to unclassified or classified. Classified deployments must also provide
+      evidence of NSA-approved cryptographic protection.
+  tags:
+    - V-261928
+
+- name: PostgreSQL 16 STIG | Require SSL path for classified deployments
+  ansible.builtin.assert:
+    that:
+      - >-
+        (postgres16_environment_classification == 'unclassified')
+        or
+        ('ssl=on' in postgres16_sensitive_settings.stdout_lines)
+        or
+        (postgres16_enable_ssl is true)
+    fail_msg: >-
+      V-261928 is CAT I. Classified deployments require PostgreSQL SSL in
+      addition to NSA-approved cryptographic network protection. SSL is
+      currently off and guarded TLS enablement was not requested.
+  tags:
+    - V-261928
+
+- name: PostgreSQL 16 STIG | Require PKI private-key protection evidence when key material exists
+  ansible.builtin.assert:
+    that:
+      - >-
+        (postgres16_tls_file_stats.results | default([])
+         | selectattr('item.key', 'equalto', 'ssl_key_file')
+         | selectattr('stat.exists', 'defined')
+         | selectattr('stat.exists', 'equalto', true)
+         | list | length == 0)
+        or
+        (postgres16_pki_evidence is not none)
+    fail_msg: >-
+      V-261894 is CAT I. PostgreSQL private-key material exists, so provide
+      evidence that the key and containing directory are restricted to
+      authorized users and protected by the approved FIPS cryptographic
+      boundary. The role reports ownership/modes but will not relocate keys.
+  tags:
+    - V-261894
+
+- name: PostgreSQL 16 STIG | Audit server version
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SHOW server_version;"
+  register: postgres16_server_version
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261887
+    - V-261935
+    - V-261936
+    - V-283674
+
+- name: PostgreSQL 16 STIG | Assert test-cycle required server version
+  ansible.builtin.assert:
+    that:
+      - (postgres16_server_version.stdout | trim).split(' ')[0] == (postgres16_required_server_version | string)
+    fail_msg: >-
+      Installed PostgreSQL server_version={{ postgres16_server_version.stdout | trim }}
+      does not match test-cycle required version={{ postgres16_required_server_version }}.
+      V-283674 requires the latest vendor-supported/current minor release.
+  when: postgres16_required_server_version is not none
+  tags:
+    - V-283674
+    - V-261936
+
+- name: PostgreSQL 16 STIG | Report installed server version
+  ansible.builtin.debug:
+    msg: >-
+      PostgreSQL server_version={{ postgres16_server_version.stdout }}.
+      Patch/support compliance still requires comparison with the current
+      approved vendor/package source; this role does not perform a blind upgrade.
+  tags:
+    - V-261887
+    - V-261935
+    - V-261936
+    - V-283674

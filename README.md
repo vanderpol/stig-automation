@@ -71,3 +71,22 @@ See `TESTING.md` before applying the role and record the exact Git tag/commit wi
 **Current Tomcat status:** a retrospective V3R4 provenance/current-check review found 14 previously missing/partial controls. This round added the safe deterministic remediation and explicit site/evidence guardrails needed to represent all 79 current controls. The new logic is not yet lab/assessment verified. See `docs/TOMCAT9_PROVENANCE_REVIEW.md` and `remediation/tomcat/tomcat9/stig/docs/SOURCE_PROVENANCE.md`.
 
 Anti-STIG implementation is deferred until the corresponding remediation has established a verified compliant baseline.
+
+## PostgreSQL 16 development
+
+PostgreSQL remediation is being developed against the current **Crunchy Data Postgres 16 STIG V1R3** only. The legacy Crunchy Data PostgreSQL benchmark is out of scope.
+
+Development/readiness documentation:
+
+- `remediation/postgresql/postgresql16/README.md` — scope and status.
+- `remediation/postgresql/postgresql16/stig/docs/BENCHMARK.md` — authoritative benchmark metadata.
+- `remediation/postgresql/postgresql16/stig/docs/CONTROL_MATRIX.md` — current V-ID classification/coverage ledger.
+- `remediation/postgresql/postgresql16/stig/docs/SOURCE_PROVENANCE.md` — source/provenance ledger.
+- `remediation/postgresql/postgresql16/stig/docs/ISSUES_AND_CONCERNS.md` — known risk, assessor, and site-decision concerns.
+- `remediation/postgresql/postgresql16/stig/docs/CAT_I_REVIEW.md` — all 11 CAT I boundary decisions and test priorities.
+- `docs/POSTGRESQL16_QUICK_START.md` — concise initial tester workflow.
+- `docs/POSTGRESQL16_TESTER_GUIDE.md` — full PostgreSQL 16 tester procedure.
+- `docs/POSTGRESQL16_FIRST_PASS_STATUS.md` — implementation/readiness status.
+- `docs/POSTGRESQL16_TEST_REPORT.md` — team test-result template.
+
+No PostgreSQL role should be presented for team testing until the complete V1R3 control set has been reconciled to executable remediation/audit/evidence handling.

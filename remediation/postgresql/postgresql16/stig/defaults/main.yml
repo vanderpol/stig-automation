@@ -1,0 +1,69 @@
+---
+# Crunchy Data Postgres 16 STIG V1R3
+postgres16_stig_enabled: true
+
+# Discovery / connection. The role asks PostgreSQL for its actual paths.
+postgres16_psql_bin: psql
+postgres16_admin_user: postgres
+postgres16_admin_db: postgres
+
+# Safety gates.
+# V-261857 is organization-defined. Empty means fail the applicable
+# remediation prerequisite rather than inventing a connection limit.
+postgres16_max_connections: null
+postgres16_role_connection_limits: {}
+
+# Audit baseline required by the V1R3 pgAudit family. Additional
+# organization-defined audit classes may be appended explicitly.
+postgres16_pgaudit_required_classes:
+  - ddl
+  - role
+  - read
+  - write
+postgres16_pgaudit_additional_classes: []
+postgres16_pgaudit_log_catalog: "on"
+
+# Literal current-check minimum for V-261860.
+postgres16_log_line_prefix: "< %m %a %u %d %r %p %i %e %s %c >"
+
+# V-261899 session termination/keepalive values. These STIG checks require
+# organization-approved nonzero values. Null means audit/evidence only.
+postgres16_statement_timeout_ms: null
+postgres16_tcp_keepalives_idle: null
+postgres16_tcp_keepalives_interval: null
+postgres16_tcp_keepalives_count: null
+
+# V-261921 desired log timezone is organization/site-selected. Null means no change.
+postgres16_log_timezone: null
+
+# Central logging is organization-owned. Supplying an approved facility enables
+# guarded PostgreSQL syslog configuration; offload/receiver evidence is still required.
+postgres16_syslog_facility: null
+postgres16_syslog_ident: "postgres"
+postgres16_central_log_evidence: null
+
+# Guarded TLS remediation. Null means no change; true enables ssl only after
+# the currently configured certificate/key paths are confirmed to exist.
+postgres16_enable_ssl: null
+
+# Optional current-minor assertion for V-283674. Keep null unless the test cycle
+# supplies the authoritative current PostgreSQL 16 minor version.
+# Current upstream PostgreSQL 16 minor as of 2026-09-25. Update this deliberately
+# when PostgreSQL publishes a newer 16.x release; V-283674 requires latest.
+postgres16_required_server_version: "16.15"
+
+# Site-owned evidence / approved-state inputs.
+postgres16_approved_superusers: []
+postgres16_approved_auth_methods: []
+postgres16_authentication_exception_evidence: null
+postgres16_authorization_evidence: null
+postgres16_installation_account_evidence: null
+postgres16_password_auth_ao_approval_evidence: null
+postgres16_pki_evidence: null
+postgres16_fips_evidence: null
+postgres16_patch_evidence: null
+postgres16_at_rest_protection_evidence: null
+
+# V-261928 applicability must be declared rather than inferred.
+postgres16_environment_classification: null
+postgres16_classified_crypto_evidence: null

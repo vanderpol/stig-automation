@@ -1,0 +1,117 @@
+---
+- name: PostgreSQL 16 STIG | Verify psql is available
+  ansible.builtin.command:
+    argv: ["{{ postgres16_psql_bin }}", "--version"]
+  register: postgres16_psql_version
+  changed_when: false
+
+- name: PostgreSQL 16 STIG | Require PostgreSQL major version 16
+  ansible.builtin.assert:
+    that:
+      - "' 16.' in postgres16_psql_version.stdout"
+    fail_msg: >-
+      This role is scoped only to PostgreSQL 16. Observed:
+      {{ postgres16_psql_version.stdout | default('unknown') }}
+
+- name: PostgreSQL 16 STIG | Discover database owner primary group
+  ansible.builtin.command:
+    argv: ["id", "-gn", "{{ postgres16_admin_user }}"]
+  register: postgres16_admin_group_raw
+  changed_when: false
+  check_mode: false
+
+- name: PostgreSQL 16 STIG | Record database owner primary group
+  ansible.builtin.set_fact:
+    postgres16_admin_group: "{{ postgres16_admin_group_raw.stdout | trim }}"
+
+- name: PostgreSQL 16 STIG | Discover server configuration paths
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SELECT current_setting('data_directory'), current_setting('config_file'), current_setting('hba_file');"
+  register: postgres16_paths_raw
+  changed_when: false
+  check_mode: false
+
+- name: PostgreSQL 16 STIG | Parse discovered paths
+  ansible.builtin.set_fact:
+    postgres16_data_directory: "{{ postgres16_paths_raw.stdout.split('|')[0] }}"
+    postgres16_config_file: "{{ postgres16_paths_raw.stdout.split('|')[1] }}"
+    postgres16_hba_file: "{{ postgres16_paths_raw.stdout.split('|')[2] }}"
+
+- name: PostgreSQL 16 STIG | Validate discovered files
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - "{{ postgres16_config_file }}"
+    - "{{ postgres16_hba_file }}"
+  register: postgres16_discovered_files
+
+- name: PostgreSQL 16 STIG | Refuse guessed configuration paths
+  ansible.builtin.assert:
+    that:
+      - postgres16_discovered_files.results | map(attribute='stat.exists') | min
+    fail_msg: >-
+      PostgreSQL reported a configuration path that does not exist. Refusing
+      remediation rather than guessing a distro-specific location.
+
+- name: PostgreSQL 16 STIG | Resolve configured TLS file paths
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -F
+      - "|"
+      - -c
+      - >-
+        SELECT name,
+               CASE
+                 WHEN setting = '' THEN ''
+                 WHEN substring(setting,1,1) = '/' THEN setting
+                 ELSE current_setting('data_directory') || '/' || setting
+               END
+        FROM pg_settings
+        WHERE name IN ('ssl_ca_file','ssl_cert_file','ssl_crl_file','ssl_key_file')
+        ORDER BY name;
+  register: postgres16_tls_paths_raw
+  changed_when: false
+  check_mode: false
+
+- name: PostgreSQL 16 STIG | Build TLS path map
+  ansible.builtin.set_fact:
+    postgres16_tls_paths: >-
+      {{ dict(postgres16_tls_paths_raw.stdout_lines | map('split', '|') | list) }}
+
+- name: PostgreSQL 16 STIG | Audit configured TLS files
+  ansible.builtin.stat:
+    path: "{{ item.value }}"
+  loop: "{{ postgres16_tls_paths | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  when: item.value | length > 0
+  register: postgres16_tls_file_stats
+
+- name: PostgreSQL 16 STIG | Read settings that drive restart/reload decisions
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SELECT current_setting('shared_preload_libraries'), current_setting('log_line_prefix');"
+  register: postgres16_current_settings
+  changed_when: false
+  check_mode: false

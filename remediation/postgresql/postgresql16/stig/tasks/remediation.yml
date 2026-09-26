@@ -1,0 +1,621 @@
+---
+# Keep shared capabilities together. Per-V-ID tags preserve assessment traceability
+# without allowing multiple controls to overwrite the same PostgreSQL parameter.
+
+- name: PostgreSQL 16 STIG | Validate supplied cluster connection limit
+  ansible.builtin.assert:
+    that:
+      - postgres16_max_connections is none or (postgres16_max_connections | int) > 0
+    fail_msg: >-
+      postgres16_max_connections must be a positive integer when supplied.
+  tags:
+    - V-261857
+
+- name: PostgreSQL 16 STIG | Validate supplied per-role connection limits
+  ansible.builtin.assert:
+    that:
+      - (item.value | int) >= 0
+    fail_msg: >-
+      Per-role connection limits must be nonnegative integers.
+  loop: "{{ postgres16_role_connection_limits | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  tags:
+    - V-261857
+
+- name: PostgreSQL 16 STIG | Apply approved cluster connection limit
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*max_connections\s*='
+    line: "max_connections = {{ postgres16_max_connections | int }}"
+    backup: true
+  register: postgres16_max_connections_change
+  when: postgres16_max_connections is not none
+  tags:
+    - V-261857
+
+- name: PostgreSQL 16 STIG | Read current approved-role connection limits
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - >-
+        SELECT rolconnlimit FROM pg_roles
+        WHERE rolname = '{{ item.key | replace("'", "''") }}';
+  loop: "{{ postgres16_role_connection_limits | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  register: postgres16_role_limit_current
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261857
+
+- name: PostgreSQL 16 STIG | Require supplied roles to exist
+  ansible.builtin.assert:
+    that:
+      - item.stdout | trim | length > 0
+    fail_msg: >-
+      Approved connection limit was supplied for role {{ item.item.key }},
+      but that role does not exist. Refusing to create an account implicitly.
+  loop: "{{ postgres16_role_limit_current.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.key }}"
+  tags:
+    - V-261857
+
+- name: PostgreSQL 16 STIG | Apply changed approved per-role connection limits
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -v
+      - ON_ERROR_STOP=1
+      - -c
+      - >-
+        ALTER ROLE "{{ item.item.key | replace('"', '""') }}"
+        CONNECTION LIMIT {{ item.item.value | int }};
+  loop: "{{ postgres16_role_limit_current.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.key }}"
+  when: (item.stdout | trim | int) != (item.item.value | int)
+  tags:
+    - V-261857
+
+- name: PostgreSQL 16 STIG | Report restart required for max_connections
+  ansible.builtin.debug:
+    msg: >-
+      max_connections changed and requires an approved PostgreSQL restart.
+      This role does not restart the database automatically.
+  when:
+    - postgres16_max_connections_change is defined
+    - postgres16_max_connections_change.changed | default(false)
+  tags:
+    - V-261857
+
+- name: PostgreSQL 16 STIG | Build required pgAudit class union
+  ansible.builtin.set_fact:
+    postgres16_pgaudit_classes: >-
+      {{ (postgres16_pgaudit_required_classes +
+          postgres16_pgaudit_additional_classes) | unique | list | sort }}
+
+- name: PostgreSQL 16 STIG | Check pgAudit extension availability
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SELECT count(*) FROM pg_available_extensions WHERE name = 'pgaudit';"
+  register: postgres16_pgaudit_available
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261860
+    - V-261861
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Require pgAudit to be available
+  ansible.builtin.assert:
+    that:
+      - postgres16_pgaudit_available.stdout | int > 0
+    fail_msg: >-
+      pgAudit is required by the current V1R3 audit controls but is not
+      available to PostgreSQL. Install the PostgreSQL-16-compatible pgAudit
+      package using the approved repository/package process. The role will not
+      guess a package source or package name.
+  tags:
+    - V-261860
+    - V-261861
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Read file and runtime shared_preload_libraries
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -F
+      - "|"
+      - -c
+      - >-
+        SELECT
+          coalesce(
+            (SELECT setting
+             FROM pg_file_settings
+             WHERE name='shared_preload_libraries' AND applied
+             ORDER BY seqno DESC LIMIT 1),
+            ''
+          ),
+          current_setting('shared_preload_libraries');
+  register: postgres16_preload_raw
+  changed_when: false
+  check_mode: false
+  tags:
+    - V-261860
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Record file and runtime preload values
+  ansible.builtin.set_fact:
+    postgres16_preload_file: "{{ postgres16_preload_raw.stdout.split('|')[0] | trim }}"
+    postgres16_preload_runtime: "{{ postgres16_preload_raw.stdout.split('|')[1] | trim }}"
+  tags:
+    - V-261860
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Build merged shared_preload_libraries from parsed file state
+  ansible.builtin.set_fact:
+    postgres16_preload_merged: >-
+      {{ (((postgres16_preload_file
+            if postgres16_preload_file | length > 0
+            else postgres16_preload_runtime).split(',') |
+           map('trim') | reject('equalto', '') | list) + ['pgaudit'])
+         | unique | join(',') }}
+  tags:
+    - V-261860
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Report pending preload mismatch
+  ansible.builtin.debug:
+    msg: >-
+      File shared_preload_libraries={{ postgres16_preload_file | default('') }};
+      runtime={{ postgres16_preload_runtime | default('') }}.
+      A difference indicates restart-sensitive configuration is not yet active.
+  when:
+    - postgres16_preload_file | length > 0
+    - postgres16_preload_file != postgres16_preload_runtime
+  tags:
+    - V-261860
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Configure merged shared_preload_libraries
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*shared_preload_libraries\s*='
+    line: "shared_preload_libraries = '{{ postgres16_preload_merged }}'"
+    backup: true
+  register: postgres16_preload_change
+  tags:
+    - V-261860
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Validate approved session termination settings
+  ansible.builtin.assert:
+    that:
+      - (item.value | int) > 0
+    fail_msg: >-
+      V-261899 values must be explicit organization-approved nonzero integers.
+  loop:
+    - { key: "statement_timeout", value: "{{ postgres16_statement_timeout_ms }}" }
+    - { key: "tcp_keepalives_idle", value: "{{ postgres16_tcp_keepalives_idle }}" }
+    - { key: "tcp_keepalives_interval", value: "{{ postgres16_tcp_keepalives_interval }}" }
+    - { key: "tcp_keepalives_count", value: "{{ postgres16_tcp_keepalives_count }}" }
+  when: item.value is not none
+  tags:
+    - V-261899
+
+- name: PostgreSQL 16 STIG | Require complete approved V-261899 input set
+  ansible.builtin.assert:
+    that:
+      - postgres16_statement_timeout_ms is not none
+      - postgres16_tcp_keepalives_idle is not none
+      - postgres16_tcp_keepalives_interval is not none
+      - postgres16_tcp_keepalives_count is not none
+    fail_msg: >-
+      V-261899 requires organization-defined nonzero statement_timeout and
+      tcp_keepalives_* values. Supply all four approved values; the role will
+      not copy the STIG's example numbers as organization policy.
+  when: >
+    postgres16_statement_timeout_ms is not none or
+    postgres16_tcp_keepalives_idle is not none or
+    postgres16_tcp_keepalives_interval is not none or
+    postgres16_tcp_keepalives_count is not none
+  tags:
+    - V-261899
+
+- name: PostgreSQL 16 STIG | Apply approved session termination settings
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*{{ item.key | regex_escape }}\s*='
+    line: "{{ item.key }} = {{ item.value | int }}"
+    backup: true
+  loop:
+    - { key: "statement_timeout", value: "{{ postgres16_statement_timeout_ms }}" }
+    - { key: "tcp_keepalives_idle", value: "{{ postgres16_tcp_keepalives_idle }}" }
+    - { key: "tcp_keepalives_interval", value: "{{ postgres16_tcp_keepalives_interval }}" }
+    - { key: "tcp_keepalives_count", value: "{{ postgres16_tcp_keepalives_count }}" }
+  when:
+    - postgres16_statement_timeout_ms is not none
+    - postgres16_tcp_keepalives_idle is not none
+    - postgres16_tcp_keepalives_interval is not none
+    - postgres16_tcp_keepalives_count is not none
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261899
+
+- name: PostgreSQL 16 STIG | Apply approved audit log timezone
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*log_timezone\s*='
+    line: "log_timezone = '{{ postgres16_log_timezone }}'"
+    backup: true
+  when: postgres16_log_timezone is not none
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261921
+
+- name: PostgreSQL 16 STIG | Read current log destinations for guarded syslog merge
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SHOW log_destination;"
+  register: postgres16_log_destination_raw
+  changed_when: false
+  check_mode: false
+  when: postgres16_syslog_facility is not none
+  tags:
+    - V-261917
+    - V-261967
+
+- name: PostgreSQL 16 STIG | Build merged log destinations
+  ansible.builtin.set_fact:
+    postgres16_log_destinations_merged: >-
+      {{ ((postgres16_log_destination_raw.stdout.split(',') |
+           map('trim') | reject('equalto', '') | list) + ['syslog'])
+         | unique | join(',') }}
+  when: postgres16_syslog_facility is not none
+  tags:
+    - V-261917
+    - V-261967
+
+- name: PostgreSQL 16 STIG | Configure approved centralized syslog settings
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*{{ item.key | regex_escape }}\s*='
+    line: "{{ item.key }} = '{{ item.value }}'"
+    backup: true
+  loop:
+    - { key: "log_destination", value: "{{ postgres16_log_destinations_merged | default('syslog') }}" }
+    - { key: "syslog_facility", value: "{{ postgres16_syslog_facility }}" }
+    - { key: "syslog_ident", value: "{{ postgres16_syslog_ident }}" }
+  when: postgres16_syslog_facility is not none
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261917
+    - V-261967
+
+- name: PostgreSQL 16 STIG | Validate guarded TLS enablement request
+  ansible.builtin.assert:
+    that:
+      - postgres16_enable_ssl in [none, true]
+    fail_msg: >-
+      postgres16_enable_ssl may be null (no change) or true. Disabling SSL is
+      not a supported STIG remediation action.
+  tags:
+    - V-261900
+    - V-261928
+    - V-261932
+    - V-261933
+
+- name: PostgreSQL 16 STIG | Require existing server certificate and private key before enabling TLS
+  ansible.builtin.assert:
+    that:
+      - postgres16_tls_paths.ssl_cert_file | default('') | length > 0
+      - postgres16_tls_paths.ssl_key_file | default('') | length > 0
+      - >-
+        (postgres16_tls_file_stats.results | default([])
+         | selectattr('item.key', 'equalto', 'ssl_cert_file')
+         | map(attribute='stat.exists') | list | first | default(false))
+      - >-
+        (postgres16_tls_file_stats.results | default([])
+         | selectattr('item.key', 'equalto', 'ssl_key_file')
+         | map(attribute='stat.exists') | list | first | default(false))
+    fail_msg: >-
+      TLS enablement was requested, but PostgreSQL's configured server
+      certificate/private-key paths are not both present. Supply approved PKI
+      material first; this role will not generate or select certificates.
+  when: postgres16_enable_ssl is true
+  tags:
+    - V-261900
+    - V-261928
+    - V-261932
+    - V-261933
+
+- name: PostgreSQL 16 STIG | Enable TLS only after explicit approval and file validation
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*ssl\s*='
+    line: "ssl = on"
+    backup: true
+  when: postgres16_enable_ssl is true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261900
+    - V-261928
+    - V-261932
+    - V-261933
+
+- name: PostgreSQL 16 STIG | Limit client-visible PostgreSQL error detail
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*client_min_messages\s*='
+    line: "client_min_messages = error"
+    backup: true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261908
+    - V-261909
+
+- name: PostgreSQL 16 STIG | Store newly set passwords with SCRAM-SHA-256
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*password_encryption\s*='
+    line: "password_encryption = 'scram-sha-256'"
+    backup: true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261891
+
+- name: PostgreSQL 16 STIG | Protect postgresql.conf ownership and mode
+  become: true
+  ansible.builtin.file:
+    path: "{{ postgres16_config_file }}"
+    owner: "{{ postgres16_admin_user }}"
+    group: "{{ postgres16_admin_group }}"
+    mode: "0600"
+  tags:
+    - V-261862
+    - V-261879
+    - V-261881
+
+- name: PostgreSQL 16 STIG | Protect stderr audit log file creation mode
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*log_file_mode\s*='
+    line: "log_file_mode = 0600"
+    backup: true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261875
+    - V-261876
+    - V-261877
+    - V-261879
+    - V-261909
+
+- name: PostgreSQL 16 STIG | Configure connection audit settings
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*{{ item.key | regex_escape }}\s*='
+    line: "{{ item.key }} = {{ item.value }}"
+    backup: true
+  loop:
+    - { key: "log_connections", value: "on" }
+    - { key: "log_disconnections", value: "on" }
+    - { key: "log_hostname", value: "on" }
+    - { key: "log_error_verbosity", value: "default" }
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261865
+    - V-261866
+    - V-261867
+    - V-261868
+    - V-261869
+    - V-261870
+    - V-261871
+    - V-261922
+    - V-261956
+    - V-261957
+    - V-261958
+    - V-261960
+    - V-261961
+
+- name: PostgreSQL 16 STIG | Configure pgAudit detail settings
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*{{ item.key | regex_escape }}\s*='
+    line: "{{ item.key }} = '{{ item.value }}'"
+    backup: true
+  loop:
+    - { key: "pgaudit.log_level", value: "log" }
+    - { key: "pgaudit.log_parameter", value: "on" }
+    - { key: "pgaudit.log_statement_once", value: "off" }
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261870
+    - V-261872
+
+- name: PostgreSQL 16 STIG | Configure literal audit identity prefix
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*log_line_prefix\s*='
+    line: "log_line_prefix = '{{ postgres16_log_line_prefix }}'"
+    backup: true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261860
+    - V-261866
+    - V-261867
+    - V-261868
+    - V-261869
+    - V-261871
+    - V-261961
+
+- name: PostgreSQL 16 STIG | Configure pgAudit event classes
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*pgaudit\.log\s*='
+    line: "pgaudit.log = '{{ postgres16_pgaudit_classes | join(', ') }}'"
+    backup: true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261861
+    - V-261863
+    - V-261938
+    - V-261940
+    - V-261942
+    - V-261944
+    - V-261946
+    - V-261948
+    - V-261950
+    - V-261952
+    - V-261954
+    - V-261959
+    - V-261962
+    - V-261964
+
+- name: PostgreSQL 16 STIG | Configure pgAudit catalog auditing
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ postgres16_config_file }}"
+    regexp: '^\s*#?\s*pgaudit\.log_catalog\s*='
+    line: "pgaudit.log_catalog = '{{ postgres16_pgaudit_log_catalog }}'"
+    backup: true
+  notify: PostgreSQL 16 STIG | Reload configuration
+  tags:
+    - V-261863
+
+- name: PostgreSQL 16 STIG | Apply reloadable configuration before effective-state validation
+  ansible.builtin.meta: flush_handlers
+  when: not ansible_check_mode
+
+- name: PostgreSQL 16 STIG | Read effective reloadable STIG settings
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - >-
+        SELECT name || '=' || setting
+        FROM pg_settings
+        WHERE name IN (
+          'client_min_messages','password_encryption','log_file_mode',
+          'log_connections','log_disconnections','log_hostname',
+          'log_error_verbosity','log_line_prefix','log_timezone',
+          'statement_timeout','tcp_keepalives_idle',
+          'tcp_keepalives_interval','tcp_keepalives_count'
+        )
+        ORDER BY name;
+  register: postgres16_effective_settings
+  changed_when: false
+  check_mode: false
+  when: not ansible_check_mode
+
+- name: PostgreSQL 16 STIG | Report effective reloadable settings
+  ansible.builtin.debug:
+    var: postgres16_effective_settings.stdout_lines
+  when:
+    - not ansible_check_mode
+    - postgres16_effective_settings is defined
+
+- name: PostgreSQL 16 STIG | Validate PostgreSQL configuration file
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - "SELECT name, setting, sourcefile, sourceline FROM pg_file_settings WHERE error IS NOT NULL;"
+  register: postgres16_config_errors
+  changed_when: false
+  failed_when: postgres16_config_errors.stdout | trim | length > 0
+  check_mode: false
+
+- name: PostgreSQL 16 STIG | Read PostgreSQL pending-restart state
+  become: true
+  become_user: "{{ postgres16_admin_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ postgres16_psql_bin }}"
+      - -d
+      - "{{ postgres16_admin_db }}"
+      - -AtX
+      - -c
+      - >-
+        SELECT name || '=' || pending_restart
+        FROM pg_settings
+        WHERE pending_restart
+        ORDER BY name;
+  register: postgres16_pending_restart
+  changed_when: false
+  check_mode: false
+  when: not ansible_check_mode
+
+- name: PostgreSQL 16 STIG | Report all pending restart settings
+  ansible.builtin.debug:
+    var: postgres16_pending_restart.stdout_lines
+  when:
+    - not ansible_check_mode
+    - postgres16_pending_restart is defined
+    - postgres16_pending_restart.stdout_lines | default([]) | length > 0
+
+- name: PostgreSQL 16 STIG | Report restart-required pgAudit preload change
+  ansible.builtin.debug:
+    msg: >-
+      shared_preload_libraries changed. PostgreSQL must be restarted before
+      pgAudit can become active. This role intentionally does not restart a
+      database automatically. Perform the approved restart, then run functional
+      and authoritative assessment testing.
+  when: postgres16_preload_change.changed
+  tags:
+    - V-261860
+    - V-261863

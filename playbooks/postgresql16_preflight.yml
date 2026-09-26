@@ -1,0 +1,24 @@
+---
+- name: Discover and preflight PostgreSQL 16 STIG target
+  hosts: postgresql16
+  become: true
+  tasks:
+    - name: Run PostgreSQL 16 discovery
+      ansible.builtin.include_role:
+        name: ../remediation/postgresql/postgresql16/stig
+        tasks_from: discovery.yml
+
+    - name: Run PostgreSQL 16 read-only technical audit
+      ansible.builtin.include_role:
+        name: ../remediation/postgresql/postgresql16/stig
+        tasks_from: technical_audit.yml
+
+    - name: Run PostgreSQL 16 read-only audit checks
+      ansible.builtin.include_role:
+        name: ../remediation/postgresql/postgresql16/stig
+        tasks_from: audit.yml
+
+    - name: Report PostgreSQL 16 site/application evidence gates
+      ansible.builtin.include_role:
+        name: ../remediation/postgresql/postgresql16/stig
+        tasks_from: evidence.yml
