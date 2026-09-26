@@ -30,5 +30,11 @@
 - name: Apply authentication and SSH anti-controls
   ansible.builtin.import_tasks: ssh_auth.yml
 
+- name: Apply policy and configured-audit anti-controls
+  ansible.builtin.import_tasks: policy_audit.yml
+
 - name: Apply file-permission and audit anti-controls
   ansible.builtin.import_tasks: files_audit.yml
+
+- name: Verify recovery-critical services after intentional weakening
+  ansible.builtin.import_tasks: postflight.yml
