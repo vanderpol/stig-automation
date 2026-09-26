@@ -1,43 +1,88 @@
 ---
-- name: Set a non-FIPS system crypto policy
-  ansible.builtin.command: update-crypto-policies --set DEFAULT
-  register: anti_stig_crypto
-  changed_when: anti_stig_crypto.rc == 0
-  failed_when: anti_stig_crypto.rc != 0
+- name: Discover current system crypto policy
+  ansible.builtin.command: update-crypto-policies --show
+  register: anti_stig_crypto_policy
+  changed_when: false
+  failed_when: anti_stig_crypto_policy.rc != 0
   tags:
     - RHEL-09-215105
     - RHEL-09-671010
     - RHEL-09-672020
 
-- name: Put SELinux into permissive mode for the running lab
-  ansible.posix.selinux:
-    policy: targeted
-    state: permissive
+- name: Set a non-FIPS system crypto policy
+  when: anti_stig_crypto_policy.stdout | trim != 'DEFAULT'
+  ansible.builtin.command: update-crypto-policies --set DEFAULT
+  changed_when: true
+  tags:
+    - RHEL-09-215105
+    - RHEL-09-671010
+    - RHEL-09-672020
+
+- name: Discover SELinux runtime mode
+  ansible.builtin.command: getenforce
+  register: anti_stig_selinux_mode
+  changed_when: false
+  failed_when: anti_stig_selinux_mode.rc != 0
   tags:
     - RHEL-09-431010
     - RHEL-09-431015
 
-- name: Configure deliberately noncompliant sysctl values
-  ansible.posix.sysctl:
-    name: "{{ item.name }}"
-    value: "{{ item.value }}"
-    state: present
-    sysctl_file: /etc/sysctl.d/99-anti-stig.conf
-    reload: true
-  loop:
-    - { name: kernel.randomize_va_space, value: '0' }
-    - { name: kernel.kptr_restrict, value: '0' }
-    - { name: kernel.dmesg_restrict, value: '0' }
-    - { name: kernel.perf_event_paranoid, value: '0' }
-    - { name: kernel.kexec_load_disabled, value: '0' }
-    - { name: kernel.yama.ptrace_scope, value: '0' }
-    - { name: net.ipv4.conf.all.accept_redirects, value: '1' }
-    - { name: net.ipv4.conf.default.accept_redirects, value: '1' }
-    - { name: net.ipv4.conf.all.send_redirects, value: '1' }
-    - { name: net.ipv4.conf.default.send_redirects, value: '1' }
-    - { name: net.ipv4.conf.all.accept_source_route, value: '1' }
-    - { name: net.ipv4.conf.default.accept_source_route, value: '1' }
-    - { name: net.ipv4.tcp_syncookies, value: '0' }
+- name: Put SELinux into permissive mode for the running lab
+  when: anti_stig_selinux_mode.stdout | trim == 'Enforcing'
+  ansible.builtin.command: setenforce 0
+  changed_when: true
+  tags:
+    - RHEL-09-431010
+    - RHEL-09-431015
+
+- name: Persist SELinux permissive mode without disabling SELinux
+  ansible.builtin.lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: SELINUX=permissive
+  tags:
+    - RHEL-09-431010
+    - RHEL-09-431015
+
+- name: Write deliberately noncompliant sysctl settings
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-anti-stig.conf
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      # Intentionally insecure RHEL 9.x test fixture
+      kernel.randomize_va_space = 0
+      kernel.kptr_restrict = 0
+      kernel.dmesg_restrict = 0
+      kernel.perf_event_paranoid = 0
+      kernel.kexec_load_disabled = 0
+      kernel.yama.ptrace_scope = 0
+      net.ipv4.conf.all.accept_redirects = 1
+      net.ipv4.conf.default.accept_redirects = 1
+      net.ipv4.conf.all.send_redirects = 1
+      net.ipv4.conf.default.send_redirects = 1
+      net.ipv4.conf.all.accept_source_route = 1
+      net.ipv4.conf.default.accept_source_route = 1
+      net.ipv4.tcp_syncookies = 0
+  register: anti_stig_sysctl_file
+  tags:
+    - RHEL-09-213010
+    - RHEL-09-213015
+    - RHEL-09-213020
+    - RHEL-09-213025
+    - RHEL-09-213070
+    - RHEL-09-253010
+    - RHEL-09-253015
+    - RHEL-09-253020
+    - RHEL-09-253025
+    - RHEL-09-253030
+    - RHEL-09-253035
+
+- name: Load deliberately noncompliant sysctl settings
+  when: anti_stig_sysctl_file.changed
+  ansible.builtin.command: sysctl --system
+  changed_when: true
   tags:
     - RHEL-09-213010
     - RHEL-09-213015
