@@ -143,3 +143,24 @@ If pgAudit is newly added to `shared_preload_libraries`, use the approved site r
 After functional testing, run the playbook again for idempotency and then run the current authoritative V1R3 assessment. Reconcile every unexpected V-ID. Store sanitized team artifacts under `remediation/postgresql/postgresql16/tests/results/`.
 
 PostgreSQL-specific high-risk areas include authentication/HBA, PKI, FIPS, PPSM ports/listen addresses, role/object privileges, package/support state, at-rest encryption, central audit offload, and application-owned controls. Do not turn those into generic defaults merely to clear a finding.
+
+
+## F5 NGINX V1R1 quick start
+
+This is an **initial validation build**, not an assessment-verified release. The current benchmark contains 32 findings (V-278380 through V-278411), including CAT I V-278381 and V-278396.
+
+1. Record the exact Git commit, OS, NGINX edition/version/package source, OpenSSL/provider state, and Ansible version.
+2. Copy `inventories/lab/hosts.nginx.example.yml` into the active lab inventory and copy `inventories/lab/group_vars/nginx.yml.example` to `nginx.yml`.
+3. Supply the organization-defined `worker_connections` value and the CAT I central syslog endpoint before a full run. Supply only approved PKI/network/authentication values; do not use documentation examples as production values.
+4. Run discovery: `ansible-playbook playbooks/nginx_preflight.yml`
+5. Review proposed changes: `ansible-playbook playbooks/nginx_stig.yml --check --diff`
+6. Apply remediation: `ansible-playbook playbooks/nginx_stig.yml`
+7. Confirm `nginx -t`, TLS/application functionality, authentication behavior, logging delivery, and management access.
+8. Run the playbook again and record unexpected changes as idempotency defects.
+9. Run the current authoritative F5 NGINX V1R1 assessment and reconcile every unexpected V-ID using `docs/NGINX_V1R1_TEST_REPORT.md`.
+
+### NGINX first-cycle scrutiny
+
+Pay particular attention to V-278381/V-278405 TLS behavior, V-278396 central logging, V-278384 consent routing, V-278389 listeners, V-278390/V-278400 authentication, V-278391/V-278406 CRL/OCSP behavior, V-278398 allow/deny scope, V-278402 security attributes, V-278403 PKI provenance, V-278404 DoS limits, V-278407 FIPS provider state, V-278409 API separation, and V-278410/V-278411 token/key lifecycle.
+
+The current V1R1 OCSP example must be reconciled with the installed NGINX edition/version and current vendor syntax rather than copied blindly. Anti-STIG remains deferred until an authoritative positive baseline is established.
