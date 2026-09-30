@@ -1,0 +1,170 @@
+---
+# V-278382, V-278408
+- name: V-278382 | Disable interactive shell for NGINX service account
+  ansible.builtin.user:
+    name: "{{ nginx_stig_effective_user }}"
+    shell: "{{ '/usr/sbin/nologin' if ansible_facts.os_family == 'Debian' else '/sbin/nologin' }}"
+  tags: [V-278382, CAT2]
+
+- name: V-278408 | Lock NGINX service account password
+  ansible.builtin.user:
+    name: "{{ nginx_stig_effective_user }}"
+    password_lock: true
+  tags: [V-278408, CAT2]
+
+# V-278383
+- name: V-278383 | Remove NGINX service account from common privileged supplemental groups
+  ansible.builtin.command:
+    argv:
+      - gpasswd
+      - -d
+      - "{{ nginx_stig_effective_user }}"
+      - "{{ item }}"
+  loop: "{{ ['sudo', 'wheel', 'admin'] }}"
+  when:
+    - ansible_facts.getent_group is defined
+    - item in ansible_facts.getent_group
+    - nginx_stig_effective_user in (ansible_facts.getent_group[item][2] | default([]))
+  changed_when: true
+  tags: [V-278383, CAT2]
+
+# V-278386, V-278397
+- name: V-278386 | Restrict main NGINX configuration permissions
+  ansible.builtin.file:
+    path: "{{ nginx_stig_main_conf }}"
+    owner: root
+    group: root
+    mode: "0600"
+  tags: [V-278386, CAT2]
+
+- name: V-278397 | Remove other-write permission from NGINX configuration directory
+  ansible.builtin.file:
+    path: "{{ nginx_stig_conf_dir }}"
+    owner: root
+    mode: "0755"
+  tags: [V-278397, CAT2]
+
+# V-278387
+- name: Discover external module paths from effective configuration
+  ansible.builtin.set_fact:
+    nginx_stig_loaded_module_paths: "{{ nginx_stig_effective_config.stdout | regex_findall('(?m)^\\s*load_module\\s+([^;]+);') | unique | list }}"
+  tags: [V-278387, V-278393, CAT2]
+
+- name: V-278387 | Protect explicitly approved external module directories
+  ansible.builtin.file:
+    path: "{{ item | dirname }}"
+    owner: root
+    mode: "0755"
+  loop: "{{ nginx_stig_approved_module_paths }}"
+  when: nginx_stig_approved_module_paths | length > 0
+  tags: [V-278387, CAT2]
+
+# V-278392 and V-278410: enforce permissions on private keys actually referenced by effective config.
+- name: Discover referenced TLS private keys
+  ansible.builtin.set_fact:
+    nginx_stig_private_keys: "{{ nginx_stig_effective_config.stdout | regex_findall('(?m)^\s*ssl_certificate_key\s+([^;]+);') | unique | list }}"
+  tags: [V-278392, V-278410, CAT2]
+
+- name: V-278392 V-278410 | Protect referenced TLS private keys
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ nginx_stig_private_keys }}"
+  when: not item.startswith('$')
+  tags: [V-278392, V-278410, CAT2]
+
+# Controls whose literal checks can be satisfied globally without inventing site architecture.
+- name: Ensure STIG drop-in directory exists
+  ansible.builtin.file:
+    path: "{{ nginx_stig_dropin | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: nginx_stig_manage_dropin | bool
+
+- name: Write deterministic NGINX V1R1 hardening drop-in
+  ansible.builtin.copy:
+    dest: "{{ nginx_stig_dropin }}"
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      # Managed by stig-automation: F5 NGINX STIG V1R1
+      # V-278381 / V-278405
+      ssl_protocols TLSv1.2 TLSv1.3;
+      ssl_ciphers {{ nginx_stig_fips_cipher_string }};
+      ssl_prefer_server_ciphers on;
+      # V-278394
+      client_body_timeout {{ nginx_stig_client_body_timeout }}s;
+      client_header_timeout {{ nginx_stig_client_header_timeout }}s;
+      send_timeout {{ nginx_stig_send_timeout }}s;
+      # V-278395
+      server_tokens off;
+      # V-278399
+      ssl_session_timeout {{ nginx_stig_ssl_session_timeout_minutes }}m;
+      # V-278404: define the shared zone here. Enforcement is added only to
+      # explicitly reviewed server/location files below.
+      limit_conn_zone $binary_remote_addr zone={{ nginx_stig_limit_conn_zone_name }}:{{ nginx_stig_limit_conn_zone_size }};
+  when: nginx_stig_manage_dropin | bool
+  notify:
+    - validate nginx
+    - reload nginx
+  tags: [V-278381, V-278394, V-278395, V-278399, V-278404, V-278405, CAT1, CAT2]
+
+# V-278380 belongs in events {}, so modify the existing directive only when site value is supplied.
+- name: V-278380 | Verify an existing worker_connections directive was discovered
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_effective_config.stdout is search('(?m)^\\s*worker_connections\\s+\\d+\\s*;')
+    fail_msg: >-
+      V-278380: no existing worker_connections directive was found in the effective
+      configuration. The role will not guess where to create an events{} directive.
+  tags: [V-278380, CAT2]
+
+- name: V-278380 | Require organization-defined worker_connections value
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_worker_connections is not none
+      - nginx_stig_worker_connections | int > 0
+    fail_msg: "V-278380 requires nginx_stig_worker_connections from the SSP/site capacity decision."
+  tags: [V-278380, CAT2]
+
+- name: V-278380 | Set worker_connections in existing configuration
+  ansible.builtin.replace:
+    path: "{{ nginx_stig_main_conf }}"
+    regexp: '(?m)^\s*worker_connections\s+\d+\s*;'
+    replace: "    worker_connections {{ nginx_stig_worker_connections }};"
+    validate: "{{ nginx_stig_binary }} -t -c %s"
+  notify: reload nginx
+  tags: [V-278380, CAT2]
+
+# V-278404: a zone without an applied limit_conn/limit_req does not satisfy the check.
+- name: V-278404 | Refuse ambiguous multi-server mutation targets
+  ansible.builtin.shell: |
+    set -o pipefail
+    grep -Ec '^[[:space:]]*server[[:space:]]*\\{' "{{ item }}"
+  args:
+    executable: /bin/bash
+  loop: "{{ nginx_stig_dos_scope_files }}"
+  register: nginx_stig_dos_server_counts
+  changed_when: false
+  failed_when: nginx_stig_dos_server_counts.stdout | int != 1
+  when: nginx_stig_dos_scope_files | length > 0
+  tags: [V-278404, CAT2]
+
+- name: V-278404 | Apply reviewed per-client connection limit
+  ansible.builtin.blockinfile:
+    path: "{{ item }}"
+    marker: "# {mark} STIG V-278404"
+    insertafter: '^\\s*server\\s*\\{'
+    block: |
+      limit_conn {{ nginx_stig_limit_conn_zone_name }} {{ nginx_stig_limit_conn_per_client }};
+  loop: "{{ nginx_stig_dos_scope_files }}"
+  when: nginx_stig_dos_scope_files | length > 0
+  notify:
+    - validate nginx
+    - reload nginx
+  tags: [V-278404, CAT2]
