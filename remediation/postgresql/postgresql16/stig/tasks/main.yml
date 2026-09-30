@@ -3,6 +3,17 @@
   ansible.builtin.import_tasks: discovery.yml
   tags: [always, preflight]
 
+- name: PostgreSQL 16 STIG | Apply isolated-lab defaults
+  ansible.builtin.set_fact:
+    postgres16_max_connections: "{{ postgres16_max_connections if postgres16_max_connections is not none else postgres16_stig_lab_max_connections }}"
+    postgres16_statement_timeout_ms: "{{ postgres16_statement_timeout_ms if postgres16_statement_timeout_ms is not none else postgres16_stig_lab_statement_timeout_ms }}"
+    postgres16_tcp_keepalives_idle: "{{ postgres16_tcp_keepalives_idle if postgres16_tcp_keepalives_idle is not none else postgres16_stig_lab_tcp_keepalives_idle }}"
+    postgres16_tcp_keepalives_interval: "{{ postgres16_tcp_keepalives_interval if postgres16_tcp_keepalives_interval is not none else postgres16_stig_lab_tcp_keepalives_interval }}"
+    postgres16_tcp_keepalives_count: "{{ postgres16_tcp_keepalives_count if postgres16_tcp_keepalives_count is not none else postgres16_stig_lab_tcp_keepalives_count }}"
+    postgres16_log_timezone: "{{ postgres16_log_timezone if postgres16_log_timezone is not none else postgres16_stig_lab_log_timezone }}"
+  when: postgres16_stig_lab_mode | bool
+  tags: [always, lab]
+
 - name: PostgreSQL 16 STIG | Pre-remediation technical audit and mandatory gates
   ansible.builtin.import_tasks: technical_audit.yml
   when: postgres16_stig_enabled | bool
