@@ -99,7 +99,14 @@ Any agent, contributor, or automation working in this repository must optimize f
 14. **Do not call automation STIG-compliant because Ansible completed successfully.**
     Compliance requires authoritative assessment plus applicable organization/application evidence.
 
-15. **Anti-STIG comes after a known-good compliant baseline.**
+15. **The normal tester interface is lab-first and one-command.**
+    - Follow `docs/LAB_FIRST_EXECUTION_STANDARD.md`.
+    - Normal remediation SHALL integrate discovery/preflight; separate preflight playbooks are optional troubleshooting tools.
+    - Testers SHALL NOT need to edit role source or copy/edit large variable files for the normal isolated-lab workflow.
+    - Use deterministic STIG-defined lab defaults when legitimate, but never fabricate organization/site facts.
+    - Preserve advanced inventory overrides for targeted scenarios.
+
+16. **Anti-STIG comes after a known-good compliant baseline.**
     - Do not build Anti-STIG first.
     - Once a control is assessment-verified, create deterministic fail -> remediate -> pass regression coverage where practical.
 
