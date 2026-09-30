@@ -1,0 +1,23 @@
+---
+# Copy to nginx.yml and supply only approved site values.
+nginx_stig_worker_connections: 512
+
+# CAT I V-278396: required for central log off-load implementation.
+# nginx_stig_syslog_server: "10.0.0.10:514"
+
+# V-278398: organization-approved networks only.
+# nginx_stig_allowed_cidrs:
+#   - "10.0.0.0/16"
+
+# Evidence references may be ticket/SSP/control identifiers; do not store secrets here.
+# nginx_stig_pki_approval_evidence: "SSP section ..."
+# nginx_stig_fips_platform_evidence: "RHEL FIPS validation evidence ..."
+# nginx_stig_replay_resistance_evidence: "Authentication design ..."
+
+# V-278404: only list files whose server{} scope has been reviewed for the limit.
+# nginx_stig_dos_scope_files:
+#   - "/etc/nginx/conf.d/application.conf"
+
+# Loaded dynamic modules must be explicitly approved.
+# nginx_stig_approved_module_paths:
+#   - "/usr/lib64/nginx/modules/ngx_http_example_module.so"
