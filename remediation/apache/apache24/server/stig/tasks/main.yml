@@ -3,6 +3,12 @@
   ansible.builtin.include_vars:
     file: "{{ role_path }}/../../common/vars/main.yml"
 
+- name: Apply isolated-lab defaults
+  ansible.builtin.set_fact:
+    apache24_stig_listen: "{{ apache24_stig_listen if apache24_stig_listen | length > 0 else [ansible_default_ipv4.address ~ ':' ~ (apache24_stig_lab_listen_port | string)] }}"
+  when: apache24_stig_lab_mode | bool
+  tags: [always, lab]
+
 - name: Validate supported platform
   ansible.builtin.assert:
     that:
