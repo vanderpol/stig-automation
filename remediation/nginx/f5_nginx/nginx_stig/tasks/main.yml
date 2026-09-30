@@ -1,0 +1,33 @@
+---
+- name: Validate supported operating-system family
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.os_family in ['RedHat', 'Debian']
+    fail_msg: "Initial F5 NGINX V1R1 validation supports RedHat-family and Debian-family Linux only."
+  tags: [always]
+
+- name: Run NGINX discovery and preflight
+  ansible.builtin.import_tasks: discovery.yml
+  tags: [always, discovery]
+
+- name: Apply deterministic and guarded remediation
+  ansible.builtin.import_tasks: remediation.yml
+  when: not nginx_stig_audit_only | bool
+  tags: [stig, remediation]
+
+- name: Flush validation and reload handlers before post-remediation audit
+  ansible.builtin.meta: flush_handlers
+  when: not nginx_stig_audit_only | bool
+  tags: [stig, remediation, audit]
+
+- name: Refresh effective NGINX configuration after remediation
+  ansible.builtin.command: "{{ nginx_stig_binary }} -qT -c {{ nginx_stig_main_conf }}"
+  register: nginx_stig_effective_config
+  changed_when: false
+  check_mode: false
+  when: not nginx_stig_audit_only | bool
+  tags: [stig, audit]
+
+- name: Run site-owned and evidence checks
+  ansible.builtin.import_tasks: audit.yml
+  tags: [stig, audit]
