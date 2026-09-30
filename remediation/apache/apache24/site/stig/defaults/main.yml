@@ -1,4 +1,8 @@
 ---
+# Default isolated-lab execution profile. Override only for targeted regression scenarios.
+apache24_site_stig_lab_mode: true
+apache24_site_stig_lab_server_name: stig-lab.invalid
+
 apache24_site_stig_audit_only: false
 
 # Site/application values. Empty values intentionally require user decisions/evidence.
