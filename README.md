@@ -4,6 +4,12 @@ Ansible remediation, audit/evidence handling, and Anti-STIG regression content f
 
 Future agent/contributor work must follow `AGENTS.md`. The rationale and reusable Apache/Tomcat lessons are documented in `docs/LOCKDOWN_LESSONS_LEARNED.md`.
 
+## Primary use: isolated SCAP-validation lab
+
+The repository-wide tester interface is defined by `docs/LAB_FIRST_EXECUTION_STANDARD.md`. The target experience is one normal playbook invocation per STIG: discovery/preflight is integrated, deterministic STIG-defined values use documented lab defaults where legitimate, product configuration is validated automatically, and unresolved organization/application evidence is reported rather than requiring edits to role source.
+
+Existing roles are being migrated to this standard. Older quick-start sections below may still describe manual preflight or copied variable files until that role's migration is complete.
+
 The primary implementation root is `remediation/`, which contains Ansible lockdown and deterministic Anti-STIG content organized by technology and benchmark.
 
 Shared `playbooks/`, `inventories/`, and repository-level documentation provide entry points and testing guidance. Assessment content is maintained separately from this repository.
