@@ -1,3 +1,7 @@
+> **LAB / REGRESSION TESTING ONLY — NOT FOR PRODUCTION USE**
+>
+> This repository exists solely to assist automated regression testing of DISA STIG SCAP content in isolated, disposable test environments. The Ansible content intentionally makes security-relevant configuration changes and may disrupt applications, authentication, networking, logging, TLS, or other services. It is not production hardening guidance and SHALL NOT be used on production, operational, or otherwise valuable systems.
+
 # PostgreSQL 16 STIG remediation
 
 Ansible remediation for the current DISA **Crunchy Data Postgres 16 STIG, Version 1 Release 3 (V1R3)**.
