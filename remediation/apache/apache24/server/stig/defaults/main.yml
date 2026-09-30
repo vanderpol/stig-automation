@@ -1,4 +1,8 @@
 ---
+# Default isolated-lab execution profile. Override only for targeted regression scenarios.
+apache24_stig_lab_mode: true
+apache24_stig_lab_listen_port: 80
+
 apache24_stig_audit_only: false
 apache24_stig_restart: true
 
