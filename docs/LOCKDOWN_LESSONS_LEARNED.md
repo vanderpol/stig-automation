@@ -251,6 +251,16 @@ Every substantial lockdown should have:
 - first-pass/readiness status;
 - Anti-STIG only after positive validation.
 
+## 16. Optimize the tester interface for the actual lab mission
+
+The primary repository mission is to create known compliant and known noncompliant endpoints for SCAP validation, not to act as production configuration-management software.
+
+The early Apache/Tomcat workflow exposed too much internal machinery to testers: separate preflight execution, copied example variable files, and manual decisions that were sometimes unnecessary when the STIG itself supplied a deterministic value.
+
+Going forward, normal lab execution should be one command. Discovery/preflight belongs inside that execution path. Deterministic STIG values should be useful defaults. Truly organization-owned facts remain explicit and must never be fabricated. Advanced variables remain available for special scenarios without becoming prerequisites for ordinary lab testing.
+
+See `docs/LAB_FIRST_EXECUTION_STANDARD.md` for the normative requirements.
+
 ## Practical starting checklist
 
 Before writing the first task for a new lockdown, answer:
