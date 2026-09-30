@@ -1,4 +1,7 @@
 ---
+# Default isolated-lab execution profile. Override only for targeted regression scenarios.
+tomcat_stig_lab_mode: true
+
 # Supported/test scope for v1.0: RHEL 8 and RHEL 9, Tomcat 9 only.
 tomcat_user: tomcat
 tomcat_group: tomcat
