@@ -6,6 +6,12 @@
     fail_msg: "Initial F5 NGINX V1R1 validation supports RedHat-family and Debian-family Linux only."
   tags: [always]
 
+- name: Apply isolated-lab defaults
+  ansible.builtin.set_fact:
+    nginx_stig_worker_connections: "{{ nginx_stig_worker_connections if nginx_stig_worker_connections is not none else nginx_stig_lab_worker_connections }}"
+  when: nginx_stig_lab_mode | bool
+  tags: [always, lab]
+
 - name: Run NGINX discovery and preflight
   ansible.builtin.import_tasks: discovery.yml
   tags: [always, discovery]
