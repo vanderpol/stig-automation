@@ -17,3 +17,8 @@ This directory is now reconciled from the original `tomcat9_stig_ansible_rhel8_r
 RHEL 8 and RHEL 9 are the stabilization targets. Ubuntu and RHEL 10 remain outside this Tomcat 9 baseline.
 
 Anti-STIG remains deferred until this role produces a verified compliant SCAP baseline.
+
+
+## Known issues and validation concerns
+
+Read [`ISSUES_AND_CONCERNS.md`](ISSUES_AND_CONCERNS.md) before testing or deployment. It records benchmark ambiguities, Realm/authentication blast-radius concerns, FIPS/PKI boundaries, platform/layout limitations, and remaining validation gates.
