@@ -6,6 +6,10 @@ This repository automates DISA STIG remediation, audit/evidence handling, and la
 
 Any agent, contributor, or automation working in this repository must optimize for **current-benchmark correctness, explicit provenance, conservative remediation, minimal blast radius, and testability**.
 
+## Safety and intended use
+
+This is a public **lab-only regression-testing repository**. Content exists solely to assist automated regression testing of DISA STIG SCAP content on isolated, disposable systems. It is not production hardening guidance and SHALL NOT be used on production, operational, or otherwise valuable systems. Contributors SHALL preserve this warning in tester-facing entry points and SHALL assume the automation may intentionally cause disruptive security-relevant configuration changes.
+
 ## Repository rules
 
 1. **The current DISA benchmark is the implementation authority.**
