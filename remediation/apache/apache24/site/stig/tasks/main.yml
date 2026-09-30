@@ -5,7 +5,7 @@
 
 - name: Apply isolated-lab defaults
   ansible.builtin.set_fact:
-    apache24_site_document_root: "{{ apache24_site_document_root if apache24_site_document_root | length > 0 else apache24.document_root | default('/var/www/html') }}"
+    apache24_site_document_root: "{{ apache24_site_document_root if apache24_site_document_root | length > 0 else '/var/www/html' }}"
     apache24_site_server_name: "{{ apache24_site_server_name if apache24_site_server_name | length > 0 else apache24_site_stig_lab_server_name }}"
   when: apache24_site_stig_lab_mode | bool
   tags: [always, lab]
