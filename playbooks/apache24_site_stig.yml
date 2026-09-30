@@ -1,6 +1,8 @@
 ---
+# LAB / REGRESSION TESTING ONLY — NOT FOR PRODUCTION USE.
+# Non-interactive normal path: target either stig_targets or the legacy apache24_site group.
 - name: Apply Apache Server 2.4 UNIX Site STIG V2R7 remediation
-  hosts: apache24_site
+  hosts: "stig_targets:apache24_site"
   become: true
   gather_facts: true
   roles:
