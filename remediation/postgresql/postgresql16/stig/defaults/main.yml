@@ -1,4 +1,13 @@
 ---
+# Default isolated-lab execution profile. Override only for targeted regression scenarios.
+postgres16_stig_lab_mode: true
+postgres16_stig_lab_max_connections: 100
+postgres16_stig_lab_statement_timeout_ms: 900000
+postgres16_stig_lab_tcp_keepalives_idle: 60
+postgres16_stig_lab_tcp_keepalives_interval: 10
+postgres16_stig_lab_tcp_keepalives_count: 5
+postgres16_stig_lab_log_timezone: UTC
+
 # Crunchy Data Postgres 16 STIG V1R3
 postgres16_stig_enabled: true
 
