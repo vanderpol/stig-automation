@@ -1,5 +1,9 @@
 # Lab-First Execution Standard
 
+## Intended-use boundary
+
+This standard applies only to isolated, disposable lab systems used for automated regression testing of DISA STIG SCAP content. Repository automation is not intended or approved for production deployment. Streamlining the lab workflow intentionally favors reproducible endpoint state over production change-management safeguards.
+
 ## Purpose
 
 This repository primarily builds deterministic compliant and deliberately noncompliant systems in an **isolated test lab** so SCAP/assessment content can be validated against known endpoint states.
