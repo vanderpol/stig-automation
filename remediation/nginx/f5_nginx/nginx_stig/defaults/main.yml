@@ -1,4 +1,8 @@
 ---
+# Default isolated-lab execution profile. Override only for targeted regression scenarios.
+nginx_stig_lab_mode: true
+nginx_stig_lab_worker_connections: 1024
+
 nginx_stig_audit_only: false
 nginx_stig_service: nginx
 nginx_stig_binary: nginx
