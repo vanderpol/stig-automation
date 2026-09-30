@@ -1,0 +1,16 @@
+---
+- name: Validate nginx
+  ansible.builtin.command: "{{ nginx_stig_binary }} -t -c {{ nginx_stig_main_conf }}"
+  changed_when: false
+  listen: validate nginx
+
+- name: Reload nginx
+  ansible.builtin.command: "{{ nginx_stig_binary }} -t -c {{ nginx_stig_main_conf }}"
+  changed_when: false
+  notify: Perform nginx reload
+  listen: reload nginx
+
+- name: Perform nginx reload
+  ansible.builtin.service:
+    name: "{{ nginx_stig_service }}"
+    state: reloaded
