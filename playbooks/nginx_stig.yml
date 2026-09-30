@@ -1,6 +1,8 @@
 ---
+# LAB / REGRESSION TESTING ONLY — NOT FOR PRODUCTION USE.
+# Non-interactive normal path: target either stig_targets or the legacy nginx group.
 - name: Apply F5 NGINX STIG V1R1 remediation
-  hosts: nginx
+  hosts: "stig_targets:nginx"
   become: true
   gather_facts: true
   roles:
