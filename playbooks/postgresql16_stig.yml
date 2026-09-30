@@ -1,6 +1,9 @@
 ---
+# LAB / REGRESSION TESTING ONLY — NOT FOR PRODUCTION USE.
+# Non-interactive normal path: target either stig_targets or the legacy postgresql16 group.
 - name: Apply Crunchy Data Postgres 16 STIG V1R3 remediation
-  hosts: postgresql16
+  hosts: "stig_targets:postgresql16"
   become: true
+  gather_facts: true
   roles:
     - role: ../remediation/postgresql/postgresql16/stig
