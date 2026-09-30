@@ -1,6 +1,8 @@
 ---
+# LAB / REGRESSION TESTING ONLY — NOT FOR PRODUCTION USE.
+# Non-interactive normal path: target either stig_targets or the legacy tomcat9 group.
 - name: Apply Apache Tomcat 9 STIG V3R4 remediation
-  hosts: tomcat9
+  hosts: "stig_targets:tomcat9"
   become: true
   gather_facts: true
   roles:
