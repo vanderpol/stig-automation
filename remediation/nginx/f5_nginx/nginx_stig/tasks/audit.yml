@@ -1,0 +1,165 @@
+---
+- name: V-278383 | Assert NGINX account is not in common privileged groups
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_effective_user not in ((ansible_facts.getent_group[item][2] | default([])) if item in ansible_facts.getent_group else [])
+    fail_msg: "V-278383: {{ nginx_stig_effective_user }} is a member of privileged group {{ item }}."
+  loop: [sudo, wheel, admin]
+  tags: [V-278383, CAT2]
+
+- name: V-278384 | Require banner applicability/evidence rather than rewriting application routing
+  ansible.builtin.assert:
+    that:
+      - not nginx_stig_consent_banner_applicable | bool or nginx_stig_consent_banner_evidence | length > 0
+    fail_msg: "V-278384 requires application-aware DOD consent-banner implementation/evidence."
+  tags: [V-278384, CAT2]
+
+- name: V-278389 | Require approved listener inventory
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_approved_listen_endpoints | length > 0
+    fail_msg: "V-278389 requires SSP-approved listen endpoints/protocols; the role will not invent them."
+  tags: [V-278389, CAT2]
+
+- name: V-278390 | Require replay-resistance evidence for network authentication
+  ansible.builtin.assert:
+    that:
+      - not nginx_stig_network_authentication_in_use | bool or nginx_stig_replay_resistance_evidence | length > 0
+    fail_msg: "V-278390 requires the site's authentication mechanism and replay-resistance evidence."
+  tags: [V-278390, CAT2]
+
+- name: V-278396 | CAT I require central logging endpoint and effective syslog logging
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_syslog_server | length > 0
+      - nginx_stig_effective_config.stdout is not search('(?m)^\\s*(?:access_log|error_log)\\s+(?!syslog:)(?!off(?:\\s|;))')
+      - nginx_stig_effective_config.stdout is search('(?m)^\\s*(?:access_log|error_log)\\s+syslog:server=')
+    fail_msg: >-
+      V-278396 is CAT I. Supply nginx_stig_syslog_server and ensure every effective
+      access_log/error_log destination required by the current check is syslog-backed.
+      A configured endpoint variable alone is not evidence of effective central logging.
+  tags: [V-278396, CAT1]
+
+- name: V-278398 | Require organization-defined allowlist
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_allowed_cidrs | length > 0
+    fail_msg: "V-278398 requires organization-approved allow CIDRs; deny-all policy is not generated without them."
+  tags: [V-278398, CAT2]
+
+- name: V-278401 | Require keyval timeout when token keyval storage is used
+  ansible.builtin.assert:
+    that:
+      - not nginx_stig_keyval_in_use | bool or nginx_stig_keyval_timeout | length > 0
+    fail_msg: "V-278401 requires an organization-defined keyval credential timeout."
+  tags: [V-278401, CAT2]
+
+- name: V-278402 | Require site-defined security headers when proxying
+  ansible.builtin.assert:
+    that:
+      - not nginx_stig_proxying_in_use | bool or nginx_stig_required_proxy_headers | length > 0
+    fail_msg: "V-278402 requires organization/application-defined security attributes; do not invent header values."
+  tags: [V-278402, CAT2]
+
+- name: V-278403 | Require DOD-approved PKI evidence
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_pki_approval_evidence | length > 0
+    fail_msg: "V-278403 requires evidence that configured certificate authorities/certificates are DOD approved."
+  tags: [V-278403, CAT2]
+
+- name: V-278407 | Require FIPS platform evidence
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_fips_platform_evidence | length > 0
+    fail_msg: "V-278407 requires OS/OpenSSL FIPS-validated module readiness evidence."
+  tags: [V-278407, CAT2]
+
+- name: V-278409 | Require separate API maintenance path when API is used
+  ansible.builtin.assert:
+    that:
+      - not nginx_stig_api_in_use | bool or (nginx_stig_api_management_address | length > 0 and nginx_stig_api_separation_evidence | length > 0)
+    fail_msg: "V-278409 requires a site-defined management address and separation evidence when NGINX API is used."
+  tags: [V-278409, CAT2]
+
+- name: V-278411 | Require token-revocation evidence when access tokens are used
+  ansible.builtin.assert:
+    that:
+      - not nginx_stig_access_tokens_in_use | bool or nginx_stig_token_revocation_evidence | length > 0
+    fail_msg: "V-278411 requires site authentication/IdP token-revocation design and evidence."
+  tags: [V-278411, CAT2]
+
+- name: V-278385 | Find custom log formats
+  ansible.builtin.set_fact:
+    nginx_stig_custom_log_formats: "{{ nginx_stig_effective_config.stdout | regex_findall('(?m)^\\s*log_format\\s+[^;]+;') }}"
+  tags: [V-278385, CAT2]
+
+- name: V-278385 | Verify required fields in every custom log format
+  ansible.builtin.assert:
+    that:
+      - item is search('\\$server_name')
+      - item is search('\\$server_addr')
+      - item is search('\\$remote_addr')
+      - item is search('\\$remote_user')
+      - item is search('\\$time_local')
+      - item is search('\\$status')
+      - item is search('\\$request')
+      - item is search('\\$request_id')
+      - item is search('\\$http_user_agent')
+      - item is search('\\$http_x_forwarded_for')
+    fail_msg: "V-278385: custom log_format is missing one or more fields required by the current V1R1 check."
+  loop: "{{ nginx_stig_custom_log_formats }}"
+  tags: [V-278385, CAT2]
+
+- name: Discover file-based NGINX logs
+  ansible.builtin.set_fact:
+    nginx_stig_log_files: >-
+      {{ nginx_stig_effective_config.stdout
+         | regex_findall('(?m)^\\s*(?:access_log|error_log)\\s+((?!syslog:)[^;\\s]+)')
+         | reject('equalto', 'off') | unique | list }}
+  tags: [V-278388, CAT2]
+
+- name: V-278388 | Inspect file-based audit logs
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ nginx_stig_log_files }}"
+  register: nginx_stig_log_stats
+  tags: [V-278388, CAT2]
+
+- name: V-278388 | Assert file-based audit logs are not group/other writable
+  ansible.builtin.assert:
+    that:
+      - not item.stat.exists or item.stat.mode[-2:] in ['00', '04', '40', '44']
+    fail_msg: "V-278388: {{ item.item }} is writable by group or other."
+  loop: "{{ nginx_stig_log_stats.results }}"
+  tags: [V-278388, CAT2]
+
+- name: V-278387 V-278393 | Require explicit approval for every loaded external module
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_loaded_module_paths | difference(nginx_stig_approved_module_paths) | length == 0
+    fail_msg: >-
+      Loaded external modules are not all in nginx_stig_approved_module_paths:
+      {{ nginx_stig_loaded_module_paths | difference(nginx_stig_approved_module_paths) }}
+  tags: [V-278387, V-278393, CAT2]
+
+- name: V-278404 | Require an applied connection/request limit
+  ansible.builtin.assert:
+    that:
+      - nginx_stig_effective_config.stdout is search('(?m)^\\s*(limit_conn|limit_req)\\s+')
+    fail_msg: "V-278404 requires an applied limit_conn or limit_req; defining only a shared zone is insufficient."
+  tags: [V-278404, CAT2]
+
+- name: Report controls requiring manual/current-check reconciliation
+  ansible.builtin.debug:
+    msg:
+      - "V-278385 audit log_format fields: inspect effective custom log_format."
+      - "V-278387/V-278393 modules: compare loaded modules with approved inventory."
+      - "V-278388 logs: verify each effective access/error log permission."
+      - "V-278391/V-278406 revocation: CRL and OCSP are alternative current-check paths."
+      - "V-278396 central logging: every effective log directive must be reconciled, not merely one added."
+      - "V-278400 PIV/mTLS: requires DOD PKI material and application scope."
+      - "V-278404 connection/request limits: apply to site server/location scope after functional testing."
+      - "V-278405/V-278407 crypto: cipher config does not itself prove FIPS validation."
+      - "V-278410 certificate/key strength must be cryptographically inspected, not inferred from permissions."
+  tags: [audit]
